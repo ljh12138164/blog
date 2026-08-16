@@ -1,5 +1,6 @@
 .next/
 out/
+.secrets/
 node_modules/
 public/_pagefind/
 public/robots.txt
