@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+set -- ${SSH_ORIGINAL_COMMAND:-}
+
+if [ "$#" -ne 2 ] || [ "$1" != "deploy" ]; then
+  echo "Only 'deploy sha-<40 lowercase hex characters>' is allowed." >&2
+  exit 126
+fi
+
+if ! printf '%s\n' "$2" | grep -Eq '^sha-[0-9a-f]{40}$'; then
+  echo "Invalid image tag." >&2
+  exit 126
+fi
+
+exec sudo -n /usr/local/sbin/deploy-blog "$2"

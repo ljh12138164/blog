@@ -1,6 +1,6 @@
 # 模型之外
 
-一个使用 Nextra 4 Custom Theme、Next.js、Turbopack 和 pnpm 构建的中文个人博客。
+一个使用 Nextra 4 Custom Theme、Next.js、Tailwind CSS、Turbopack 和 pnpm 构建的中文个人博客。生产环境导出为静态站点，由项目内的 Nginx 容器提供服务。
 
 ## 本地运行
 
@@ -13,10 +13,9 @@ pnpm dev
 
 ```bash
 pnpm build
-pnpm start
 ```
 
-`postbuild` 会先扫描 Next.js 的服务端 HTML，在 `public/_pagefind` 生成 Pagefind 索引，再由 `next-sitemap` 根据构建产物自动生成 `sitemap.xml` 和 `robots.txt`。开发模式下尚未生成索引时，搜索框会给出提示。
+`pnpm build` 生成 `out/` 静态站点；`postbuild` 随后生成 `out/_pagefind` 搜索索引，以及 `sitemap.xml` 和 `robots.txt`。开发模式下尚未生成索引时，搜索框会给出提示。
 
 ## SEO 配置
 
@@ -26,3 +25,20 @@ pnpm start
 
 1. 在 `app/posts/<slug>/page.mdx` 新建文章。
 2. 在 `lib/posts.ts` 添加文章摘要，供首页文章列表读取；sitemap 会在构建后自动发现文章路由。
+
+## 容器运行
+
+```bash
+docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .
+docker run --rm -p 18080:8080 blog:local
+```
+
+健康检查地址为 `http://127.0.0.1:18080/healthz`。
+
+## 自动部署
+
+推送到 `master` 后，GitHub Actions 验证静态构建、推送 GHCR 镜像，并通过受限 SSH 命令部署到服务器。完整的变量、密钥、回滚和排障说明见 [部署文档](docs/deployment.md)。
+
+## 项目维护 Skill
+
+项目级 Skill 位于 `.agents/skills/maintain-blog`。它规定了文章元数据同步、文档维护、构建验证和 `HERMES.md` 中断续接流程。

@@ -1,0 +1,66 @@
+#!/bin/sh
+set -eu
+
+STACK_DIR=/opt/stacks/blog
+ENV_FILE="$STACK_DIR/.env"
+NEW_TAG=${1:-}
+
+if [ "$#" -ne 1 ] || ! printf '%s\n' "$NEW_TAG" | grep -Eq '^sha-[0-9a-f]{40}$'; then
+  echo "Invalid image tag: $NEW_TAG" >&2
+  exit 2
+fi
+
+exec 9>/run/lock/blog-deploy.lock
+if ! flock -n 9; then
+  echo "Another blog deployment is already running." >&2
+  exit 3
+fi
+
+cd "$STACK_DIR"
+
+PREVIOUS_TAG=$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" 2>/dev/null || true)
+PREVIOUS_TAG=${PREVIOUS_TAG:-latest}
+
+write_tag() {
+  umask 077
+  printf 'IMAGE_TAG=%s\n' "$1" > "$ENV_FILE.next"
+  mv "$ENV_FILE.next" "$ENV_FILE"
+}
+
+deploy_tag() {
+  write_tag "$1"
+  docker compose pull web
+  docker compose up -d --remove-orphans web
+}
+
+is_healthy() {
+  attempt=0
+  while [ "$attempt" -lt 30 ]; do
+    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/healthz >/dev/null; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+  return 1
+}
+
+echo "Deploying $NEW_TAG (previous: $PREVIOUS_TAG)"
+deploy_tag "$NEW_TAG"
+
+if is_healthy; then
+  echo "Deployment healthy: $NEW_TAG"
+  exit 0
+fi
+
+echo "Health check failed; rolling back to $PREVIOUS_TAG" >&2
+docker compose logs --tail 80 web >&2 || true
+deploy_tag "$PREVIOUS_TAG"
+
+if ! is_healthy; then
+  echo "Rollback health check also failed." >&2
+  exit 5
+fi
+
+echo "Rolled back to $PREVIOUS_TAG" >&2
+exit 4

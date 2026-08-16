@@ -1,0 +1,127 @@
+name: CI and Deploy
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Existing immutable image tag to redeploy, for example sha-0123..."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/ljh12138164/blog
+  SITE_URL: ${{ vars.SITE_URL || 'http://60.205.171.159' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ env.SITE_URL }}
+      - name: Verify static artifacts
+        shell: bash
+        run: |
+          test -f out/index.html
+          test -f out/_pagefind/pagefind.js
+          test -f out/sitemap.xml
+          test -f out/robots.txt
+
+  publish-image:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.image_tag == '')
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: tag
+        run: echo "value=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ env.SITE_URL }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.value }}
+            ${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    if: >-
+      always() &&
+      github.event_name != 'pull_request' &&
+      needs.verify.result == 'success' &&
+      (needs.publish-image.result == 'success' || needs.publish-image.result == 'skipped')
+    needs: [verify, publish-image]
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: blog-production
+      cancel-in-progress: false
+    steps:
+      - id: target
+        name: Resolve immutable image tag
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.image_tag }}
+        run: |
+          tag="${REQUESTED_TAG:-sha-${GITHUB_SHA}}"
+          if [[ ! "$tag" =~ ^sha-[0-9a-f]{40}$ ]]; then
+            echo "Invalid image tag: $tag" >&2
+            exit 2
+          fi
+          echo "value=$tag" >> "$GITHUB_OUTPUT"
+      - name: Configure restricted SSH client
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Deploy and verify
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '60.205.171.159' }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || 'blog-deploy' }}
+          IMAGE_TAG: ${{ steps.target.outputs.value }}
+        run: >-
+          ssh -i ~/.ssh/deploy_key
+          -p "$DEPLOY_PORT"
+          -o BatchMode=yes
+          "$DEPLOY_USER@$DEPLOY_HOST"
+          "deploy $IMAGE_TAG"

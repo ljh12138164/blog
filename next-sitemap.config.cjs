@@ -5,6 +5,7 @@ module.exports = {
     process.env.NEXT_PUBLIC_SITE_URL ||
     'http://localhost:3000',
   generateRobotsTxt: true,
+  outDir: 'out',
   changefreq: 'weekly',
   priority: 0.7,
   sitemapSize: 5000,
