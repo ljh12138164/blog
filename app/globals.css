@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  --color-ink: #18201d;
+  --color-muted: #64706a;
+  --color-line: #d9ddd8;
+  --color-paper: #f5f4ee;
+  --color-accent: #c8572c;
+  --font-serif: Georgia, 'Noto Serif SC', 'Songti SC', serif;
+  --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
