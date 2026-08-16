@@ -82,7 +82,7 @@ export function Search() {
       </button>
       {open && (
         <div
-          className="fixed inset-0 z-[100] flex items-start justify-center bg-ink/35 px-4 pt-[12vh] backdrop-blur-[2px]"
+          className="fixed inset-0 h-[100vh] z-[100] flex items-start justify-center bg-ink/35 px-4 pt-[12vh] backdrop-blur-[2px]"
           role="presentation"
           onMouseDown={() => setOpen(false)}
         >

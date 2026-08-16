@@ -1,4 +1,4 @@
-# 模型之外
+# 个人博客
 
 一个使用 Nextra 4 Custom Theme、Next.js、Tailwind CSS、Turbopack 和 pnpm 构建的中文个人博客。生产环境导出为静态站点，由项目内的 Nginx 容器提供服务。
 
