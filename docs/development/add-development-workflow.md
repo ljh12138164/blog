@@ -39,6 +39,8 @@
 - `pnpm typecheck`：通过。
 - `pnpm build`：通过；静态导出完成，Pagefind 索引 4 个页面，sitemap 生成成功。
 - `git diff --check`：通过。
+- GitHub Actions `CI and Deploy`：通过。
+- Pull Request：[PR #1](https://github.com/ljh12138164/blog/pull/1)。
 
 ## Risks
 
