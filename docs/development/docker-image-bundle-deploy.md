@@ -27,13 +27,20 @@ The static-file deployment removed Docker even though the repository must contin
 
 ## Implementation
 
-Pending design review and implementation plan.
+- Restored the repository Docker runtime: multi-stage Dockerfile, container Nginx, Docker ignore rules, and local-only Compose image reference.
+- Replaced static release switching with a bundle-aware server script that imports `image.tar`, snapshots managed configuration, syncs the bundle, and restores the previous configuration and tag after health-check failure.
+- Replaced the Actions static archive upload with immutable image build, `docker save`, and bundle streaming through the existing restricted SSH command.
+- Recorded the durable deployment boundary in ADR 0003 and marked the direct-static ADR as superseded.
 
 ## Verification
 
-Pending implementation.
+- Passed: `docker compose config` renders the local `blog:latest` image with `pull_policy: never`.
+- Passed: `pnpm typecheck`, `NEXT_PUBLIC_SITE_URL=http://60.205.171.159 pnpm build`, and required `out/` artifacts (`index.html`, Pagefind, sitemap, robots).
+- Passed: `bash -n deploy/server/deploy-blog`, `bash -n deploy/server/blog-deploy-gate`, workflow YAML parsing, no-registry workflow scan, and `git diff --check`.
+- Blocked locally: `docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .` cannot connect because Docker Desktop's Linux engine is not running on this workstation. The deploy workflow performs the same build on GitHub-hosted Linux runners.
 
 ## Risks
 
 - The server needs a one-time bootstrap installation of the bundle-aware restricted deployment script before the first workflow run.
 - Docker image archives require temporary disk space on the GitHub runner and server, though server memory is not used for an application build.
+- The first production release requires the documented root-only bootstrap before the bundle-aware forced command can accept standard input.

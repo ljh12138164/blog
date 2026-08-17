@@ -6,16 +6,17 @@
 
 ## 状态
 
-设计已确认，正在准备实施计划。
+本地实现与可用验证已完成，正在准备 Pull Request。
 
 ## 下一步
 
-审阅并确认 `docs/superpowers/specs/2026-08-17-docker-image-bundle-deploy-design.md`，然后实施并验证发布链路。
+提交文档与验证记录、推送分支并创建 PR；等待 GitHub Actions 验证 Docker 构建。合并前以 Workbench 执行 `docs/deployment.md` 的一次性服务器引导。
 
 ## 验证
 
-- 已从最新 `origin/master` 创建隔离分支 `feat/docker-image-bundle-deploy`。
+- 已通过：`pnpm typecheck`、`pnpm build`、静态产物检查、Compose 本地镜像渲染、部署脚本语法、workflow YAML 解析、无 Registry 操作扫描和 `git diff --check`。
+- 本机 Docker Desktop Linux engine 未运行，实际 `docker build` 需由 GitHub Actions Linux runner 复核。
 
 ## 阻塞
 
-无。
+无；本机 Docker 构建由 GitHub Actions 验证。
