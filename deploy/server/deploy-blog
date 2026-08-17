@@ -1,11 +1,14 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
 STACK_DIR=/opt/stacks/blog
+ENV_FILE="$STACK_DIR/.env"
+HOST_NGINX_CONF=/www/server/panel/vhost/nginx/60.205.171.159.conf
+NGINX_BIN=/www/server/nginx/sbin/nginx
 NEW_TAG=${1:-}
 
-if [ "$#" -ne 1 ] || ! printf '%s\n' "$NEW_TAG" | grep -Eq '^sha-[0-9a-f]{40}$'; then
-  echo "Invalid release tag: $NEW_TAG" >&2
+if [[ $# -ne 1 || ! "$NEW_TAG" =~ ^sha-[0-9a-f]{40}$ ]]; then
+  echo "Invalid image tag: $NEW_TAG" >&2
   exit 2
 fi
 
@@ -15,16 +18,63 @@ if ! flock -n 9; then
   exit 3
 fi
 
-cd "$STACK_DIR"
+ARCHIVE=$(mktemp /tmp/blog-release.XXXXXX.tar.gz)
+BUNDLE_DIR=$(mktemp -d /tmp/blog-release.XXXXXX)
+cleanup() {
+  rm -f "$ARCHIVE"
+  rm -rf "$BUNDLE_DIR"
+}
+trap cleanup EXIT
 
-RELEASES_DIR="$STACK_DIR/releases"
-CURRENT_LINK="$STACK_DIR/current"
-RELEASE_DIR="$RELEASES_DIR/$NEW_TAG"
+cat > "$ARCHIVE"
+tar -xzf "$ARCHIVE" -C "$BUNDLE_DIR"
+
+for required in \
+  image.tar \
+  compose.yaml \
+  deploy/host-nginx.conf \
+  deploy/server/deploy-blog \
+  deploy/server/blog-deploy-gate \
+  deploy/server/blog-deploy.sudoers; do
+  test -f "$BUNDLE_DIR/$required" || {
+    echo "Release bundle is missing $required." >&2
+    exit 2
+  }
+done
+
+mkdir -p "$STACK_DIR/backups"
+BACKUP_DIR="$STACK_DIR/backups/${NEW_TAG}-$(date -u +%Y%m%dT%H%M%SZ)"
+PREVIOUS_TAG=$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" 2>/dev/null || true)
+PREVIOUS_TAG=${PREVIOUS_TAG:-latest}
+
+backup_file() {
+  local source=$1
+  local name=$2
+  test -f "$source" || {
+    echo "Required managed file is missing: $source" >&2
+    exit 2
+  }
+  mkdir -p "$(dirname "$BACKUP_DIR/$name")"
+  cp -p "$source" "$BACKUP_DIR/$name"
+}
+
+restore_file() {
+  local name=$1
+  local target=$2
+  local mode=$3
+  install -D -m "$mode" "$BACKUP_DIR/$name" "$target"
+}
+
+write_tag() {
+  umask 077
+  printf 'IMAGE_TAG=%s\n' "$1" > "$ENV_FILE.next"
+  mv "$ENV_FILE.next" "$ENV_FILE"
+}
 
 is_healthy() {
-  attempt=0
-  while [ "$attempt" -lt 30 ]; do
-    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1/healthz >/dev/null; then
+  local attempt=0
+  while [[ "$attempt" -lt 30 ]]; do
+    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/healthz >/dev/null; then
       return 0
     fi
     attempt=$((attempt + 1))
@@ -33,42 +83,52 @@ is_healthy() {
   return 1
 }
 
-mkdir -p "$RELEASES_DIR"
-PREVIOUS_RELEASE=$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)
-STAGING_DIR=$(mktemp -d "$RELEASES_DIR/.incoming.XXXXXX")
-cleanup() { rm -rf "$STAGING_DIR"; }
-trap cleanup EXIT
+restore_previous_release() {
+  restore_file compose.yaml "$STACK_DIR/compose.yaml" 644
+  restore_file host-nginx.conf "$HOST_NGINX_CONF" 644
+  restore_file deploy-blog /usr/local/sbin/deploy-blog 755
+  restore_file blog-deploy-gate /usr/local/bin/blog-deploy-gate 755
+  restore_file blog-deploy.sudoers /etc/sudoers.d/blog-deploy 440
+  restore_file env "$ENV_FILE" 600
+  "$NGINX_BIN" -t
+  "$NGINX_BIN" -s reload
+  (cd "$STACK_DIR" && docker compose up -d --remove-orphans web)
+}
 
-tar -xzf - -C "$STAGING_DIR"
-test -f "$STAGING_DIR/index.html"
-test -f "$STAGING_DIR/_pagefind/pagefind.js"
-test -f "$STAGING_DIR/sitemap.xml"
-test -f "$STAGING_DIR/robots.txt"
+backup_file "$STACK_DIR/compose.yaml" compose.yaml
+backup_file "$HOST_NGINX_CONF" host-nginx.conf
+backup_file /usr/local/sbin/deploy-blog deploy-blog
+backup_file /usr/local/bin/blog-deploy-gate blog-deploy-gate
+backup_file /etc/sudoers.d/blog-deploy blog-deploy.sudoers
+backup_file "$ENV_FILE" env
 
-if [ ! -d "$RELEASE_DIR" ]; then
-  mv "$STAGING_DIR" "$RELEASE_DIR"
-  STAGING_DIR=''
-fi
+echo "Loading $NEW_TAG (previous: $PREVIOUS_TAG)"
+docker load -i "$BUNDLE_DIR/image.tar"
 
-ln -s "$RELEASE_DIR" "$CURRENT_LINK.next"
-mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
+install -m 644 "$BUNDLE_DIR/compose.yaml" "$STACK_DIR/compose.yaml"
+install -m 644 "$BUNDLE_DIR/deploy/host-nginx.conf" "$HOST_NGINX_CONF"
+install -m 755 "$BUNDLE_DIR/deploy/server/deploy-blog" /usr/local/sbin/deploy-blog
+install -m 755 "$BUNDLE_DIR/deploy/server/blog-deploy-gate" /usr/local/bin/blog-deploy-gate
+install -m 440 "$BUNDLE_DIR/deploy/server/blog-deploy.sudoers" /etc/sudoers.d/blog-deploy
+write_tag "$NEW_TAG"
+
+"$NGINX_BIN" -t
+"$NGINX_BIN" -s reload
+(cd "$STACK_DIR" && docker compose up -d --remove-orphans web)
 
 if is_healthy; then
   echo "Deployment healthy: $NEW_TAG"
   exit 0
 fi
 
-echo "Health check failed; rolling back to $PREVIOUS_RELEASE" >&2
-if [ -z "$PREVIOUS_RELEASE" ]; then
-  exit 4
-fi
-ln -s "$PREVIOUS_RELEASE" "$CURRENT_LINK.next"
-mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
+echo "Health check failed; rolling back to $PREVIOUS_TAG" >&2
+docker compose -f "$STACK_DIR/compose.yaml" logs --tail 80 web >&2 || true
+restore_previous_release
 
 if ! is_healthy; then
   echo "Rollback health check also failed." >&2
   exit 5
 fi
 
-echo "Rolled back to $PREVIOUS_RELEASE" >&2
+echo "Rolled back to $PREVIOUS_TAG" >&2
 exit 4
