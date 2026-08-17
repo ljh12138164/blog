@@ -5,11 +5,6 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
-    inputs:
-      image_tag:
-        description: "Existing immutable image tag to redeploy, for example sha-0123..."
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -55,29 +50,11 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.3
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-        env:
-          NEXT_PUBLIC_SITE_URL: ${{ env.SITE_URL }}
       - id: target
         name: Resolve immutable release tag
         shell: bash
-        env:
-          REQUESTED_TAG: ${{ inputs.image_tag }}
         run: |
-          tag="${REQUESTED_TAG:-sha-${GITHUB_SHA}}"
-          if [[ ! "$tag" =~ ^sha-[0-9a-f]{40}$ ]]; then
-            echo "Invalid image tag: $tag" >&2
-            exit 2
-          fi
-          echo "value=$tag" >> "$GITHUB_OUTPUT"
+          echo "value=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
       - name: Configure restricted SSH client
         shell: bash
         env:
@@ -89,7 +66,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-      - name: Deploy verified static release
+      - name: Build immutable local image
+        env:
+          RELEASE_TAG: ${{ steps.target.outputs.value }}
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SITE_URL="${{ env.SITE_URL }}" \
+            --tag "blog:$RELEASE_TAG" \
+            .
+      - name: Deploy Docker image bundle
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '60.205.171.159' }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
@@ -97,7 +82,18 @@ jobs:
           RELEASE_TAG: ${{ steps.target.outputs.value }}
         shell: bash
         run: |
-          tar -C out -czf - . | ssh -i ~/.ssh/deploy_key \
+          release_dir=$(mktemp -d)
+          trap 'rm -rf "$release_dir"' EXIT
+          mkdir -p "$release_dir/deploy/server"
+          docker save "blog:$RELEASE_TAG" -o "$release_dir/image.tar"
+          cp compose.yaml "$release_dir/compose.yaml"
+          cp deploy/host-nginx.conf "$release_dir/deploy/host-nginx.conf"
+          cp deploy/server/deploy-blog "$release_dir/deploy/server/deploy-blog"
+          cp deploy/server/blog-deploy-gate "$release_dir/deploy/server/blog-deploy-gate"
+          cp deploy/server/blog-deploy.sudoers "$release_dir/deploy/server/blog-deploy.sudoers"
+          tar -C "$release_dir" -czf - \
+            image.tar compose.yaml deploy/host-nginx.conf \
+            deploy/server/deploy-blog deploy/server/blog-deploy-gate deploy/server/blog-deploy.sudoers | ssh -i ~/.ssh/deploy_key \
             -p "$DEPLOY_PORT" \
             -o BatchMode=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" \
