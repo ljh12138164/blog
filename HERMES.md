@@ -6,11 +6,11 @@
 
 ## 状态
 
-本地实现与可用验证已完成，正在准备 Pull Request。
+分支已推送，待创建 Pull Request 并等待 GitHub Actions 验证 Docker 构建。
 
 ## 下一步
 
-提交文档与验证记录、推送分支并创建 PR；等待 GitHub Actions 验证 Docker 构建。合并前以 Workbench 执行 `docs/deployment.md` 的一次性服务器引导。
+在 GitHub 创建 `feat/docker-image-bundle-deploy` 到 `master` 的非草稿 PR；CI 通过后，以 Workbench 执行 `docs/deployment.md` 的一次性服务器引导，再合并 PR。
 
 ## 验证
 
@@ -19,4 +19,4 @@
 
 ## 阻塞
 
-无；本机 Docker 构建由 GitHub Actions 验证。
+当前环境的 GitHub CLI 不可用，浏览器创建 PR 超时；远端分支已推送。
