@@ -15,7 +15,7 @@
 
 ## 下一步
 
-审阅改动并提交直接静态发布迁移；推送与 PR 前重新验证 GitHub 网络访问。
+等待 [PR #2](https://github.com/ljh12138164/blog/pull/2) 的 GitHub Actions 结果。
 
 ## 验证
 
@@ -26,4 +26,4 @@
 
 ## 阻塞
 
-远程 `git fetch origin master --prune` 因 GitHub 连接重置失败；用户已确认本地基线为最新。推送与创建 PR 前需要重新验证远程访问。
+无。

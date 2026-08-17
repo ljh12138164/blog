@@ -43,6 +43,7 @@ The blog is a static export, but production deployment currently builds an image
 - `pnpm build`: passed outside the filesystem sandbox; the sandboxed run is blocked because Turbopack cannot read its inferred `C:\\Users\\PC` workspace root.
 - Required static files exist after the build: passed.
 - `git diff --check`: passed.
+- Pull Request: [#2](https://github.com/ljh12138164/blog/pull/2)；GitHub Actions 状态待确认。
 
 ## Risks
 
