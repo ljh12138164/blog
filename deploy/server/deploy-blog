@@ -2,11 +2,10 @@
 set -eu
 
 STACK_DIR=/opt/stacks/blog
-ENV_FILE="$STACK_DIR/.env"
 NEW_TAG=${1:-}
 
 if [ "$#" -ne 1 ] || ! printf '%s\n' "$NEW_TAG" | grep -Eq '^sha-[0-9a-f]{40}$'; then
-  echo "Invalid image tag: $NEW_TAG" >&2
+  echo "Invalid release tag: $NEW_TAG" >&2
   exit 2
 fi
 
@@ -18,25 +17,14 @@ fi
 
 cd "$STACK_DIR"
 
-PREVIOUS_TAG=$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" 2>/dev/null || true)
-PREVIOUS_TAG=${PREVIOUS_TAG:-latest}
-
-write_tag() {
-  umask 077
-  printf 'IMAGE_TAG=%s\n' "$1" > "$ENV_FILE.next"
-  mv "$ENV_FILE.next" "$ENV_FILE"
-}
-
-deploy_tag() {
-  write_tag "$1"
-  docker compose pull web
-  docker compose up -d --remove-orphans web
-}
+RELEASES_DIR="$STACK_DIR/releases"
+CURRENT_LINK="$STACK_DIR/current"
+RELEASE_DIR="$RELEASES_DIR/$NEW_TAG"
 
 is_healthy() {
   attempt=0
   while [ "$attempt" -lt 30 ]; do
-    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/healthz >/dev/null; then
+    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1/healthz >/dev/null; then
       return 0
     fi
     attempt=$((attempt + 1))
@@ -45,22 +33,42 @@ is_healthy() {
   return 1
 }
 
-echo "Deploying $NEW_TAG (previous: $PREVIOUS_TAG)"
-deploy_tag "$NEW_TAG"
+mkdir -p "$RELEASES_DIR"
+PREVIOUS_RELEASE=$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)
+STAGING_DIR=$(mktemp -d "$RELEASES_DIR/.incoming.XXXXXX")
+cleanup() { rm -rf "$STAGING_DIR"; }
+trap cleanup EXIT
+
+tar -xzf - -C "$STAGING_DIR"
+test -f "$STAGING_DIR/index.html"
+test -f "$STAGING_DIR/_pagefind/pagefind.js"
+test -f "$STAGING_DIR/sitemap.xml"
+test -f "$STAGING_DIR/robots.txt"
+
+if [ ! -d "$RELEASE_DIR" ]; then
+  mv "$STAGING_DIR" "$RELEASE_DIR"
+  STAGING_DIR=''
+fi
+
+ln -s "$RELEASE_DIR" "$CURRENT_LINK.next"
+mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
 
 if is_healthy; then
   echo "Deployment healthy: $NEW_TAG"
   exit 0
 fi
 
-echo "Health check failed; rolling back to $PREVIOUS_TAG" >&2
-docker compose logs --tail 80 web >&2 || true
-deploy_tag "$PREVIOUS_TAG"
+echo "Health check failed; rolling back to $PREVIOUS_RELEASE" >&2
+if [ -z "$PREVIOUS_RELEASE" ]; then
+  exit 4
+fi
+ln -s "$PREVIOUS_RELEASE" "$CURRENT_LINK.next"
+mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
 
 if ! is_healthy; then
   echo "Rollback health check also failed." >&2
   exit 5
 fi
 
-echo "Rolled back to $PREVIOUS_TAG" >&2
+echo "Rolled back to $PREVIOUS_RELEASE" >&2
 exit 4

@@ -3,74 +3,58 @@
 ## 架构
 
 ```text
-GitHub master
-  → GitHub Actions 验证静态导出
-  → 构建并推送 ghcr.io/ljh12138164/blog:sha-<commit>
-  → 受限 SSH 命令
-  → /opt/stacks/blog/compose.yaml
-  → 127.0.0.1:18080
-  → 宝塔 Nginx :80/:443
+GitHub master → GitHub Actions 构建静态站点 → 受限 SSH 标准输入上传
+→ /opt/stacks/blog/releases/sha-<commit> → current（原子切换）
+→ 宝塔 Nginx :80/:443
 ```
 
-应用容器只监听回环地址，不直接暴露公网端口。宝塔 Nginx 是多个项目共享的边缘入口。
+服务器不安装 Node.js、不构建站点、不使用 Docker 或 GHCR；2 GB 内存只承担 Nginx 静态文件服务。
 
 ## GitHub 配置
 
 在仓库 `Settings → Secrets and variables → Actions` 中配置：
 
-### Secrets
-
 - `DEPLOY_SSH_KEY`：仅用于 `blog-deploy` 强制命令的私钥。
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH Ed25519 主机公钥对应的 known_hosts 行。
+- `DEPLOY_HOST`、`DEPLOY_PORT`、`DEPLOY_USER`（`blog-deploy`）和 `SITE_URL`：Actions variables。
 
-### Variables
+## 服务器安装
 
-- `DEPLOY_HOST`：`60.205.171.159`
-- `DEPLOY_PORT`：`22`
-- `DEPLOY_USER`：`blog-deploy`
-- `SITE_URL`：`http://60.205.171.159`
-
-绑定域名后只需修改 `SITE_URL`、宝塔 Nginx 的 `server_name`，并配置 HTTPS。
-
-## 流水线行为
-
-- Pull Request：安装依赖、类型检查、静态构建和产物验证，不发布。
-- 推送 `master`：验证后构建 `sha-<commit>` 与 `latest` 镜像，推送 GHCR 并部署 immutable 标签。
-- 手动触发：不填写标签时重新构建当前 commit；填写现有 `sha-<40位commit>` 时直接重新部署该版本。
-- 生产部署串行执行，不在切换容器时取消正在进行的发布。
-
-GHCR 包首次创建后需在 GitHub Package settings 中将可见性设为 Public。
-
-## 服务器文件
+以 root 安装：
 
 ```text
-/opt/stacks/blog/compose.yaml
-/opt/stacks/blog/.env
-/usr/local/bin/blog-deploy-gate
-/usr/local/sbin/deploy-blog
-/www/server/panel/vhost/nginx/blog.conf
+/usr/local/bin/blog-deploy-gate       ← deploy/server/blog-deploy-gate
+/usr/local/sbin/deploy-blog           ← deploy/server/deploy-blog
+/etc/sudoers.d/blog-deploy            ← deploy/server/blog-deploy.sudoers
+/www/server/panel/vhost/nginx/blog.conf ← deploy/host-nginx.conf
 ```
 
-`blog-deploy` 用户的 SSH 公钥被限制为调用 gate。gate 只接受：
+创建 `/opt/stacks/blog/releases`，确保 Nginx 可读取 `/opt/stacks/blog`，检查并重载 Nginx 后确认 `/healthz` 返回 200。
+
+`blog-deploy` 的 SSH 公钥被限制为调用 gate；它只接受：
 
 ```text
 deploy sha-<40位小写十六进制commit>
 ```
 
-## 健康检查与回滚
+Actions 将 `out/` 压缩后写入该 SSH 命令的标准输入。gate 不提供 shell、SFTP 或任意命令执行。
 
-容器和发布脚本都请求 `/healthz`。新版本在 60 秒内未健康时，脚本恢复 `.env` 中的上一个镜像标签并重新启动容器；流水线保持失败状态以便排查。
+## 流水线行为
 
-查看状态：
+- Pull Request：安装依赖、类型检查、静态构建和产物验证，不发布。
+- 推送 `master`：验证通过后重新构建，发布到不可变 `sha-<commit>` release。
+- 手动触发：填写已有标签时切换到该 release，用于回滚。
+- 脚本验证 `index.html`、Pagefind、sitemap 与 robots，原子切换 `current` 并检查 `/healthz`；失败时恢复上一 release。
+
+## 回滚与排障
+
+在 GitHub Actions 的 `workflow_dispatch` 填入已有 `sha-<40位commit>` 标签即可回滚。
 
 ```bash
-cd /opt/stacks/blog
-docker compose ps
-docker compose logs --tail 100 web
-curl -f http://127.0.0.1:18080/healthz
+readlink -f /opt/stacks/blog/current
+curl -f http://127.0.0.1/healthz
+ls -la /opt/stacks/blog/releases
 ```
-
-手动回滚应优先从 GitHub Actions 的 `workflow_dispatch` 指定旧的 immutable 标签，不要直接改用含义可变的 `latest`。
 
 ## 本地验证
 
@@ -78,8 +62,6 @@ curl -f http://127.0.0.1:18080/healthz
 pnpm install --frozen-lockfile
 pnpm typecheck
 NEXT_PUBLIC_SITE_URL=http://60.205.171.159 pnpm build
-docker compose config
-docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .
 ```
 
 构建必须生成 `out/index.html`、Pagefind、sitemap 和 robots 文件。
