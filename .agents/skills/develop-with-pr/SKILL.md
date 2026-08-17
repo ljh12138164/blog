@@ -52,11 +52,12 @@ Write scope and testable acceptance criteria before implementation. Keep impleme
    - the main changes;
    - verification commands and results;
    - known risks or `None`.
-4. Wait for GitHub Actions. If a check fails, inspect its logs, fix the cause on the same branch, update the document, push, and wait again.
-5. Stop only when all required checks pass or a user/external dependency blocks progress.
-6. Never merge or delete the branch. The user reviews and merges the PR manually in GitHub.
+4. After creating a PR, record its URL and that CI is pending in HERMES. Set the exact next action to waiting for its GitHub Actions result.
+5. Wait for GitHub Actions. If a check fails, inspect its logs, fix the cause on the same branch, update the document, push, and wait again.
+6. Stop only when all required checks pass or a user/external dependency blocks progress.
+7. Never merge or delete the branch. The user reviews and merges the PR manually in GitHub.
 
 ## Finish or pause
 
-- On success, place the PR URL and passing-check status in the development document, then reduce Hermes to `状态：空闲` and `下一步：无`.
+- On success, place the PR URL and passing-check status in the development document, then reduce Hermes to `状态：空闲` and `下一步：无`. If this final record is committed and pushes a new CI run, wait for that commit's checks before reporting completion; do not create another Hermes-only commit afterward.
 - On interruption, keep Hermes limited to current state, exact next action, verification status, and blocker; keep task history in the development document and Git.
