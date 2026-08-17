@@ -1,8 +1,0 @@
-.git
-.github
-.next
-node_modules
-out
-.env*
-HERMES.md
-*.tsbuildinfo

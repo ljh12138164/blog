@@ -2,31 +2,27 @@
 
 ## 当前目标
 
-无。
+将发布链路从 GHCR 镜像迁移为 GitHub Actions 构建静态产物并通过受限 SSH 发布到服务器。
 
 ## 状态
 
-空闲。
+进行中。
 
 ## 已完成
 
-- 已通过 `grill-with-docs` 明确工作流边界。
-- 已创建 `feat/add-development-workflow` 分支。
-- 已初始化 `develop-with-pr` Skill 和对应开发文档。
-- 已通过 Skill 官方校验器、类型检查和完整静态构建。
-- 已创建 [PR #1](https://github.com/ljh12138164/blog/pull/1)，GitHub Actions 已通过，等待用户审阅并手动合并。
+- 已创建 `feat/direct-static-deploy` 分支。
+- 已提交 `develop-with-pr` 的本地基线例外规则：`0d9113a`。
 
 ## 下一步
 
-无。
+等待 [PR #2](https://github.com/ljh12138164/blog/pull/2) 的 GitHub Actions 结果。
 
 ## 验证
 
-- 已通过：Skill 官方校验器。
-- 已通过：`pnpm typecheck`。
-- 已通过：`pnpm build`（含 Pagefind 与 sitemap）。
-- 已通过：`git diff --check`。
-- 已通过：GitHub Actions `CI and Deploy`。
+- 已通过：`develop-with-pr` Skill 官方校验器（使用 `python -X utf8`）。
+- 已通过：`bash -n deploy/server/deploy-blog`、`bash -n deploy/server/blog-deploy-gate`。
+- 已通过：`pnpm typecheck`、`pnpm build`（后者需要非沙箱环境）。
+- 已通过：静态产物存在性与 `git diff --check`。
 
 ## 阻塞
 
