@@ -1,44 +1,196 @@
 export const metadata = {
   title: 'Token 与 Context：模型究竟看见了什么？',
-  description: '从分词、上下文窗口到注意力，理解大模型处理文字的基本单位。',
-  date: '2026-08-16',
+  description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。',
+  date: '2026-08-19',
   category: 'AI 基础',
-  readingTime: '8 分钟',
+  readingTime: '10 分钟',
   alternates: { canonical: '/posts/token-and-context' },
-  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、上下文窗口到注意力，理解大模型处理文字的基本单位。', url: '/posts/token-and-context' },
-  twitter: { card: 'summary', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、上下文窗口到注意力，理解大模型处理文字的基本单位。' }
+  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。', url: '/posts/token-and-context' },
+  twitter: { card: 'summary', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。' }
 }
 
-## Token 是什么
+我们把一段文字发给大模型时，模型并不是直接按“字”或“单词”阅读。请求会先经过分词器，变成一串 Token ID；模型在这串数字上完成计算，再一个 Token 一个 Token 地生成回答。
 
-Token 是模型读取和生成文本时使用的基本单位。它不一定等于一个字，也不一定等于一个完整单词。分词器会把文本拆成模型词表中已有的片段，再把每个片段转换成数字编号。
+这听起来像一个底层实现细节，却会一路影响 AI 应用的成本、延迟、可用上下文，甚至提示词应该怎样排列。理解 Token 的最好方式不是背诵“一千 Token 大约等于多少字”，而是亲手数一次，再观察同一份信息换一种表示方式会发生什么。
 
-例如，“我喜欢人工智能”可能被拆成若干汉字或词组；英文 `unbelievable` 也可能被拆成 `un`、`believ`、`able`。具体结果取决于模型使用的分词器。
+## Token 不是字符，而是模型词表中的片段
 
-> Token 是计量单位，不是模型真正理解世界的最小概念。
+下面的练习使用 `js-tiktoken` 和 GPT-4o 对应的 `o200k_base` 分词器，把一篇 Markdown 文档编码成 Token ID：
 
-## Context 是什么
+```ts
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { Tiktoken } from 'js-tiktoken/lite';
+import o200kBase from 'js-tiktoken/ranks/o200k_base';
 
-Context（上下文）是模型在生成当前回答时能够参考的信息。它通常包括系统指令、之前的对话、用户本次输入、工具返回结果，以及模型已经生成的内容。
+const tokenizer = new Tiktoken(o200kBase);
+const input = readFileSync(path.join(import.meta.dirname, 'input.md'), 'utf-8');
+const tokens = tokenizer.encode(input);
 
-模型不会像人一样自动记住所有历史。只有被放进当前上下文的信息，才有机会影响下一步输出。
+console.log('Characters:', input.length);
+console.log('Tokens:', tokens.length);
+console.dir(tokens, { maxArrayLength: 20 });
+```
 
-## 上下文窗口
+`encode` 返回的不是词语列表，而是一串整数。每个整数指向分词器词表中的一个片段。常见英文词可能只占一个 Token，生僻词可能被拆成多个片段；中文也不保证一个汉字恰好对应一个 Token。空格、标点、换行和代码符号同样会参与分词。
 
-上下文窗口是一次推理可容纳的 Token 总量。输入和输出通常共享这个额度：输入越长，可生成的空间就越少。
+因此，用字符数直接估算 Token 只能得到粗略结果。只要模型、分词器或内容语言发生变化，比例就可能改变。需要做预算时，应使用目标模型对应的分词器；请求已经发出后，则应优先相信模型服务返回的实际 usage。
 
-窗口更大并不代表模型能同等准确地利用其中每一条信息。重要内容被大量无关材料包围时，仍可能被忽略。因此，整理上下文往往比单纯增加上下文更有效。
+AI SDK 的流式调用会在生成结束后提供用量信息。即使正文是一边生成一边显示，usage 仍然要等整个响应完成后才能确定：
 
-## 注意力在做什么
+```ts
+import { google } from '@ai-sdk/google';
+import { streamText } from 'ai';
 
-注意力机制帮助模型在生成每个 Token 时，为上下文中的不同位置分配不同权重。它使模型能够关联远处的词语，但不是一个可以无限容量、精确检索的数据库。
+const result = streamText({
+  model: google('gemini-2.5-flash-lite'),
+  prompt: 'Which country makes the best sausages? Answer in one paragraph.',
+});
 
-## 三个常见误区
+for await (const chunk of result.textStream) {
+  process.stdout.write(chunk);
+}
 
-1. **一个汉字就是一个 Token。** 实际数量取决于分词器。
-2. **对话越长，模型了解得越多。** 噪声也会随之增加，旧内容还可能被截断。
-3. **上下文等于长期记忆。** 上下文是本次推理的工作区；长期记忆需要外部存储和重新检索。
+console.log(await result.usage);
+```
 
-## 实践建议
+这里值得记录的不只有总量。输入 Token 决定这次请求带入了多少上下文，输出 Token 反映模型实际生成了多少内容；部分提供商还会报告 reasoning tokens、cached input tokens 等更细的类别。字段和计费方式依赖具体模型提供商，但工程原则相同：把 usage 当成每次调用的基础观测数据，而不是月底账单出现异常后才去猜。
 
-提供明确目标、必要背景、约束条件和期望格式。长文档先筛选相关片段，再交给模型。重要要求放在清晰、容易定位的位置，并让模型复述关键约束以便检查。
+## 同一份数据，写法不同，Token 开销也不同
+
+Token 是上下文的容量单位，也是常见的计费单位。这意味着数据结构不只是“模型能不能读懂”的问题，还关系到要花多少上下文来表达同一件事。
+
+假设我们要给模型四个引用来源：
+
+```ts
+const data = [
+  { url: 'https://aihero.dev', title: 'AI Hero' },
+  { url: 'https://totaltypescript.com', title: 'Total TypeScript' },
+  { url: 'https://mattpocock.com', title: 'Matt Pocock' },
+  { url: 'https://twitter.com/mattpocockuk', title: 'Twitter' },
+];
+```
+
+它可以表示成漂亮格式化的 JSON：
+
+```json
+[
+  {
+    "url": "https://aihero.dev",
+    "title": "AI Hero"
+  }
+]
+```
+
+也可以表示成 Markdown：
+
+```md
+- [AI Hero](https://aihero.dev)
+- [Total TypeScript](https://totaltypescript.com)
+- [Matt Pocock](https://mattpocock.com)
+- [Twitter](https://twitter.com/mattpocockuk)
+```
+
+练习使用同一个 `o200k_base` 分词器测得：Markdown 为 53 Token，XML 为 77 Token，带缩进的 JSON 为 103 Token。对于这份扁平的链接列表，Markdown 用更少的结构符号表达了相同信息。
+
+但不能据此得出“Markdown 永远优于 JSON”。如果数据存在嵌套、可选字段或严格类型，JSON 的结构可能更可靠；如果需要明确区分指令与文档，XML 标签也可能更清楚。甚至只把 `JSON.stringify(data, null, 2)` 改成不带缩进的 `JSON.stringify(data)`，结果就会变化。
+
+真正有用的结论是：**数据表示本身也消耗 Token，应当用真实数据测量。** 对 RAG 尤其如此。一次只多几十个 Token 看似无关紧要，但当上下文包含数百条搜索结果、重复字段和冗长元数据时，这些结构开销会迅速累积。更紧凑的表示不仅降低成本，也能给真正相关的证据和模型回答留出空间。
+
+## Context Window 是输入与输出共享的预算
+
+Context 是模型生成当前回答时能够看到的信息，包括系统指令、对话历史、用户请求、检索结果、工具返回值，以及当前已经生成的内容。Context window 则规定这些内容最多能占用多少 Token。
+
+可以把一次请求粗略理解为：
+
+```text
+系统指令
++ 对话历史
++ 用户输入
++ 检索与工具结果
++ 模型输出
+<= Context Window
+```
+
+练习用一个故意夸张的例子制造 1000 万个 `foo`，然后把整段文本交给模型：
+
+```ts
+let text = '';
+const numberOfTokens = 10_000_000;
+
+for (let i = 0; i < numberOfTokens; i++) {
+  text += 'foo ';
+}
+
+const result = await generateText({
+  model: google('gemini-2.5-flash-lite'),
+  prompt: text,
+});
+```
+
+这个请求的意义不是测试模型能否理解 `foo`，而是让窗口限制变得可见。当输入超过模型或提供商允许的上限，请求会失败；在某些聊天框架中，过长历史也可能先被截断。更容易被忽略的是，输入即使没有溢出，也会挤占输出空间。把窗口全部塞满文档后再要求模型写长报告，本身就是互相冲突的预算安排。
+
+窗口足够大也不代表所有信息都能被同等利用。十万 Token 的噪声里埋着一句关键约束，和只提供相关的十段材料，并不是相同质量的上下文。工程上更可靠的做法是删掉重复内容、摘要较早的对话、检索最相关的文档片段，并为预期输出预留明确余量。
+
+例如，一个客服助手每轮都携带完整产品手册和全部聊天历史，很快就会变得昂贵而迟钝。更合理的上下文可能只有：稳定的客服规则、近期几轮对话、历史摘要，以及针对当前问题检索出的三段产品说明。Context engineering 的核心不是“塞得下”，而是决定什么值得进入这一次推理。
+
+## Prompt Caching：相同前缀可以少算一遍
+
+真实应用中的许多请求拥有相同开头：系统提示词不变，产品文档不变，长对话只是在末尾增加一条新消息。一些模型提供商会缓存这段公共前缀，并以更低价格或更低延迟处理重复部分。
+
+练习用 Token 数组模拟了缓存匹配：
+
+```ts
+const cached = tokenizer.encode('The quick brown fox jumps over the lazy dog');
+const input = tokenizer.encode(
+  'The quick brown fox jumps over the lazy dog. What a brilliant story.',
+);
+
+let matching = 0;
+for (let i = 0; i < input.length; i++) {
+  if (input[i] !== cached[i]) break;
+  matching++;
+}
+
+const cachedTokens = input.slice(0, matching);
+const uncachedTokens = input.slice(matching);
+```
+
+当新输入在旧内容末尾追加文字时，前面的 Token 可以命中缓存，新增部分按普通输入处理：
+
+```text
+Cached:   The quick brown fox jumps over the lazy dog
+Uncached: . What a brilliant story.
+```
+
+如果把靠前的 `quick` 改成 `fast`，匹配会在这里中断，后面即使完全相同，也不再属于这段连续缓存前缀：
+
+```text
+Cached:   The
+Uncached:  fast brown fox jumps over the lazy dog. What a brilliant story.
+```
+
+这解释了为什么提示词的排列会影响缓存收益。稳定的系统指令、工具定义和公共资料适合放在前面；每次变化的时间戳、请求 ID、用户问题和新对话放在后面。如果把动态字段塞在最前面，后续大量静态内容可能因为前缀过早变化而无法复用。
+
+对话天然适合这种模式。第一次请求包含：
+
+```text
+User: What is the capital of France?
+Assistant: Paris
+```
+
+下一轮保持历史不变，只在末尾追加：
+
+```text
+User: What is the capital of Germany?
+```
+
+旧对话构成稳定前缀，新问题成为未缓存后缀。实际缓存是否自动启用、最低前缀长度、有效期、折扣和 usage 字段都由提供商决定，所以不能只靠本地模拟推断账单；应检查目标提供商的规则，并在生产 usage 中观察 `cachedInputTokens` 等数据。
+
+## 从 Token 视角设计上下文
+
+把这些练习连起来，可以得到一个比“上下文窗口有多大”更有用的工程视角：先用目标分词器估算输入，再用实际 usage 校准；为同一份数据选择足够清楚且不过度冗长的表示；把 context window 当作输入与输出共享的预算；最后，让稳定内容形成可复用前缀，把动态内容留在后面。
+
+假设一次 RAG 请求由 2000 Token 的系统规则、6000 Token 的检索结果、3000 Token 的历史和最多 1500 Token 的回答组成，那么需要关注的不是一个孤立数字，而是这份预算是否合理：检索结果有没有重复，旧对话能否摘要，回答是否留足空间，稳定的 2000 Token 是否能够命中缓存。
+
+Token 不是模型理解世界的最小概念，但它是应用与模型交互时最现实的资源单位。开始记录它之后，很多模糊问题都会变得可测量：为什么一次请求更贵，为什么长对话开始丢失信息，为什么同样的数据换个格式就省下上下文，以及为什么只改了提示词开头的一句话，缓存命中率会突然下降。
