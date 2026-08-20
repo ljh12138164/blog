@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  SITE_URL: ${{ vars.SITE_URL || 'http://60.205.171.159' }}
+  SITE_URL: https://ai.ljhboard.cn
 
 jobs:
   verify:
