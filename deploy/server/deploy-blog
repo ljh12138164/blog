@@ -3,7 +3,7 @@ set -euo pipefail
 
 STACK_DIR=/opt/stacks/blog
 ENV_FILE="$STACK_DIR/.env"
-HOST_NGINX_CONF=/www/server/panel/vhost/nginx/60.205.171.159.conf
+HOST_NGINX_CONF=/www/server/panel/vhost/nginx/ai.ljhboard.cn.conf
 NGINX_BIN=/www/server/nginx/sbin/nginx
 NEW_TAG=${1:-}
 
