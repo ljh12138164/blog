@@ -2,21 +2,23 @@
 
 ## 当前目标
 
-修复 Docker 镜像发布后公网请求返回 404：宿主机 Nginx 必须把请求反向代理到 `127.0.0.1:18080`。
+将 `D:\code\canvas\apps\blog` 的旧博客内容迁入当前独立博客，保留当前 Nextra 视觉风格，以旧博客标题和主要文案为准，并改善代码块可读性。
 
 ## 状态
 
-宿主机 Nginx 反向代理配置已修正并通过本地检查，正在创建独立修复分支。
+正在 `feat/migrate-canvas-blog-content` 分支实施；错误创建的 canvas PR #3 已关闭。
 
 ## 下一步
 
-推送 `feat/fix-host-nginx-proxy` 并创建到 `master` 的 Pull Request；合并后由 GitHub Actions 安装修正后的反向代理配置。
+迁移 32 篇历史文章及图片，完成近期/历史分组和浅色代码块后运行 `pnpm typecheck`、`pnpm build` 与浏览器验收。
 
-## 验证
+## 计划验证
 
-- 已定位：部署脚本覆盖 `/www/server/panel/vhost/nginx/60.205.171.159.conf`，旧配置仍指向 `/opt/stacks/blog/current`。
-- 已通过：部署脚本语法、Compose 渲染和 `git diff --check`；部署时还会在 reload 前运行服务器 Nginx 语法检查。
+- `pnpm typecheck`
+- `pnpm build`
+- 校验 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml`、`out/robots.txt`
+- 桌面与移动端检查首页、近期文章、历史文章、搜索和代码块
 
 ## 阻塞
 
-Workbench CLI 当前仍报 `missing port in address`；若无法恢复，将由新的 GitHub Actions 部署应用配置。
+无。

@@ -1,0 +1,156 @@
+export const metadata = {
+  title: "谷歌AI的图片识别API实现",
+  description: "详细介绍如何使用谷歌AI的Gemini多模态模型实现图片识别功能",
+  date: "2025-01-25",
+  category: "AI 调用",
+  readingTime: "2 分钟",
+  alternates: { canonical: "/ai调用/谷歌ai读Image图片" },
+  openGraph: { type: 'article', title: "谷歌AI的图片识别API实现", description: "详细介绍如何使用谷歌AI的Gemini多模态模型实现图片识别功能", url: "/ai调用/谷歌ai读Image图片" },
+  twitter: { card: 'summary', title: "谷歌AI的图片识别API实现", description: "详细介绍如何使用谷歌AI的Gemini多模态模型实现图片识别功能" }
+}
+
+
+本文将详细介绍如何使用谷歌AI的Gemini模型实现图片识别功能。
+
+## 功能概述
+
+该API提供了四个主要端点：
+1. `/image` - 通过图片URL进行识别
+2. `/imageStream` - 通过图片URL进行流式识别
+3. `/file` - 通过文件上传进行识别
+4. `/fileStream` - 通过文件上传进行流式识别
+
+## 实现细节
+
+### 1. 图片URL识别
+
+```typescript
+.post('/image', 
+  zValidator('json', z.object({
+    image: z.string(),
+    prompt: z.string().optional(),
+    filetype: z.string(),
+  })),
+  async (c) => {
+    const { image, prompt, filetype } = c.req.valid('json');
+    // 获取图片数据
+    const imageResp = await fetch(image).then(response => response.arrayBuffer());
+    
+    // 调用AI模型
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: Buffer.from(imageResp).toString('base64'),
+          mimeType: filetype
+        }
+      },
+      prompt || '解释这张图片'
+    ]);
+    
+    return c.json({ result: result.response.text() });
+  }
+)
+```
+
+### 2. 文件上传识别
+
+```typescript
+.post('/file',
+  zValidator('form', z.object({
+    image: z.instanceof(File),
+    prompt: z.string().optional(),
+  })),
+  async (c) => {
+    const { image, prompt } = c.req.valid('form');
+    
+    // 处理文件数据
+    const fileBuffer = Buffer.from(await image.arrayBuffer());
+    
+    // 调用AI模型
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: fileBuffer.toString('base64'),
+          mimeType: image.type
+        }
+      },
+      prompt || '解释这张图片'
+    ]);
+    
+    return c.json({ result: result.response.text() });
+  }
+)
+```
+
+### 3. 流式响应实现
+
+流式响应使用了Hono的stream功能，可以实时返回AI的识别结果：
+
+```typescript
+return stream(c, async (stream) => {
+  for await (const chunk of result.stream) {
+    stream.write(chunk.text());
+  }
+});
+```
+
+### 4. 上下文支持
+
+文件流式识别支持上下文功能：
+
+```typescript
+if (history && history.length > 0) {
+  // 创建带上下文的聊天会话
+  chats = model.startChat({
+    history: JSON.parse(history),
+  });
+}
+```
+
+## 关键特性
+
+1. **多种输入方式**：支持URL和文件上传两种方式
+2. **流式响应**：支持实时返回识别结果
+3. **上下文支持**：可以保持对话上下文
+4. **类型安全**：使用Zod进行请求验证
+5. **灵活提示**：支持自定义提示词
+
+## 使用示例
+
+### URL方式调用
+
+```typescript
+const response = await fetch('/api/ai/image', {
+  method: 'POST',
+  body: JSON.stringify({
+    image: 'https://example.com/image.jpg',
+    prompt: '这张图片里有什么？',
+    filetype: 'image/jpeg'
+  })
+});
+```
+
+### 文件上传方式
+
+```typescript
+const formData = new FormData();
+formData.append('image', file);
+formData.append('prompt', '描述这张图片');
+
+const response = await fetch('/api/ai/file', {
+  method: 'POST',
+  body: formData
+});
+```
+
+## 注意事项
+
+1. 图片需要转换为Base64格式
+2. 需要正确设置MIME类型
+3. 流式响应需要特殊的客户端处理
+4. 建议设置适当的超时时间
+
+## 总结
+
+这个实现提供了一个完整的谷歌AI图片识别解决方案，支持多种使用场景，并且具有良好的扩展性和可维护性。
+

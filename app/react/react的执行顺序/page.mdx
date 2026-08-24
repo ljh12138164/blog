@@ -1,0 +1,38 @@
+export const metadata = {
+  title: "React 的执行顺序",
+  description: "记录 React 组件挂载、更新与卸载阶段的执行顺序",
+  date: "2025-05-20",
+  category: "API 与 React",
+  readingTime: "1 分钟",
+  alternates: { canonical: "/react/react的执行顺序" },
+  openGraph: { type: 'article', title: "React 的执行顺序", description: "记录 React 组件挂载、更新与卸载阶段的执行顺序", url: "/react/react的执行顺序" },
+  twitter: { card: 'summary', title: "React 的执行顺序", description: "记录 React 组件挂载、更新与卸载阶段的执行顺序" }
+}
+
+### 挂载阶段
+
+父组件：执行函数体（首次渲染）子组件：执行函数体（首次渲染）
+
+子组件：useEffect（挂载阶段）
+
+父组件：useEffect（挂载阶段）
+
+### 更新阶段
+
+父组件：执行函数体（重新渲染）
+
+子组件：执行函数体（重新渲染）
+
+子组件：useEffect 清理函数（如果依赖项变化）
+
+父组件：useEffect 清理函数（如果依赖项变化）
+
+子组件：useEffect（如果依赖项变化）
+
+父组件：useEffect（如果依赖项变化）
+
+### 卸载阶段
+
+父组件：useEffect 清理函数
+
+子组件：useEffect 清理函数

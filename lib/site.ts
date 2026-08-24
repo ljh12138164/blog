@@ -1,5 +1,5 @@
 export const site = {
-  name: '个人博客',
-  description: '记录技术、阅读、生活与那些值得反复思考的问题。',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  name: 'ljh的技术博客',
+  description: '记录编程技术心得、学习资源、项目开发经验，以及值得反复思考的问题。',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.ljhboard.cn'
 }

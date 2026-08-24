@@ -1,0 +1,31 @@
+export const metadata = {
+  title: "用for of替代forEach",
+  description: "用for of替代forEach",
+  date: "2025-01-30",
+  category: "抽象的问题",
+  readingTime: "1 分钟",
+  alternates: { canonical: "/抽象的问题/用for of替代forEach" },
+  openGraph: { type: 'article', title: "用for of替代forEach", description: "用for of替代forEach", url: "/抽象的问题/用for of替代forEach" },
+  twitter: { card: 'summary', title: "用for of替代forEach", description: "用for of替代forEach" }
+}
+
+
+## 终于知道为什么要用for of替代forEach了(biome的规则)
+
+### 写文件上传时，发现用forEach不会继续异步
+
+![image](./image.png)
+
+### 点击提交的时候不会发生异步，会跳过异步
+
+![image](./image1.png)
+
+### 解决用for of替代forEach
+
+![image](./image2.png)
+
+### 结果不会跳过异步
+
+成功上传到了supabase的OSS中
+
+![image](./image3.png)

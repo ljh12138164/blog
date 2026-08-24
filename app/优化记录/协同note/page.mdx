@@ -1,0 +1,62 @@
+export const metadata = {
+  title: "协同note",
+  description: "协同note的优化记录",
+  date: "2025-01-29",
+  category: "优化记录",
+  readingTime: "2 分钟",
+  alternates: { canonical: "/优化记录/协同note" },
+  openGraph: { type: 'article', title: "协同note", description: "协同note的优化记录", url: "/优化记录/协同note" },
+  twitter: { card: 'summary', title: "协同note", description: "协同note的优化记录" }
+}
+
+## 协同note
+
+- 协同note是基于note的，所以需要配置vercel.json 
+因为是createWebHistory模式
+
+![vercel.json](./image1.png)
+
+
+- 上线后刷新出现404，需要配置vercel.json
+
+![vercel.json](./image.png)
+
+### 1.从highthouse中可以看到优化思路
+
+![highthouse](./image2.png)
+
+1. 无障碍优化
+- 添加语言到html中
+2. seo优化
+- 添加title和description
+- 添加robots.txt
+3. 性能优化
+- 打包后压缩图片
+- 打包后压缩打包文件
+- 查看那个打包体积打进行优化
+
+![build](./image3.png)
+
+- 优化前打包文件体积
+- 优化未使用的tiptap的打包文件
+- 优化lodash的打包文件（使用lodash-es）进行树摇
+
+![build](./image6.png)
+
+
+### 优化前
+
+![tiptap](./image4.png)
+
+### 优化后
+
+![highlight.js](./image5.png)
+
+
+- 进行分包处理
+
+![build](./image7.png)
+
+- 打包结果结果比打包前好一点
+
+![build](./image8.png)

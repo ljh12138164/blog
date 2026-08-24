@@ -1,0 +1,78 @@
+export const metadata = {
+  title: "Note协同文档系统",
+  description: "Note是一个实时协同的文档编辑系统，支持多人同时编辑、实时同步，为团队协作提供便捷的文档管理解决方案。",
+  date: "2025-02-14",
+  category: "项目文档",
+  readingTime: "1 分钟",
+  alternates: { canonical: "/项目文档/协同文档" },
+  openGraph: { type: 'article', title: "Note协同文档系统", description: "Note是一个实时协同的文档编辑系统，支持多人同时编辑、实时同步，为团队协作提供便捷的文档管理解决方案。", url: "/项目文档/协同文档" },
+  twitter: { card: 'summary', title: "Note协同文档系统", description: "Note是一个实时协同的文档编辑系统，支持多人同时编辑、实时同步，为团队协作提供便捷的文档管理解决方案。" }
+}
+
+
+## 项目介绍
+Note是一个实时协同的文档编辑系统，支持多人同时编辑、实时同步，为团队协作提供便捷的文档管理解决方案。
+
+## 技术栈
+- Vue 3 - 渲染框架
+- TypeScript - 类型系统
+- Vite - 构建工具
+- TailwindCSS - 样式框架
+- Tiptap - 富文本编辑器
+- Y.js - 协同编辑
+- Pinia - 状态管理
+- Vue Query - 数据请求
+
+## 核心功能
+1. 实时协作
+   - 多人同时编辑
+   - 实时同步
+   - 冲突解决
+
+2. 文档管理
+   - 文件夹组织
+   - 版本历史
+   - 权限控制
+
+3. 富文本编辑
+   - 格式化工具
+   - 图片插入
+   - 表格支持
+
+4. 团队协作
+   - 评论系统
+   - 任务分配
+   - 通知提醒
+
+## 项目结构
+```
+apps/note/
+├── src/              # 源代码
+│   ├── components/   # 组件
+│   ├── hooks/       # 自定义Hook
+│   └── types/       # 类型定义
+├── public/          # 静态资源
+└── styles/         # 样式文件
+```
+
+## 开发指南
+1. 安装依赖
+```bash
+pnpm install
+```
+
+2. 启动开发服务器
+```bash
+pnpm dev
+```
+
+3. 构建生产版本
+```bash
+pnpm build
+```
+
+## 部署要求
+- Node.js 18+
+- WebSocket支持
+- IndexedDB支持
+- 现代浏览器

@@ -1,0 +1,42 @@
+export const metadata = {
+  title: "jebet",
+  description: "jebet的项目优化记录",
+  date: "2025-02-02",
+  category: "优化记录",
+  readingTime: "1 分钟",
+  alternates: { canonical: "/优化记录/jebet" },
+  openGraph: { type: 'article', title: "jebet", description: "jebet的项目优化记录", url: "/优化记录/jebet" },
+  twitter: { card: 'summary', title: "jebet", description: "jebet的项目优化记录" }
+}
+
+## jebet
+
+### 开始优化
+
+- 未优化前的打包大小
+ 
+![jebet](./image.png)
+
+### 打包分析直接7MB
+![jebet](./image1.png)
+
+- 对图片进行压缩插件处理
+- 对打包产物的压缩处理
+- 对echart的按需引入
+
+![jebet](./image3.png)
+
+- 分包策略对打包体积大的进行独立打包
+
+![jebet](./image5.png)
+
+
+### 优化后
+
+![jebet](./image2.png)
+
+### 优化后打包大小
+
+![jebet](./image4.png)
+
+
