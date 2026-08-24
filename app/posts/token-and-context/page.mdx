@@ -1,196 +1,232 @@
 export const metadata = {
   title: 'Token 与 Context：模型究竟看见了什么？',
-  description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。',
+  description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。',
   date: '2026-08-19',
   category: 'AI 基础',
-  readingTime: '10 分钟',
+  readingTime: '8 分钟',
   alternates: { canonical: '/posts/token-and-context' },
-  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。', url: '/posts/token-and-context' },
-  twitter: { card: 'summary', title: 'Token 与 Context：模型究竟看见了什么？', description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。' }
+  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。', url: '/posts/token-and-context' },
+  twitter: { card: 'summary', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。' }
 }
 
-我们把一段文字发给大模型时，模型并不是直接按“字”或“单词”阅读。请求会先经过分词器，变成一串 Token ID；模型在这串数字上完成计算，再一个 Token 一个 Token 地生成回答。
+我们把文字发送给模型时，模型并不是直接按“一个汉字”或“一个单词”阅读。文本会先被编码成 Token；系统指令、历史消息、工具定义、文档和回答，也都要在有限的 Context 中共享空间。
 
-这听起来像一个底层实现细节，却会一路影响 AI 应用的成本、延迟、可用上下文，甚至提示词应该怎样排列。理解 Token 的最好方式不是背诵“一千 Token 大约等于多少字”，而是亲手数一次，再观察同一份信息换一种表示方式会发生什么。
+理解这两个概念，能把很多模糊问题变成可以测量的工程问题：为什么请求变贵、为什么长对话开始丢信息、为什么输出空间突然不够，以及为什么只改提示词开头的一小段，缓存收益就下降了。
 
-## Token 不是字符，而是模型词表中的片段
+## 读完你能做什么
 
-下面的练习使用 `js-tiktoken` 和 GPT-4o 对应的 `o200k_base` 分词器，把一篇 Markdown 文档编码成 Token ID：
+- 解释 Token 为什么不等于字符数或单词数。
+- 对一次真实模型输入进行准确计数。
+- 为输入与输出分配 Context 预算。
+- 通过稳定前缀提高 Prompt Caching 的命中机会。
 
-```ts
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { Tiktoken } from 'js-tiktoken/lite';
-import o200kBase from 'js-tiktoken/ranks/o200k_base';
+## Token：文字进入模型前的编码单位
 
-const tokenizer = new Tiktoken(o200kBase);
-const input = readFileSync(path.join(import.meta.dirname, 'input.md'), 'utf-8');
-const tokens = tokenizer.encode(input);
+Tokenizer 会把文本切成词表中已有的片段，再把每个片段映射成整数。片段可能是一个字符、一个词的一部分、一个完整单词，或者包含前导空格的组合。
 
-console.log('Characters:', input.length);
-console.log('Tokens:', tokens.length);
-console.dir(tokens, { maxArrayLength: 20 });
-```
+因此：
 
-`encode` 返回的不是词语列表，而是一串整数。每个整数指向分词器词表中的一个片段。常见英文词可能只占一个 Token，生僻词可能被拆成多个片段；中文也不保证一个汉字恰好对应一个 Token。空格、标点、换行和代码符号同样会参与分词。
+- 同样的字符数，Token 数可能不同；
+- 同一句文本，在不同编码或模型上可能不同；
+- JSON、Markdown、代码和自然语言的切分方式也可能不同。
 
-因此，用字符数直接估算 Token 只能得到粗略结果。只要模型、分词器或内容语言发生变化，比例就可能改变。需要做预算时，应使用目标模型对应的分词器；请求已经发出后，则应优先相信模型服务返回的实际 usage。
+OpenAI 的[tiktoken 指南](https://developers.openai.com/cookbook/examples/how_to_count_tokens_with_tiktoken)展示了不同编码对同一文本的切分差异，并提醒空格通常会和后面的词一起编码。
 
-AI SDK 的流式调用会在生成结束后提供用量信息。即使正文是一边生成一边显示，usage 仍然要等整个响应完成后才能确定：
+先建立一个最重要的判断：
 
-```ts
-import { google } from '@ai-sdk/google';
-import { streamText } from 'ai';
+> Token 是编码结果，不是靠字符数就能稳定换算的自然语言单位。
 
-const result = streamText({
-  model: google('gemini-2.5-flash-lite'),
-  prompt: 'Which country makes the best sausages? Answer in one paragraph.',
-});
+<details>
+  <summary>停一下：1000 个汉字一定等于 1000 Token 吗？</summary>
+  <p><strong>答案：</strong>不一定。切分取决于目标模型使用的编码；标点、数字、英文和罕见字符也会改变结果。需要使用目标模型对应的计数方式。</p>
+</details>
 
-for await (const chunk of result.textStream) {
-  process.stdout.write(chunk);
-}
+## 实验一：数“实际请求”，不要只数字符串
 
-console.log(await result.usage);
-```
+对一段纯文本，本地 tokenizer 很方便；但真实请求还可能包含消息角色、内容边界、工具定义、图片或文件。OpenAI 的[Token counting 指南](https://developers.openai.com/api/docs/guides/token-counting)说明，服务端计数接口可以接收与 Responses API 相同的输入，并返回该输入的准确 Token 数。
 
-这里值得记录的不只有总量。输入 Token 决定这次请求带入了多少上下文，输出 Token 反映模型实际生成了多少内容；部分提供商还会报告 reasoning tokens、cached input tokens 等更细的类别。字段和计费方式依赖具体模型提供商，但工程原则相同：把 usage 当成每次调用的基础观测数据，而不是月底账单出现异常后才去猜。
+~~~ts
+import OpenAI from 'openai'
 
-## 同一份数据，写法不同，Token 开销也不同
+const client = new OpenAI()
 
-Token 是上下文的容量单位，也是常见的计费单位。这意味着数据结构不只是“模型能不能读懂”的问题，还关系到要花多少上下文来表达同一件事。
+const result = await client.responses.inputTokens.count({
+  model: 'gpt-5.6',
+  input: [
+    {
+      role: 'developer',
+      content: '只依据用户提供的内容回答；不知道时明确说明。'
+    },
+    {
+      role: 'user',
+      content: '请用三句话解释 Token 与 Context 的关系。'
+    }
+  ]
+})
 
-假设我们要给模型四个引用来源：
+console.log(result.input_tokens)
+~~~
 
-```ts
-const data = [
-  { url: 'https://aihero.dev', title: 'AI Hero' },
-  { url: 'https://totaltypescript.com', title: 'Total TypeScript' },
-  { url: 'https://mattpocock.com', title: 'Matt Pocock' },
-  { url: 'https://twitter.com/mattpocockuk', title: 'Twitter' },
-];
-```
+这个实验的重点不是记住某次输出的数字，而是保留方法：**构造与生产调用相同的输入，再计数。** 如果生产请求包含工具 schema，就不要只对用户那句话做本地编码后当成总输入。
 
-它可以表示成漂亮格式化的 JSON：
+本地 tokenizer 仍然适合快速比较两个纯文本版本，例如检查删掉重复说明后减少了多少 Token。到了最终预算和账单分析，再用实际请求与 API usage 校准。
 
-```json
-[
-  {
-    "url": "https://aihero.dev",
-    "title": "AI Hero"
-  }
-]
-```
+## Context：一次推理可使用的工作区
 
-也可以表示成 Markdown：
+Context window 可以理解为一次模型调用的总工作区。它通常要容纳：
 
-```md
-- [AI Hero](https://aihero.dev)
-- [Total TypeScript](https://totaltypescript.com)
-- [Matt Pocock](https://mattpocock.com)
-- [Twitter](https://twitter.com/mattpocockuk)
-```
-
-练习使用同一个 `o200k_base` 分词器测得：Markdown 为 53 Token，XML 为 77 Token，带缩进的 JSON 为 103 Token。对于这份扁平的链接列表，Markdown 用更少的结构符号表达了相同信息。
-
-但不能据此得出“Markdown 永远优于 JSON”。如果数据存在嵌套、可选字段或严格类型，JSON 的结构可能更可靠；如果需要明确区分指令与文档，XML 标签也可能更清楚。甚至只把 `JSON.stringify(data, null, 2)` 改成不带缩进的 `JSON.stringify(data)`，结果就会变化。
-
-真正有用的结论是：**数据表示本身也消耗 Token，应当用真实数据测量。** 对 RAG 尤其如此。一次只多几十个 Token 看似无关紧要，但当上下文包含数百条搜索结果、重复字段和冗长元数据时，这些结构开销会迅速累积。更紧凑的表示不仅降低成本，也能给真正相关的证据和模型回答留出空间。
-
-## Context Window 是输入与输出共享的预算
-
-Context 是模型生成当前回答时能够看到的信息，包括系统指令、对话历史、用户请求、检索结果、工具返回值，以及当前已经生成的内容。Context window 则规定这些内容最多能占用多少 Token。
-
-可以把一次请求粗略理解为：
-
-```text
-系统指令
-+ 对话历史
+~~~text
+稳定指令
 + 用户输入
-+ 检索与工具结果
-+ 模型输出
-<= Context Window
-```
++ 对话历史
++ 工具定义与工具结果
++ 检索或附加资料
++ 为输出预留的空间
+<= 模型允许的 Context
+~~~
 
-练习用一个故意夸张的例子制造 1000 万个 `foo`，然后把整段文本交给模型：
+这说明“模型支持很长上下文”不等于“可以把空间全部用来塞输入”。如果没有为输出预留空间，请求可能失败，或者无法生成你需要的完整答案。
 
-```ts
-let text = '';
-const numberOfTokens = 10_000_000;
+可以在应用里显式计算预算：
 
-for (let i = 0; i < numberOfTokens; i++) {
-  text += 'foo ';
+~~~ts
+type ContextBudget = {
+  limit: number
+  input: number
+  reserveOutput: number
 }
 
-const result = await generateText({
-  model: google('gemini-2.5-flash-lite'),
-  prompt: text,
-});
-```
+function inspectBudget(budget: ContextBudget) {
+  const remaining =
+    budget.limit - budget.input - budget.reserveOutput
 
-这个请求的意义不是测试模型能否理解 `foo`，而是让窗口限制变得可见。当输入超过模型或提供商允许的上限，请求会失败；在某些聊天框架中，过长历史也可能先被截断。更容易被忽略的是，输入即使没有溢出，也会挤占输出空间。把窗口全部塞满文档后再要求模型写长报告，本身就是互相冲突的预算安排。
-
-窗口足够大也不代表所有信息都能被同等利用。十万 Token 的噪声里埋着一句关键约束，和只提供相关的十段材料，并不是相同质量的上下文。工程上更可靠的做法是删掉重复内容、摘要较早的对话、检索最相关的文档片段，并为预期输出预留明确余量。
-
-例如，一个客服助手每轮都携带完整产品手册和全部聊天历史，很快就会变得昂贵而迟钝。更合理的上下文可能只有：稳定的客服规则、近期几轮对话、历史摘要，以及针对当前问题检索出的三段产品说明。Context engineering 的核心不是“塞得下”，而是决定什么值得进入这一次推理。
-
-## Prompt Caching：相同前缀可以少算一遍
-
-真实应用中的许多请求拥有相同开头：系统提示词不变，产品文档不变，长对话只是在末尾增加一条新消息。一些模型提供商会缓存这段公共前缀，并以更低价格或更低延迟处理重复部分。
-
-练习用 Token 数组模拟了缓存匹配：
-
-```ts
-const cached = tokenizer.encode('The quick brown fox jumps over the lazy dog');
-const input = tokenizer.encode(
-  'The quick brown fox jumps over the lazy dog. What a brilliant story.',
-);
-
-let matching = 0;
-for (let i = 0; i < input.length; i++) {
-  if (input[i] !== cached[i]) break;
-  matching++;
+  return {
+    remaining,
+    fits: remaining >= 0
+  }
 }
 
-const cachedTokens = input.slice(0, matching);
-const uncachedTokens = input.slice(matching);
-```
+const budget = inspectBudget({
+  limit: 128_000,
+  input: 92_000,
+  reserveOutput: 8_000
+})
 
-当新输入在旧内容末尾追加文字时，前面的 Token 可以命中缓存，新增部分按普通输入处理：
+console.log(budget)
+~~~
 
-```text
-Cached:   The quick brown fox jumps over the lazy dog
-Uncached: . What a brilliant story.
-```
+这里的数字只是演示预算关系，不代表某个具体模型的限制。生产代码应从你实际使用的模型配置中读取 limit，并用实际计数替换估算值。
 
-如果把靠前的 `quick` 改成 `fast`，匹配会在这里中断，后面即使完全相同，也不再属于这段连续缓存前缀：
+<details>
+  <summary>主动回忆：输入没有超过 Context 上限，就一定合理吗？</summary>
+  <p><strong>答案：</strong>不一定。还要为输出预留空间，而且大量无关或重复内容会稀释关键信息、增加延迟与成本。能装下只是最低条件。</p>
+</details>
 
-```text
-Cached:   The
-Uncached:  fast brown fox jumps over the lazy dog. What a brilliant story.
-```
+## 实验二：给上下文做一份预算表
 
-这解释了为什么提示词的排列会影响缓存收益。稳定的系统指令、工具定义和公共资料适合放在前面；每次变化的时间戳、请求 ID、用户问题和新对话放在后面。如果把动态字段塞在最前面，后续大量静态内容可能因为前缀过早变化而无法复用。
+假设一个客服助手需要这些内容：
 
-对话天然适合这种模式。第一次请求包含：
+| 内容 | 用途 | 处理策略 |
+| --- | --- | --- |
+| 稳定规则 | 定义任务和边界 | 保留，避免重复 |
+| 工具定义 | 允许查询订单 | 只提供当前可用工具 |
+| 最近对话 | 理解当前问题 | 保留必要轮次 |
+| 历史摘要 | 保留长期状态 | 用结构化摘要代替全部原文 |
+| 产品资料 | 回答事实问题 | 只选择与当前问题相关的片段 |
+| 输出余量 | 生成完整答复 | 提前预留 |
 
-```text
-User: What is the capital of France?
-Assistant: Paris
-```
+当预算不足时，不要从头到尾机械截断。更合理的顺序通常是：
 
-下一轮保持历史不变，只在末尾追加：
+1. 删除重复、无关内容；
+2. 只保留当前任务需要的工具；
+3. 把较早对话压缩成可检查的事实摘要；
+4. 选择相关资料，而不是附上整份知识库；
+5. 保留足够的输出余量。
 
-```text
-User: What is the capital of Germany?
-```
+这就是 Context Engineering 的基本问题：决定哪些信息值得进入这一次推理，而不只是追求把窗口填满。
 
-旧对话构成稳定前缀，新问题成为未缓存后缀。实际缓存是否自动启用、最低前缀长度、有效期、折扣和 usage 字段都由提供商决定，所以不能只靠本地模拟推断账单；应检查目标提供商的规则，并在生产 usage 中观察 `cachedInputTokens` 等数据。
+## Prompt Caching：相同前缀为什么重要
 
-## 从 Token 视角设计上下文
+许多生产请求都有很长的稳定开头：系统规则、工具定义和公共资料保持不变，只有末尾的用户问题发生变化。
 
-把这些练习连起来，可以得到一个比“上下文窗口有多大”更有用的工程视角：先用目标分词器估算输入，再用实际 usage 校准；为同一份数据选择足够清楚且不过度冗长的表示；把 context window 当作输入与输出共享的预算；最后，让稳定内容形成可复用前缀，把动态内容留在后面。
+OpenAI 的[Prompt Caching 指南](https://developers.openai.com/api/docs/guides/prompt-caching)说明，缓存依赖相同的提示前缀。为了提高命中机会，应把稳定内容放在前面，把每次变化的内容放在后面，并从 usage 中观察 cached tokens。
 
-假设一次 RAG 请求由 2000 Token 的系统规则、6000 Token 的检索结果、3000 Token 的历史和最多 1500 Token 的回答组成，那么需要关注的不是一个孤立数字，而是这份预算是否合理：检索结果有没有重复，旧对话能否摘要，回答是否留足空间，稳定的 2000 Token 是否能够命中缓存。
+适合缓存的排列：
 
-Token 不是模型理解世界的最小概念，但它是应用与模型交互时最现实的资源单位。开始记录它之后，很多模糊问题都会变得可测量：为什么一次请求更贵，为什么长对话开始丢失信息，为什么同样的数据换个格式就省下上下文，以及为什么只改了提示词开头的一句话，缓存命中率会突然下降。
+~~~text
+[稳定规则]
+[稳定工具定义]
+[稳定公共资料]
+[对话历史]
+[本次用户问题]
+~~~
+
+不利于缓存的排列：
+
+~~~text
+[每次变化的请求 ID 和时间戳]
+[稳定规则]
+[稳定工具定义]
+[稳定公共资料]
+[本次用户问题]
+~~~
+
+第二种排列在开头就发生变化，后面即使有大量相同内容，也难以形成同一段连续前缀。不要为了缓存而改变任务语义，但在语义相同的前提下，稳定在前、动态在后通常更合理。
+
+<details>
+  <summary>停一下：用户 ID 应该放在长篇稳定规则之前吗？</summary>
+  <p><strong>答案：</strong>如果它不影响规则解释，通常放在后面的动态区域更合适。真正的判断标准是语义和数据依赖，而不是为了缓存盲目移动字段。</p>
+</details>
+
+## 三个容易混淆的问题
+
+### Token 少，就一定更好吗？
+
+不是。删掉必要规则或证据会降低结果质量。目标是减少重复和无关内容，而不是追求最短输入。
+
+### Context 大，就不需要管理历史了吗？
+
+不是。更大的窗口提高容量，却不会自动判断什么最相关，也不会替你为输出预留空间。
+
+### 本地计数和 API usage 为什么可能不同？
+
+你可能只编码了文本，却遗漏消息结构、工具 schema 或其他输入；也可能使用了与目标模型不一致的编码。最终应以目标模型的官方计数方式和实际 usage 为准。
+
+## 练习：为一个文档问答请求做取舍
+
+现在有一份请求：
+
+- 稳定规则：6000 Token
+- 工具定义：4000 Token
+- 完整历史：30000 Token
+- 十份候选文档：70000 Token
+- 预期输出：8000 Token
+- 假设总预算：100000 Token
+
+请先计算它是否能放下，再写出至少两项调整。
+
+<details>
+  <summary>查看参考答案</summary>
+  <p>总需求是 118000 Token，超过预算 18000。可以把早期对话压缩为事实摘要，并只选择与问题最相关的文档片段。稳定规则和工具定义也应检查是否存在重复，但不能为了缩短输入删掉必要边界。</p>
+</details>
+
+## 上线前检查清单
+
+- 使用目标模型对应的方式计算真实请求，而不是按字符猜。
+- 输入预算包含指令、历史、工具、资料和输出余量。
+- 超预算时按相关性整理内容，不做无脑截断。
+- 稳定内容在前，动态内容在后。
+- 在生产 usage 中记录输入、输出和缓存 Token。
+- 模型或请求结构变化后，重新校准预算。
+
+## 最后记住
+
+Token 决定输入如何被编码，Context 决定一次推理能使用多少工作区。把二者放在一起，才得到可操作的工程视角：
+
+> 先准确计数，再分配预算；只提供当前任务需要的信息，并为输出留出空间。
+
+继续深入可参考：
+
+- [OpenAI：How to count tokens with tiktoken](https://developers.openai.com/cookbook/examples/how_to_count_tokens_with_tiktoken)
+- [OpenAI：Token counting](https://developers.openai.com/api/docs/guides/token-counting)
+- [OpenAI：Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)

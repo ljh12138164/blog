@@ -10,26 +10,18 @@ export const recentPosts = [
   {
     slug: 'token-and-context',
     title: 'Token 与 Context：模型究竟看见了什么？',
-    description: '从分词、用量统计、数据表示、上下文窗口到提示词缓存，理解 Token 如何影响 AI 应用的成本与设计。',
+    description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。',
     date: '2026-08-19',
     category: 'AI 基础',
-    readingTime: '10 分钟'
-  },
-  {
-    slug: 'rag-in-practice',
-    title: 'RAG 不是魔法：检索增强生成的工作方式',
-    description: '拆解文档切分、向量检索、重排与生成，建立完整的 RAG 心智模型。',
-    date: '2026-08-12',
-    category: 'AI 工程',
-    readingTime: '7 分钟'
+    readingTime: '8 分钟'
   },
   {
     slug: 'prompting-principles',
     title: '如何为 AI 应用设计高质量提示词',
-    description: '从推理、检索与示例出发，把提示词写成清晰、可验证的任务说明。',
+    description: '用成功标准、指令边界、示例和评测，把提示词从“会写”变成可验证的工程组件。',
     date: '2026-08-08',
     category: '实践方法',
-    readingTime: '12 分钟'
+    readingTime: '8 分钟'
   }
 ] as const
 
