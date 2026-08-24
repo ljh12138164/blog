@@ -23,8 +23,8 @@ export function CodeBlock({ children, 'data-language': language, ...props }: Cod
   }
 
   return (
-    <figure className="code-block my-8 overflow-hidden rounded-[10px] border border-line bg-code shadow-sm">
-      <figcaption className="flex min-h-11 items-center justify-between border-b border-line bg-code-header px-4 font-sans text-xs text-muted">
+    <figure className="code-block my-8 overflow-hidden rounded-[10px] bg-code">
+      <figcaption className="flex min-h-11 items-center justify-between bg-code-header px-4 font-sans text-xs text-muted">
         <span>{language?.toUpperCase() ?? 'CODE'}</span>
         <button
           className="min-h-10 cursor-pointer border-0 bg-transparent px-2 font-semibold text-muted hover:text-ink"

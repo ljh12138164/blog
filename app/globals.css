@@ -41,11 +41,6 @@
   }
 }
 
-.code-block pre > code > span {
-  display: block;
-  min-height: 1.6em;
-}
-
 .code-block code span {
   color: var(--shiki-light, var(--color-ink));
 }
