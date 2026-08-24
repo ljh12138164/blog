@@ -6,11 +6,11 @@
 
 ## 状态
 
-正在 `feat/migrate-canvas-blog-content` 分支实施；错误创建的 canvas PR #3 已关闭。
+实现、评审、本地构建和浏览器验收已完成；正确的 blog PR #8 已创建。错误创建的 canvas PR #3 已关闭且未合并。
 
 ## 下一步
 
-迁移 32 篇历史文章及图片，完成近期/历史分组和浅色代码块后运行 `pnpm typecheck`、`pnpm build` 与浏览器验收。
+等待 [blog PR #8](https://github.com/ljh12138164/blog/pull/8) 的检查完成；通过后合并到 `master`。
 
 ## 计划验证
 
@@ -21,4 +21,4 @@
 
 ## 阻塞
 
-无。
+无本地阻塞；等待远端检查。
