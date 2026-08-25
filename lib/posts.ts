@@ -1,5 +1,13 @@
 export const recentPosts = [
   {
+    slug: 'cloudflare-custom-hostname-fast-ip',
+    title: 'Cloudflare 的优选 IP 优化',
+    description: '用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。',
+    date: '2026-08-25',
+    category: 'Cloudflare 优化',
+    readingTime: '15 分钟'
+  },
+  {
     slug: 'agent-fundamentals',
     title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环',
     description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。',
@@ -27,14 +35,6 @@ export const recentPosts = [
 
 export const archiveGroups = [
   {
-    title: 'AI 调用',
-    posts: [
-      { title: 'DeepSeek本地部署', href: '/posts/deepseek-local-deployment' },
-      { title: '谷歌AI的图片识别API实现', href: '/posts/gemini-image-recognition' },
-      { title: '谷歌ai调用', href: '/posts/gemini-api' }
-    ]
-  },
-  {
     title: 'API 与 React',
     posts: [
       { title: 'react-query实现api优化', href: '/posts/react-query-api-optimization' },
@@ -44,18 +44,10 @@ export const archiveGroups = [
   {
     title: 'Cloudflare 优化',
     posts: [
+      { title: 'Cloudflare 的优选 IP 优化', href: '/posts/cloudflare-custom-hostname-fast-ip' },
       { title: 'cdn加速', href: '/posts/cloudflare-cdn-acceleration' },
       { title: '人机验证', href: '/posts/cloudflare-turnstile' },
       { title: 'http3和103请求头', href: '/posts/cloudflare-http3-early-hints' }
-    ]
-  },
-  {
-    title: '优化记录',
-    posts: [
-      { title: 'design优化', href: '/posts/design-optimization' },
-      { title: 'jebet', href: '/posts/jebet-optimization' },
-      { title: '协同note', href: '/posts/collaborative-note-optimization' },
-      { title: '自定义表单', href: '/posts/custom-form-optimization' }
     ]
   },
   {
@@ -85,15 +77,6 @@ export const archiveGroups = [
     posts: [
       { title: '用 a 标签打开 dateURL 的问题', href: '/posts/anchor-data-url' },
       { title: '用for of替代forEach', href: '/posts/for-of-vs-foreach' }
-    ]
-  },
-  {
-    title: '项目文档',
-    posts: [
-      { title: 'Note协同文档系统', href: '/posts/note-collaboration-system' },
-      { title: 'LJH-Design设计系统', href: '/posts/ljh-design-system' },
-      { title: '自定义表单设计器', href: '/posts/custom-form-designer' },
-      { title: 'Jebet项目管理系统', href: '/posts/jebet-project-management' }
     ]
   },
   {

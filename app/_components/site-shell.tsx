@@ -11,7 +11,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
           aria-label="主导航"
         >
           <Link className="flex min-w-0 items-center gap-2.5 font-serif text-xl font-bold no-underline" href="/" aria-label="ljh的技术博客首页">
-            <span className="grid size-[30px] shrink-0 place-items-center rounded-full bg-ink text-paper" aria-hidden="true">✦</span>
+            <span className="size-[30px] shrink-0 overflow-hidden rounded-full" aria-hidden="true">
+              <img className="size-full object-cover" src="/favicon.ico" alt="" />
+            </span>
             <span className="truncate">ljh的技术博客</span>
           </Link>
           <div className="flex items-center gap-7 text-sm">
