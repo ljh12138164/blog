@@ -17,11 +17,8 @@ export default function HomePage() {
         <h1 className="my-[26px] mb-[34px] max-w-[900px] text-balance font-serif text-[clamp(48px,7vw,92px)] leading-[1.05] font-medium max-md:text-[clamp(40px,12vw,60px)]">
           ljh的技术博客
         </h1>
-        <p className="mb-4 max-w-[650px] text-pretty font-serif text-xl leading-[1.8] text-muted">
-          大家好！我是李建辉，一名热爱技术的全栈与前端开发者。这里专注于记录前端架构设计、多人实时协同算法、性能优化与 AI 大模型工程化落地实践。
-        </p>
         <p className="mb-[46px] max-w-[650px] text-pretty font-serif text-xl leading-[1.8] text-muted">
-          也记录技术选型思考、团队协作演进，以及值得反复推敲的硬核工程问题。
+          记录技术选型思考、团队协作演进，以及值得反复推敲的硬核工程问题。
         </p>
         <a className="inline-flex min-h-11 items-center gap-[42px] border-b border-ink text-sm font-bold no-underline" href="#articles">
           开始阅读 <span aria-hidden="true">↓</span>
