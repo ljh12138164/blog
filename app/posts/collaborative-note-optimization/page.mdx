@@ -1,0 +1,160 @@
+export const metadata = {
+  title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
+  description: '全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。',
+  date: '2025-01-29',
+  category: '性能调优',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/collaborative-note-optimization' },
+  openGraph: {
+    type: 'article',
+    title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
+    description: '全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。',
+    url: '/posts/collaborative-note-optimization',
+  },
+  twitter: {
+    card: 'summary',
+    title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
+    description: '全面记录富文本协同 SPA应用性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。',
+  },
+}
+
+在富文本协同笔记项目上线后，随着功能的丰富（加入多语言代码高亮、公式渲染、表格扩展和复杂数据请求），应用往往面临两大挑战：
+1. **部署后子路由刷新 404**（SPA HTML5 History 模式在静态服务器上的路由穿透问题）；
+2. **打包体积过大（Vendor Bundle 超过 1.8MB）**，导致首屏 FCP / LCP 严重偏慢，Lighthouse 性能评分低下。
+
+本文复盘完整的排查与瘦身优化历程。
+
+---
+
+## 痛点一：解决 SPA 路由刷新 404 难题
+
+使用 `vue-router` 或 `react-router` 的 HTML5 `createWebHistory()` 模式时，URL 路径如 `/notes/doc-123` 并非静态服务器磁盘上的真实物理目录。
+
+当用户首次访问首页正常，但在子路由手动刷新页面时，Vercel / Nginx 尝试寻找 `out/notes/doc-123/index.html` 失败，从而抛出 404。
+
+### 解决方案：配置 SPA 重写规则
+
+在项目根目录创建 `vercel.json`，配置路由通配重写，将所有路径回退至 `index.html`：
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+若使用 Nginx 部署，则在配置文件中添加：
+
+```nginx
+location / {
+    try_files $uri $uri/ /index.html;
+}
+```
+
+---
+
+## 痛点二：Bundle 瘦身与 Tree-Shaking 实操
+
+通过 `rollup-plugin-visualizer` 生成的打包产物依赖图谱分析，我们发现了几个严重拖慢打包体积的“元凶”：
+
+```text
+优化前产物分布:
+┌───────────────────────────────────────────────────────────┐
+│ vendor.js (1.85 MB)                                       │
+│ ├── highlight.js 全量 180+ 语言包 (占 820 KB) ──► 严重冗余! │
+│ ├── lodash 全量 CommonJS 打包 (占 280 KB) ────► 无法摇树! │
+│ └── tiptap 未使用的重型扩展 (占 450 KB)                     │
+└───────────────────────────────────────────────────────────┘
+```
+
+### 1. 彻底替换 `lodash` 为 `lodash-es`
+
+传统 `lodash` 是 CommonJS 格式，打包工具（如 Rollup / Webpack）无法对其进行精确的静态符号分析，即便只写 `import { debounce } from 'lodash'`，也会将数十个不相关的工具函数全部打入产物。
+
+* **优化措施**：迁移到原生 ESM 的 `lodash-es`：
+  ```bash
+  pnpm remove lodash @types/lodash
+  pnpm add lodash-es
+  pnpm add -D @types/lodash-es
+  ```
+* **效果**：仅此一项，产物体积直接缩减 **240 KB**。
+
+### 2. `highlight.js` 按需注册常用语言
+
+Tiptap 的代码高亮扩展默认若引入了 `lowlight/all`，会将 180 多种几乎用不到的冷门语言定义全部打包。
+
+* **优化措施**：改用 `common` 常见语言集或手动按需注册：
+
+```ts
+import { createLowlight } from 'lowlight';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import json from 'highlight.js/lib/languages/json';
+import css from 'highlight.js/lib/languages/css';
+
+const lowlight = createLowlight();
+
+// 仅注册前端和主流后端高频使用的 5~8 种核心语言
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('json', json);
+lowlight.register('css', css);
+
+export { lowlight };
+```
+* **效果**：代码高亮相关模块体积从 **820 KB 骤降至 65 KB**。
+
+### 3. Vite / Rollup 手动分包（Manual Chunks）
+
+在 `vite.config.ts` 中配置精细化分包，将低频变动的大型基础库独立为长效缓存 Chunk：
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'tiptap-vendor': ['@tiptap/vue-3', '@tiptap/starter-kit', 'prosemirror-state', 'prosemirror-view'],
+          'yjs-collab': ['yjs', '@hocuspocus/provider', 'y-indexeddb'],
+          'ui-icons': ['lucide-vue-next'],
+        },
+      },
+    },
+    // 开启现代浏览器 esnext 构建与 terser 极致压缩
+    target: 'esnext',
+    minify: 'terser',
+  },
+});
+```
+
+---
+
+## 痛点三：Lighthouse 体验综合优化
+
+通过 Google Lighthouse 进行全维度巡检并逐项修复：
+
+1. **Accessibility（无障碍）**：
+   * 在根 `index.html` 的 `<html>` 标签上显式指定 `lang="zh-CN"`；
+   * 为编辑器工具栏图标按钮添加 `aria-label="加粗"`、`aria-label="插入链接"`。
+2. **SEO 与 Meta**：
+   * 补充标准的 OpenGraph 和 Twitter Card 元标签；
+   * 自动生成 `robots.txt` 与 `sitemap.xml`。
+3. **最终成效**：
+   * Vendor 首屏 JS 体积从 **1.85MB 压减至 320KB（Gzip 后仅约 90KB）**；
+   * Lighthouse 性能得分从 **58 分跃升至 96 分**；
+   * 首屏 FCP 进入 **0.8 秒** 内。
+
+---
+
+## 总结
+
+* **SPA 路由配置**：在 Vercel / Nginx 端通过重写规则保障 HTML5 History 模式的子路由刷新稳定。
+* **精准 Tree-shaking**：坚决弃用 CommonJS 依赖（用 `lodash-es` 替代 `lodash`），对代码高亮与图标库执行严格的按需注册。
+* **分包与缓存策略**：将稳定的大型依赖（Tiptap, Yjs）抽离独立 Chunk，实现跨版本更新时的浏览器长效缓存。

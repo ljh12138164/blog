@@ -1,0 +1,127 @@
+export const metadata = {
+  title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
+  description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。',
+  date: '2024-08-16',
+  category: 'AI 工程',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/deepseek-local-deployment' },
+  openGraph: {
+    type: 'article',
+    title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
+    description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。',
+    url: '/posts/deepseek-local-deployment',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
+    description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。',
+  },
+}
+
+随着 **DeepSeek-R1 / V3** 等顶尖开源模型的发布，在本地消费级显卡或私有服务器上部署大模型，已成为保障数据隐私、实现零外网依赖与低成本推理的主流选择。
+
+本文系统梳理模型量化原理、显存预算公式，并提供基于 **Ollama** 和 **LM Studio** 的本地运行与 OpenAI 兼容 API 接入全流程。
+
+---
+
+## 本地部署核心概念：参数量、量化与显存（VRAM）预算
+
+大模型运行时，模型权重与上下文 KV Cache 必须加载进显存（GPU VRAM）或内存（CPU RAM）。
+
+```text
+显存占用计算简易公式:
+  显存占用 ≈ (参数量 × 每个参数字节数) + KV Cache 上下文开销 + 运行余量 (约 1.5~2GB)
+```
+
+| 模型规模 | FP16 (未量化) | Q8_0 (8-bit 量化) | Q4_K_M (4-bit 推荐量化) | 推荐硬件配置 |
+| :--- | :--- | :--- | :--- | :--- |
+| **7B / 8B** | ~16 GB VRAM | ~8.5 GB VRAM | **~5.5 GB VRAM** | RTX 3060 (12G) / M1/M2 Mac 16G |
+| **14B** | ~28 GB VRAM | ~15 GB VRAM | **~9.5 GB VRAM** | RTX 4070 (12G) / RTX 4080 (16G) |
+| **32B** | ~64 GB VRAM | ~34 GB VRAM | **~20 GB VRAM** | RTX 3090/4090 (24G) / Mac 32G |
+| **70B** | ~140 GB VRAM | ~75 GB VRAM | **~42 GB VRAM** | 双卡 RTX 3090/4090 / Mac 64G+ |
+
+> [!TIP]
+> **什么是 Q4_K_M 量化？**
+> 采用 4-bit 混合精度量化可以在体积压缩近 **70%** 的同时，保留原本 FP16 模型 **99% 以上的基准性能**，是本地消费级硬件推理的最佳甜点位。
+
+---
+
+## 方案一：使用 Ollama 命令行与系统级服务
+
+Ollama 是目前最流行的本地大模型管理工具，支持全自动下载、GPU 加速识别与后台守护运行。
+
+### 1. 安装与启动模型
+
+```bash
+# 运行 DeepSeek R1 蒸馏 7B/8B 模型 (支持全自动下载与启动)
+ollama run deepseek-r1:8b
+
+# 运行 DeepSeek 14B 参数模型
+ollama run deepseek-r1:14b
+```
+
+### 2. 验证 OpenAI 兼容接口
+
+Ollama 默认在本地 `http://localhost:11434` 暴露出标准 REST API，能够无缝作为 OpenAI SDK 的替代后端：
+
+```ts
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:11434/v1',
+  apiKey: 'ollama', // 本地运行无需真实 Key
+});
+
+async function main() {
+  const completion = await openai.chat.completions.create({
+    model: 'deepseek-r1:8b',
+    messages: [
+      { role: 'system', content: '你是一位资深前端架构师。' },
+      { role: 'user', content: '请解释 React Fiber 架构的核心思想。' },
+    ],
+    stream: true,
+  });
+
+  for await (const chunk of completion) {
+    process.stdout.write(chunk.choices[0]?.delta?.content || '');
+  }
+}
+
+main();
+```
+
+---
+
+## 方案二：使用 LM Studio 可视化桌面端
+
+对于更习惯图形化调优（如直观观察 GPU 显存占用、调整 Temperature、Top_P、上下文窗口大小）的开发者：
+
+1. 下载并安装 **LM Studio**；
+2. 在内置模型市场搜索 `DeepSeek-R1-Distill` 或直接搜索 HuggingFace 上的 GGUF 文件；
+3. 在 **GPU Offload** 设置中将所有层（All Layers）全部卸载至 GPU 显存以获得数十 Token/s 的推理速度；
+4. 点击 **Start Server** 即可启动本地 API 代理。
+
+---
+
+## 生产级 WebUI 与知识库（RAG）集成
+
+配合 **Open WebUI**，可以在局域网内搭建全功能的企业级 ChatGPT 替代方案：
+
+```bash
+# 通过 Docker 快速拉起具备知识库检索与多用户管理的 Open WebUI
+docker run -d -p 3000:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -v open-webui:/app/backend/data \
+  --name open-webui \
+  ghcr.io/open-webui/open-webui:main
+```
+
+浏览器访问 `http://localhost:3000`，即可享受沉浸式对话、文档嵌入解析（RAG）与代码高亮。
+
+---
+
+## 总结
+
+* **极简易用**：Ollama 提供了极致的命令行体验与标准 OpenAI 协议兼容；
+* **硬件策略**：按 `参数量 × 0.7` 快速估算 4-bit 显存需求，12G~24G 显卡即可流畅运行主流 8B~32B 模型；
+* **数据安全**：彻底告别敏感业务数据外泄，实现 100% 离线、私有可控的 AI 能力。

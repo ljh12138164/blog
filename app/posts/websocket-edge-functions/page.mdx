@@ -1,0 +1,163 @@
+export const metadata = {
+  title: '在边缘运行时（Edge Runtime）运行 WebSocket 实时协同服务：Deno Deploy + Hocuspocus 实践',
+  description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。',
+  date: '2025-02-15',
+  category: '全栈与边缘计算',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/websocket-edge-functions' },
+  openGraph: {
+    type: 'article',
+    title: '在边缘运行时（Edge Runtime）运行 WebSocket 实时协同服务：Deno Deploy + Hocuspocus 实践',
+    description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。',
+    url: '/posts/websocket-edge-functions',
+  },
+  twitter: {
+    card: 'summary',
+    title: '在边缘运行时（Edge Runtime）运行 WebSocket 实时协同服务：Deno Deploy + Hocuspocus 实践',
+    description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。',
+  },
+}
+
+在构建类似 Notion 或 Google Docs 的多人实时协同富文本编辑器时，**WebSocket** 是实现客户端 CRDT / Yjs 状态同步的核心通信协议。
+
+传统方案通常需要运维独立的 Node.js / Docker 虚机来保持 WebSocket 长连接。然而借助 **Deno Deploy** 等支持持久 WebSocket 的现代边缘平台（Edge Runtime），我们可以在无需购买固定 VPS、按需计费的无服务器环境下，运行基于 **Hocuspocus** 的企业级实时协同服务。
+
+---
+
+## 边缘 WebSocket 架构拓扑
+
+```text
+客户端 (TipTap / BlockSuite / ProseMirror)
+  │
+  ▼ wss://sync.example.com (全球任播 Anycast 域名)
+Deno Deploy 边缘节点 (V8 隔离沙箱)
+  │
+  ├── Hocuspocus Server (运行 Yjs CRDT 状态合并)
+  │     ├── 身份认证与权限钩子 (onAuthenticate)
+  │     ├── 实时广播协同光标与文本变更 (Awareness & Update)
+  │     └── 定时去抖持久化 (onStoreDocument)
+  │
+  ▼ Webhook / REST API
+后端主数据库 (Supabase PostgreSQL / Redis)
+```
+
+---
+
+## 核心实现：在 Deno 环境下构建 Hocuspocus 实例
+
+Deno 原生支持 TypeScript 与标准 Web API（如 `Deno.upgradeWebSocket`），无需额外的编译打包步骤：
+
+```ts
+// server.ts (运行于 Deno Deploy)
+import { Server } from 'npm:@hocuspocus/server@^2.13.0';
+import { Logger } from 'npm:@hocuspocus/extension-logger@^2.13.0';
+import { Webhook } from 'npm:@hocuspocus/extension-webhook@^2.13.0';
+
+const server = Server.configure({
+  port: 8080,
+  extensions: [
+    new Logger(),
+    // 通过 Webhook 与主业务后端实现持久化解耦
+    new Webhook({
+      url: Deno.env.get('BACKEND_WEBHOOK_URL') || 'https://api.example.com/api/hocuspocus-hook',
+      events: ['onStoreDocument'],
+      secret: Deno.env.get('WEBHOOK_SECRET') || 'my-secret-key',
+    }),
+  ],
+
+  // 1. 鉴权钩子：校验客户端传入的 JWT Token
+  async onAuthenticate(data) {
+    const { token } = data;
+    if (!token) {
+      throw new Error('未授权访问');
+    }
+    // 验证用户身份与文档读写权限
+    return {
+      user: { id: 'user-123', name: 'Alice' },
+    };
+  },
+
+  // 2. 状态存储钩子：支持增量与全量快照保存
+  async onStoreDocument(data) {
+    console.log(`正在持久化文档 [${data.documentName}]...`);
+    // 实际生产中可调用云端数据库 REST 接口保存二进制 Yjs Doc
+  },
+});
+
+// Deno 原生 HTTP 监听
+Deno.serve({ port: 8080 }, (req) => {
+  return server.handleRequest(req);
+});
+```
+
+---
+
+## 前端 TipTap 客户端接入配置
+
+在前端 React / Vue 应用中，通过 `@hocuspocus/provider` 与 TipTap 协同扩展无缝连接：
+
+```tsx
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import * as Y from 'yjs';
+
+export function CollaborativeEditor({ docId, user }: { docId: string; user: { name: string; color: string } }) {
+  const ydoc = new Y.Doc();
+
+  // 1. 建立与边缘 WebSocket 的持久长连接
+  const provider = new HocuspocusProvider({
+    url: 'wss://sync.example.com',
+    name: docId,
+    document: ydoc,
+    token: 'jwt-auth-token',
+  });
+
+  // 2. 初始化 TipTap 编辑器
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ history: false }), // 必须关闭本地历史，改由 Yjs 接管
+      Collaboration.configure({
+        document: ydoc,
+      }),
+      CollaborationCursor.configure({
+        provider,
+        user,
+      }),
+    ],
+  });
+
+  return (
+    <div className="editor-container border rounded-lg p-4">
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+---
+
+## Deno Deploy 部署流程与域名绑定
+
+1. **关联 GitHub 仓库**：在 Deno Deploy 控制面板新建项目，绑定存放 `server.ts` 的仓库分支。
+2. **配置环境变量**：在 Settings -> Environment Variables 中填入 `BACKEND_WEBHOOK_URL` 和 `WEBHOOK_SECRET`。
+3. **自定义域名与证书**：
+   * 在 DNS 提供商处为 `sync.example.com` 添加 CNAME 记录指向 Deno 提供的专属接入点；
+   * Deno Deploy 会全自动签发并续期免费的 TLS 证书，开箱支持全球安全的 `wss://` 连接。
+
+---
+
+## 边缘 WebSocket 的优势与权衡
+
+* **极致低延迟**：边缘节点分布于全球各个区域，跨国/跨地区协同用户的网络 RTT 大幅削减。
+* **零闲置运维成本**：没有固定服务器租金与系统补丁维护负担。
+* **注意多房间分布式路由**：在超大规模集群中，若不同协作者被路由至不同物理节点，需结合 Durable Objects（如 Cloudflare DO）或 Redis Pub/Sub 保证同一个房间（Document Room）的消息在同一个实例汇聚。
+
+---
+
+## 总结
+
+* 利用 **Deno Deploy** 的原生 Web 标准与 WebSocket 支持，可以极简部署无服务器长连接服务。
+* **Hocuspocus + Yjs** 提供了完善的鉴权、状态同步与数据持久化机制，是构建生产级多人协同编辑器的首选方案。

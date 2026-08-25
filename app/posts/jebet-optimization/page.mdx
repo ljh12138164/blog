@@ -1,0 +1,147 @@
+export const metadata = {
+  title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
+  description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。',
+  date: '2025-02-02',
+  category: '性能调优',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/jebet-optimization' },
+  openGraph: {
+    type: 'article',
+    title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
+    description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。',
+    url: '/posts/jebet-optimization',
+  },
+  twitter: {
+    card: 'summary',
+    title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
+    description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。',
+  },
+}
+
+在 Jebet 敏捷项目管理平台开发初期，随着统计图表（燃尽图、工时分布图、交付漏斗）、富文本编辑器和数据导出功能的加入，生产构建产物（Bundle）直接飙升到了令人触目惊心的 **7.2 MB**！
+
+在生产环境下，这导致用户初次打开首页需要下载近 8MB 的 JS 资源，白屏时间长达 6 秒以上。本文复盘完整的排查与分包瘦身历程。
+
+---
+
+## 依赖诊断：谁吞噬了 7MB 的空间？
+
+通过 `rollup-plugin-visualizer` 开启产物分析矩阵，发现主要体积由三大块构成：
+
+```text
+7.2 MB 产物解剖图谱:
+┌───────────────────────────────────────────────────────────┐
+│ 1. ECharts 全量全功能包 (占 2.4 MB) ──► 绝大部分图表用不上! │
+│ 2. 静态 UI 演示图与高清 PNG (占 2.8 MB) ──► 零压缩!        │
+│ 3. 单一大文件 Vendor Bundle (占 2.0 MB) ──► 缓存命中率极低!│
+└───────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 核心优化措施一：ECharts 严格按需模块化加载
+
+许多开发者习惯直接写 `import * as echarts from 'echarts'`，这会把 3D 图表、GL 渲染器、树图等所有无关图表全部打包进产物。
+
+### 改造为按需注册核心模块：
+
+```ts
+// lib/echarts.ts
+import * as echarts from 'echarts/core';
+import { BarChart, LineChart, PieChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+
+// 仅注册本项目实际用到的图表类型与通用组件
+echarts.use([
+  BarChart,
+  LineChart,
+  PieChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  CanvasRenderer,
+]);
+
+export default echarts;
+```
+
+* **收益**：ECharts 体积从 **2.4MB 骤减至 420KB**，瘦身超过 **82%**。
+
+---
+
+## 核心优化措施二：静态资源自动化压缩与 WebP 转换
+
+在构建流水线中引入 `vite-plugin-image-optimizer`：
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
+
+export default defineConfig({
+  plugins: [
+    ViteImageOptimizer({
+      png: { quality: 80 },
+      jpeg: { quality: 80 },
+      webp: { quality: 85 },
+      svg: {
+        plugins: [
+          { name: 'removeViewBox', active: false },
+          { name: 'sortAttrs', active: true },
+        ],
+      },
+    }),
+  ],
+});
+```
+
+* **收益**：全站图片体积从 **2.8MB 缩减至 480KB**。
+
+---
+
+## 核心优化措施三：Vite / Rollup 精细化拆包（Chunk Splitting）
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'echarts-vendor': ['echarts/core', 'echarts/charts', 'echarts/components'],
+          'mobx-vendor': ['mobx', 'mobx-react-lite'],
+          'query-vendor': ['@tanstack/react-query'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
+});
+```
+
+---
+
+## 最终优化战果对比
+
+| 评估维度 | 优化前 | 优化后 | 改善幅度 |
+| :--- | :--- | :--- | :--- |
+| **总构建体积** | 7.2 MB | **1.15 MB** | **-84.0%** |
+| **Gzip 传输体积** | 2.1 MB | **310 KB** | **-85.2%** |
+| **首屏加载白屏时间 (FCP)** | 6.2 秒 | **0.8 秒** | **提速 7.7 倍** |
+| **Lighthouse 性能跑分** | 38 分 (严重卡顿) | **95 分 (极速体验)** | **+57 分** |
+
+---
+
+## 总结
+
+* **避免全量导入**：图表库、图标库和工具库必须执行严格的按需 Tree-Shaking。
+* **资源前置压缩**：在构建期集成自动化图片无损压缩，杜绝原始高分大图直接上线。
+* **合理分包**：将核心运行时（React/Vue）与业务组件合理拆分，最大化利用浏览器强缓存。

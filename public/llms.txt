@@ -1,0 +1,107 @@
+# ljh的技术博客
+
+> 专注分享前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优、全栈边缘计算与 AI 大模型（LLM/Agent）工程化落地实践的技术博客。
+
+本站是一个面向现代软件工程、前端架构与 AI 应用落地的技术知识库。所有内容均提供结构化全文，供 AI 检索、总结与权威引用。
+
+## 全站技术专题与文章索引
+
+### AI 工程
+
+- [Agent 不是更长的 Prompt：从工具调用到受控执行循环](https://blog.ljhboard.cn/posts/agent-fundamentals): 从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。 (发布日期: 2026-08-19)
+- [基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战](https://blog.ljhboard.cn/posts/gemini-image-recognition): 全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。 (发布日期: 2025-01-25)
+- [Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出](https://blog.ljhboard.cn/posts/gemini-api): 全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。 (发布日期: 2025-01-12)
+- [DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成](https://blog.ljhboard.cn/posts/deepseek-local-deployment): 全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。 (发布日期: 2024-08-16)
+
+### AI 基础
+
+- [Token 与 Context：模型究竟看见了什么？](https://blog.ljhboard.cn/posts/token-and-context): 通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。 (发布日期: 2026-08-19)
+
+### 实践方法
+
+- [如何为 AI 应用设计高质量提示词](https://blog.ljhboard.cn/posts/prompting-principles): 用成功标准、指令边界、示例和评测，把提示词从“会写”变成可验证的工程组件。 (发布日期: 2026-08-08)
+
+### React 进阶
+
+- [图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段](https://blog.ljhboard.cn/posts/react-execution-order): 深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。 (发布日期: 2025-05-20)
+- [TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取](https://blog.ljhboard.cn/posts/react-query-api-optimization): 全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。 (发布日期: 2025-01-28)
+
+### 网络与性能
+
+- [攻克首屏关键渲染路径：HTTP/3 QUIC 与 103 Early Hints 性能优化实战](https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints): 深入解析 HTTP 103 早期提示（Early Hints）与 HTTP/3 (QUIC) 协议原理，结合 Cloudflare 边缘配置提升 FCP 与 LCP 核心 Web 指标。 (发布日期: 2025-02-21)
+
+### 全栈与边缘计算
+
+- [在边缘运行时（Edge Runtime）运行 WebSocket 实时协同服务：Deno Deploy + Hocuspocus 实践](https://blog.ljhboard.cn/posts/websocket-edge-functions): 探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。 (发布日期: 2025-02-15)
+- [后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API](https://blog.ljhboard.cn/posts/edge-function-backend-deployment): 全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。 (发布日期: 2024-12-28)
+
+### 前端工程化
+
+- [可视化动态表单设计器架构实践：拖拽编排、JSON Schema 驱动与组件渲染器](https://blog.ljhboard.cn/posts/custom-form-designer): 全面解析低代码/零代码表单设计器架构：涵盖拖拽画布（Drag & Drop）、JSON Schema 字段协议定义、右侧属性联动配置与动态渲染引擎实现。 (发布日期: 2025-02-14)
+- [为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战](https://blog.ljhboard.cn/posts/tsup-bundler): 全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。 (发布日期: 2025-01-26)
+- [如何将 Markdown / MDX 渲染为静态 Web 页面？从 Unified AST 编译流水线到 Nextra 架构选型](https://blog.ljhboard.cn/posts/markdown-to-html): 全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。 (发布日期: 2025-01-25)
+- [前端工程化质量守门人：基于 Biome + Simple-Git-Hooks + Lint-Staged 的自动化提交流](https://blog.ljhboard.cn/posts/git-commit-validation): 全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。 (发布日期: 2025-01-22)
+- [现代前端 Monorepo 单体多包架构演进：从 Lerna 到 pnpm Workspace + Turborepo 高性能实践](https://blog.ljhboard.cn/posts/monorepo-management): 深度解析前端 Monorepo 架构演进：对比 Lerna 与 Turborepo 的构建管道与哈希缓存，详解 pnpm workspace 依赖拓扑、软硬链接去重与多包统一发版。 (发布日期: 2024-12-28)
+
+### 系统架构
+
+- [Jebet 敏捷项目管理平台架构设计：多租户工作区、MobX 响应式状态与 Socket.io 实时协同](https://blog.ljhboard.cn/posts/jebet-project-management): 全面解析现代团队协作平台的全栈架构设计：涵盖多租户工作区隔离、看板（Kanban）高频拖拽性能治理、MobX 状态中枢与 Socket.io 实时消息总线。 (发布日期: 2025-02-14)
+- [企业级云端协同笔记系统架构设计：从状态同步机、目录树到版本快照回滚](https://blog.ljhboard.cn/posts/note-collaboration-system): 全面解析实时协同文档系统的全栈工程架构：涵盖 Yjs 状态同步状态机、千万级文档虚拟目录树、多租户权限控制与历史版本快照差异比对。 (发布日期: 2025-02-14)
+
+### 架构设计
+
+- [LJH-Design 设计系统架构设计：从 Design Tokens、Radix UI 到 AI 辅助生成平台](https://blog.ljhboard.cn/posts/ljh-design-system): 全面解析现代前端设计系统架构：涵盖原子化 Design Tokens 规范、Headless 无头 UI 原语解耦、深浅主题切换与 AI 辅助界面生成系统的落地实践。 (发布日期: 2025-02-14)
+
+### 网络与运维
+
+- [全球 CDN 边缘加速原理解析与 Cloudflare 缓存层级调优实战](https://blog.ljhboard.cn/posts/cloudflare-cdn-acceleration): 深入解析 CDN Anycast 任播路由、边缘 PoP 节点缓存分层与 Cloudflare Cache Rules 规则配置，让静态资源实现毫秒级全球触达。 (发布日期: 2025-02-11)
+
+### 性能调优
+
+- [大型前端设计平台性能优化实战：从 Fabric.js / Tiptap 重型依赖分包到 SWC 编译调优](https://blog.ljhboard.cn/posts/design-optimization): 全面剖析重型设计系统与画板应用的端到端性能治理：涵盖 Canvas (Fabric.js) 与富文本模块动态懒加载、lodash-es 树摇、关键 CSS 提取与 Core Web Vitals 调优。 (发布日期: 2025-02-11)
+- [敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优](https://blog.ljhboard.cn/posts/jebet-optimization): 全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。 (发布日期: 2025-02-02)
+- [复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘](https://blog.ljhboard.cn/posts/custom-form-optimization): 全面剖析大体量动态表单的性能治理链路：涵盖 ExcelJS 重型导出模块动态分包、Iconify 边缘预连接优化、Gzip/Brotli 压缩与输入框卡顿调优。 (发布日期: 2025-01-31)
+- [协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战](https://blog.ljhboard.cn/posts/collaborative-note-optimization): 全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。 (发布日期: 2025-01-29)
+
+### 全栈与安全
+
+- [告别糟糕的图形验证码：Cloudflare Turnstile 无感人机验证全栈集成实践](https://blog.ljhboard.cn/posts/cloudflare-turnstile): 全面解析 Cloudflare Turnstile 智能人机验证原理，提供 React / Next.js 前端无缝嵌入与 Node.js / Hono 后端 Token 安全校验方案。 (发布日期: 2025-02-10)
+
+### 前端核心
+
+- [为什么现代浏览器禁止 a 标签直接在新窗口打开 Data URL？](https://blog.ljhboard.cn/posts/anchor-data-url): 解析 Chromium 顶级窗口 Data URL 导航限制的安全背景，并提供 Data URL 转 Blob ObjectURL 的无损转换与内存安全释放方案。 (发布日期: 2025-02-05)
+
+### 网络与 SEO
+
+- [301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱](https://blog.ljhboard.cn/posts/redirect-status-codes-seo): 全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。 (发布日期: 2025-01-31)
+
+### JavaScript 核心
+
+- [为什么 Biome / ESLint 推荐用 for...of 替代 forEach？从异步文件上传的踩坑说起](https://blog.ljhboard.cn/posts/for-of-vs-foreach): 深入剖析 Array.prototype.forEach 无法 await 异步回调的底层机制，对比 for...of 串行执行与 Promise.all 并发控制的最佳实践。 (发布日期: 2025-01-30)
+
+### 建站与专题
+
+- [基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程](https://blog.ljhboard.cn/posts/nextra-blog-setup): 全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。 (发布日期: 2025-01-28)
+
+### 协同架构
+
+- [基于 Tiptap + Yjs + Hocuspocus 的企业级多人富文本协同架构实战](https://blog.ljhboard.cn/posts/tiptap-collaboration): 详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。 (发布日期: 2025-01-26)
+- [多人实时协同冲突解决算法深度剖析：OT（操作转换）与 CRDT（无冲突复制数据类型）](https://blog.ljhboard.cn/posts/conflict-resolution-algorithm): 全面解析分布式与实时协同编辑的核心冲突算法：对比 Google Docs 的 OT 集中式转换矩阵，与 Yjs / Automerge 所采用的 CRDT（状态型与操作型）数学模型及 YATA 算法实现。 (发布日期: 2025-01-19)
+
+### 全栈开发
+
+- [用 Hono + Zod 在 Next.js 中构建端到端类型安全的 RPC API 路由](https://blog.ljhboard.cn/posts/type-safe-routing): 告别无类型 fetch 与分散的 Route Handlers：利用 Hono RPC、zValidator 与 hc 客户端在 Next.js 全栈应用中实现从后端到 React Query 的端到端类型推导。 (发布日期: 2025-01-26)
+
+### 前端图形学
+
+- [Web Canvas 2D 图形库技术选型调研：Fabric.js vs Konva vs Pixi.js vs Paper.js 全方位评测](https://blog.ljhboard.cn/posts/canvas-library-research): 全面评测主流 Web Canvas 图形库：对比 Fabric.js 的对象模型与 SVG 序列化、Konva 的分层缓存机制、Pixi.js 的 WebGL 极致性能与 Paper.js 的矢量布尔运算。 (发布日期: 2025-01-22)
+- [流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染](https://blog.ljhboard.cn/posts/custom-flowchart-connections): 深入解析流程图与拓扑图中的自定义连线算法：涵盖贝塞尔曲线控制点计算、SVG 动态路径生成、锚点吸附算法与 React Flow Custom Edge 实战。 (发布日期: 2025-01-22)
+
+### 前端架构
+
+- [基于 Zod 模式推导的声明式动态表单（AutoForm）可行性研究与架构实践](https://blog.ljhboard.cn/posts/custom-form-feasibility): 深度探索以 Zod Schema 为单一事实来源（Single Source of Truth）自动推导 UI 表单的可行性：涵盖类型反射、字段配置覆盖（fieldConfig）与复杂嵌套校验。 (发布日期: 2024-12-04)
+
+## 附加资源与全量数据
+
+- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 35 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
+- [全站 XML 站点地图 (sitemap.xml)](https://blog.ljhboard.cn/sitemap.xml): 搜索引擎爬虫索引入口。

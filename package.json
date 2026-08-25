@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "update:skill": "git submodule update --remote utils",
-    "postbuild": "pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs",
+    "postbuild": "node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

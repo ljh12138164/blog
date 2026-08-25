@@ -1,1 +1,1 @@
-utils/CLAUDE.md
+AGENTS.md

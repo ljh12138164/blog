@@ -3,7 +3,7 @@ module.exports = {
   siteUrl:
     process.env.SITE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000',
+    'https://blog.ljhboard.cn',
   generateRobotsTxt: true,
   outDir: 'out',
   changefreq: 'weekly',
@@ -17,6 +17,7 @@ module.exports = {
         allow: '/',
         disallow: ['/_next/', '/_pagefind/']
       }
-    ]
+    ],
+    additionalSitemaps: []
   }
 }

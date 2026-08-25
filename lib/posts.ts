@@ -29,88 +29,88 @@ export const archiveGroups = [
   {
     title: 'AI 调用',
     posts: [
-      { title: 'DeepSeek本地部署', href: '/ai调用/DeepSeek本地部署' },
-      { title: '谷歌AI的图片识别API实现', href: '/ai调用/谷歌ai读Image图片' },
-      { title: '谷歌ai调用', href: '/ai调用/谷歌ai调用' }
+      { title: 'DeepSeek本地部署', href: '/posts/deepseek-local-deployment' },
+      { title: '谷歌AI的图片识别API实现', href: '/posts/gemini-image-recognition' },
+      { title: '谷歌ai调用', href: '/posts/gemini-api' }
     ]
   },
   {
     title: 'API 与 React',
     posts: [
-      { title: 'react-query实现api优化', href: '/api优化/react-query' },
-      { title: 'React 的执行顺序', href: '/react/react的执行顺序' }
+      { title: 'react-query实现api优化', href: '/posts/react-query-api-optimization' },
+      { title: 'React 的执行顺序', href: '/posts/react-execution-order' }
     ]
   },
   {
     title: 'Cloudflare 优化',
     posts: [
-      { title: 'cdn加速', href: '/cloundflare优化/cdn加速' },
-      { title: '人机验证', href: '/cloundflare优化/人机验证' },
-      { title: 'http3和103请求头', href: '/cloundflare优化/使用http3和103请求头' }
+      { title: 'cdn加速', href: '/posts/cloudflare-cdn-acceleration' },
+      { title: '人机验证', href: '/posts/cloudflare-turnstile' },
+      { title: 'http3和103请求头', href: '/posts/cloudflare-http3-early-hints' }
     ]
   },
   {
     title: '优化记录',
     posts: [
-      { title: 'design优化', href: '/优化记录/design优化' },
-      { title: 'jebet', href: '/优化记录/jebet' },
-      { title: '协同note', href: '/优化记录/协同note' },
-      { title: '自定义表单', href: '/优化记录/自定义表单' }
+      { title: 'design优化', href: '/posts/design-optimization' },
+      { title: 'jebet', href: '/posts/jebet-optimization' },
+      { title: '协同note', href: '/posts/collaborative-note-optimization' },
+      { title: '自定义表单', href: '/posts/custom-form-optimization' }
     ]
   },
   {
     title: '协同的实现',
     posts: [
-      { title: 'tiptap的协同集成方案', href: '/协同的实现/tiptap协同实现' },
-      { title: '防冲突算法', href: '/协同的实现/防冲突算法' }
+      { title: 'tiptap的协同集成方案', href: '/posts/tiptap-collaboration' },
+      { title: '防冲突算法', href: '/posts/conflict-resolution-algorithm' }
     ]
   },
   {
     title: '后端',
     posts: [
-      { title: '后端部署到边缘函数的探索', href: '/后端/怎么将后端部署到cdn' },
-      { title: '构建类型安全的路由', href: '/后端/构建类型安全的路由' }
+      { title: '后端部署到边缘函数的探索', href: '/posts/edge-function-backend-deployment' },
+      { title: '构建类型安全的路由', href: '/posts/type-safe-routing' }
     ]
   },
   {
     title: '工程化研究',
     posts: [
-      { title: '代码提交校验', href: '/工程化研究/代码提交校验' },
-      { title: '单仓库管理', href: '/工程化研究/单仓库管理' },
-      { title: '打包工具tsup', href: '/工程化研究/打包工具tsup' }
+      { title: '代码提交校验', href: '/posts/git-commit-validation' },
+      { title: '单仓库管理', href: '/posts/monorepo-management' },
+      { title: '打包工具tsup', href: '/posts/tsup-bundler' }
     ]
   },
   {
     title: '抽象的问题',
     posts: [
-      { title: '用 a 标签打开 dateURL 的问题', href: '/抽象的问题/用a标签打开dateURL的问题' },
-      { title: '用for of替代forEach', href: '/抽象的问题/用for of替代forEach' }
+      { title: '用 a 标签打开 dateURL 的问题', href: '/posts/anchor-data-url' },
+      { title: '用for of替代forEach', href: '/posts/for-of-vs-foreach' }
     ]
   },
   {
     title: '项目文档',
     posts: [
-      { title: 'Note协同文档系统', href: '/项目文档/协同文档' },
-      { title: 'LJH-Design设计系统', href: '/项目文档/在线画布' },
-      { title: '自定义表单设计器', href: '/项目文档/自定义表单' },
-      { title: 'Jebet项目管理系统', href: '/项目文档/项目管理系统' }
+      { title: 'Note协同文档系统', href: '/posts/note-collaboration-system' },
+      { title: 'LJH-Design设计系统', href: '/posts/ljh-design-system' },
+      { title: '自定义表单设计器', href: '/posts/custom-form-designer' },
+      { title: 'Jebet项目管理系统', href: '/posts/jebet-project-management' }
     ]
   },
   {
     title: '项目的可行性研究',
     posts: [
-      { title: '怎么把 Markdown 渲染为网页', href: '/项目的可行性研究/怎么吧md文件渲染为html网页' },
-      { title: '画布库(canvas)的调研', href: '/项目的可行性研究/画布库(canvas)的调研' },
-      { title: '自定义表单的可行性', href: '/项目的可行性研究/自定义表单的可行性' }
+      { title: '怎么把 Markdown 渲染为网页', href: '/posts/markdown-to-html' },
+      { title: '画布库(canvas)的调研', href: '/posts/canvas-library-research' },
+      { title: '自定义表单的可行性', href: '/posts/custom-form-feasibility' }
     ]
   },
   {
     title: '建站与专题',
     posts: [
-      { title: '基于 Next.js 和 Nextra 搭建个人技术博客', href: '/博客搭建' },
-      { title: '流程图的自定义连接', href: '/流程图的自定义连接' },
-      { title: '让websocket服务运行在边缘函数中', href: '/让websocket服务运行在边缘函数中/indexs' },
-      { title: '重定向码对seo的影响', href: '/重定向码对seo的影响' }
+      { title: '基于 Next.js 和 Nextra 搭建个人技术博客', href: '/posts/nextra-blog-setup' },
+      { title: '流程图的自定义连接', href: '/posts/custom-flowchart-connections' },
+      { title: '让websocket服务运行在边缘函数中', href: '/posts/websocket-edge-functions' },
+      { title: '重定向码对seo的影响', href: '/posts/redirect-status-codes-seo' }
     ]
   }
 ] as const

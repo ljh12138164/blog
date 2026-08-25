@@ -1,0 +1,140 @@
+export const metadata = {
+  title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
+  description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。',
+  date: '2024-12-28',
+  category: '全栈与边缘计算',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/edge-function-backend-deployment' },
+  openGraph: {
+    type: 'article',
+    title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
+    description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。',
+    url: '/posts/edge-function-backend-deployment',
+  },
+  twitter: {
+    card: 'summary',
+    title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
+    description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。',
+  },
+}
+
+随着云原生和 Serverless 技术的演进，传统的“买 VPS -> 配 Nginx -> 跑 Node.js Docker 容器”的后端部署模式正受到**边缘计算（Edge Computing）**的强烈冲击。
+
+在边缘计算模式下，后端代码不再跑在某个单机房的服务器中，而是直接运行在遍布全球 CDN 节点的 **V8 沙箱隔离环境（Edge Runtime）**。本文记录基于轻量级 Web 框架 **Hono** 构建并部署边缘后端的全流程与技术权衡。
+
+---
+
+## 传统 Node.js 容器 vs Serverless Function vs Edge Runtime
+
+```text
+部署形态演进对比:
+┌─────────────────────────┬─────────────────────────┬─────────────────────────┐
+│     传统 VPS / 容器      │    Serverless Lambda    │      Edge Runtime       │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ • 机器常驻，固定月费   │ • 按次计费，弹性伸缩   │ • 全球边缘多活，按需计费│
+│ • 无冷启动             │ • 冷启动较重 (300~1000ms)│ • 极速冷启动 (<10ms)    │
+│ • 单机房，物理距离延迟  │ • 集中在指定云区域     │ • 毫秒级就近接入 (PoP)   │
+│ • 支持所有 Node.js 模块│ • 支持大部分 Node.js 库 │ • 严格遵循 Web 标准 API │
+└─────────────────────────┴─────────────────────────┴─────────────────────────┘
+```
+
+> [!NOTE]
+> **Edge Runtime 的约束**：由于边缘运行时并非完整 Linux OS，而是轻量 V8 沙箱（如 Cloudflare workerd），因此**不推荐**依赖 Node.js 底层 C++ 原生扩展或同步文件系统（如 `fs.readFileSync`），必须采用标准的 `fetch`、`Web Crypto`、`Streams` 以及 ESM 模块。
+
+---
+
+## 核心选型：为什么是 Hono？
+
+Hono（日语意为“火焰”）专为现代 Edge 环境设计：
+1. **体积极小**：零外部依赖，核心库体积小于 20KB。
+2. **极速路由**：内置自研 RegExpRouter 路由算法，路由匹配性能卓越。
+3. **多平台无缝移植**：一套业务代码可同时运行在 Vercel Edge、Cloudflare Workers、Deno、Bun 或传统 Node.js 上。
+
+---
+
+## 项目搭建与 Vercel 部署实战
+
+### 1. 使用脚手架初始化
+
+```bash
+pnpm create hono my-edge-api
+```
+在交互式提示中选择目标平台（例如 `vercel` 或 `cloudflare-workers`）。
+
+### 2. 编写模块化业务路由
+
+```ts
+// src/index.ts
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import { prettyJSON } from 'hono/pretty-json';
+
+const app = new Hono();
+
+// 挂载全局中间件
+app.use('*', logger());
+app.use('*', prettyJSON());
+app.use('*', cors({
+  origin: ['https://my-blog.com', 'http://localhost:3000'],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+}));
+
+// 健康检查
+app.get('/health', (c) => {
+  return c.json({
+    status: 'ok',
+    region: c.req.raw.headers.get('cf-ipcountry') || 'global',
+    timestamp: Date.now(),
+  });
+});
+
+// 动态参数与 REST API
+app.get('/api/users/:id', async (c) => {
+  const userId = c.req.param('id');
+  return c.json({
+    id: userId,
+    name: 'Developer',
+    role: 'Admin',
+  });
+});
+
+export default app;
+```
+
+---
+
+## 边缘环境下的数据库连接策略
+
+在边缘函数中访问关系型数据库（如 PostgreSQL / MySQL）不能使用传统的持久化 TCP 连接池（因为边缘函数会频繁销毁与创建，容易瞬间耗尽数据库最大连接数）。
+
+### 推荐的数据库接入方案：
+1. **Serverless HTTP 驱动**：使用 **Neon Serverless Postgres** 或 **PlanetScale**，通过无状态的 HTTP API 执行 SQL。
+2. **连接池代理中间件**：使用 **Prisma Accelerate** 或 **Supabase Connection Pooling (PgBouncer)**。
+
+```ts
+// 示例：使用 Serverless HTTP 访问数据库
+import { neon } from '@neondatabase/serverless';
+
+app.get('/api/posts', async (c) => {
+  const sql = neon(c.env.DATABASE_URL);
+  const posts = await sql`SELECT id, title, created_at FROM posts ORDER BY created_at DESC LIMIT 10`;
+  return c.json(posts);
+});
+```
+
+---
+
+## 部署与自定义域名解析
+
+1. **部署到 Vercel**：
+   运行 `pnpm vercel --prod`，Vercel 会自动识别入口文件并部署为边缘运行时。
+2. **解决默认域名解析限制**：
+   默认生成的 `*.vercel.app` 域名在部分网络环境下可能受阻。最佳实践是在 Vercel 项目设置中绑定自己的自定义二级域名（如 `api.example.com`），并通过 CNAME 解析至 `cname.vercel-dns.com`，享受自动签发的 SSL 证书。
+
+---
+
+## 总结
+
+* **适用场景**：边缘函数极其适合用于轻量级 API 代理、鉴权中心、地理位置路由、Webhook 接收器和高性能元数据服务。
+* **开发范式**：结合 **Hono + Serverless Database**，可以在全球边缘以极低的成本构建起响应极快的现代微服务架构。

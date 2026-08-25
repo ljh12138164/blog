@@ -1,0 +1,119 @@
+export const metadata = {
+  title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
+  description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。',
+  date: '2025-01-31',
+  category: '网络与 SEO',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/redirect-status-codes-seo' },
+  openGraph: {
+    type: 'article',
+    title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
+    description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。',
+    url: '/posts/redirect-status-codes-seo',
+  },
+  twitter: {
+    card: 'summary',
+    title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
+    description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。',
+  },
+}
+
+在 Web 开发中，重定向（Redirect）是域名迁移、URL 规范化（Canonicalization）以及路由兼容不可或缺的手段。
+
+然而，面对 `301 Moved Permanently`、`302 Found`、`307 Temporary Redirect` 和 `308 Permanent Redirect` 这四个看似相近的状态码，选错状态码可能导致 **表单 POST 请求变为 GET 导致数据丢失**，或引发 **搜索引擎权重归零甚至网址被恶意劫持**。
+
+---
+
+## 30X 状态码演进与四大核心区别
+
+```text
+HTTP/1.0 规范历史包袱:
+  [客户端发出 POST] ──301/302 重定向──► [旧浏览器擅自将重定向请求篡改为 GET！]
+
+HTTP/1.1 严格定义补充:
+  - 307 (临时重定向): 严禁改变请求方法 (POST 保持 POST)
+  - 308 (永久重定向): 严禁改变请求方法 (POST 保持 POST)
+```
+
+### 核心对照矩阵
+
+| 状态码 | HTTP 规范 | 性质 | 请求方法保留（POST/PUT） | 浏览器默认缓存 | 搜索引擎权重传递 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`301`** | HTTP/1.0 | 永久移动 (Moved Permanently) | ⚠️ 常见浏览器会篡改为 GET | ✅ 强缓存（需显式设置） | ✅ **传递 90%~99% 权重** |
+| **`302`** | HTTP/1.0 | 临时移动 (Found) | ⚠️ 常见浏览器会篡改为 GET | ❌ 不缓存 | ❌ **不传递权重**（保留原 URL） |
+| **`307`** | HTTP/1.1 | 临时重定向 (Temporary Redirect) | ✅ **严格保持原 Method 与 Body** | ❌ 不缓存 | ❌ 不传递权重 |
+| **`308`** | HTTP/1.1 | 永久重定向 (Permanent Redirect) | ✅ **严格保持原 Method 与 Body** | ✅ 强缓存 | ✅ **完整传递权重** |
+
+---
+
+## 深入机制一：POST 变 GET 的历史 Bug 与解决方案
+
+在早期 HTTP/1.0 时代，当客户端向 `/submit-order` 发送 `POST` 请求而服务器返回 `301` 或 `302` 时，几乎所有主流浏览器都会自动把随后的重定向请求强制转为 `GET /new-order`，导致原本携带在 Request Body 中的 JSON 或表单数据完全丢失。
+
+为了解决这个问题：
+* **如果是临时重定向且涉及非幂等请求（POST / PUT / DELETE）**：请务必使用 **`307`**；
+* **如果是永久重定向且涉及 API 接口变更**：请务必使用 **`308`**。
+
+---
+
+## 深入机制二：SEO 权重传递与 302 网址劫持风险
+
+### 1. 权重传递（Link Equity / PageRank）
+* **301 / 308**：告知 Google / 百度爬虫“旧页面已永久失效，请将旧 URL 积累的所有排名、外链和权重完全转移给新 URL，并在搜索索引中用新 URL 替代旧 URL”。
+* **302 / 307**：爬虫认为旧页面只是临时维护，因此**继续保留旧 URL 在搜索结果中**。
+
+### 2. 警惕 302 网址劫持（302 Hijacking）
+由于 302 临时重定向不会更新索引，历史上常有黑帽 SEO 做法：
+* 攻击者建立高权重域名 A，通过 302 重定向到你的原创内容页面 B；
+* 搜索引擎抓取到 B 的优质内容，却错误地把搜索结果的标题和点击跳转归属在域名 A 旗下；
+* **防御建议**：所有长期固定的页面迁移、HTTP 强制跳 HTTPS、非 www 跳转 www 等，**一律使用 301 或 308**。
+
+---
+
+## 生产环境重定向实践配置（Nginx / Next.js）
+
+### 1. Next.js `next.config.ts` 中的标准配置
+
+```ts
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // 永久 URL 结构迁移：设置 permanent: true (Next.js 默认输出 308)
+      {
+        source: '/old-blog/:slug',
+        destination: '/posts/:slug',
+        permanent: true, // 输出 308 Permanent Redirect，保障 SEO
+      },
+      // 临时活动页面跳转：设置 permanent: false (Next.js 默认输出 307)
+      {
+        source: '/campaign/spring',
+        destination: '/campaign/2025',
+        permanent: false, // 输出 307 Temporary Redirect
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+```
+
+### 2. Nginx 配置强制 HTTPS 与规范域名
+
+```nginx
+# 强制 HTTP 跳转 HTTPS (使用 301 永久重定向)
+server {
+    listen 80;
+    server_name example.com www.example.com;
+    return 301 https://example.com$request_uri;
+}
+```
+
+---
+
+## 总结选型口诀
+
+1. **域名更换 / 永久改版 / 规范化 Canonical**：选 **`301`**（静态页面）或 **`308`**（现代 API/保留 POST）。
+2. **临时活动 / 未登录跳转到登录页 / 维护公告**：选 **`307`**（安全无副作用）。
+3. **日常开发中**：尽量避免使用语义模糊的旧 `302`，拥抱 HTTP/1.1 标准的 `307` 与 `308`。

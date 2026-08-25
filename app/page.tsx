@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { archiveGroups, archivePostCount, recentPosts } from '@/lib/posts'
+import { site } from '@/lib/site'
 
 export const metadata: Metadata = {
+  title: site.title,
+  description: site.description,
   alternates: { canonical: '/' }
 }
 
@@ -11,14 +14,14 @@ export default function HomePage() {
     <>
       <section className="mx-auto min-h-[620px] w-[min(1120px,calc(100%_-_40px))] py-[120px] pb-[90px] max-md:min-h-0 max-md:w-[min(680px,calc(100%_-_28px))] max-md:py-[90px]" data-pagefind-ignore>
         <span className="text-xs font-extrabold text-accent">THINK · BUILD · REFLECT</span>
-        <h1 className="my-[26px] mb-[34px] max-w-[900px] text-balance font-serif text-[clamp(54px,8vw,102px)] leading-[.99] font-medium max-md:text-[clamp(48px,15vw,70px)]">
+        <h1 className="my-[26px] mb-[34px] max-w-[900px] text-balance font-serif text-[clamp(48px,7vw,92px)] leading-[1.05] font-medium max-md:text-[clamp(40px,12vw,60px)]">
           ljh的技术博客
         </h1>
         <p className="mb-4 max-w-[650px] text-pretty font-serif text-xl leading-[1.8] text-muted">
-          大家好！我是李建辉，一名热爱技术的开发者。这里分享编程技术心得、学习资源整理和项目开发经验。
+          大家好！我是李建辉，一名热爱技术的全栈与前端开发者。这里专注于记录前端架构设计、多人实时协同算法、性能优化与 AI 大模型工程化落地实践。
         </p>
         <p className="mb-[46px] max-w-[650px] text-pretty font-serif text-xl leading-[1.8] text-muted">
-          也记录阅读、生活，以及一些尚未想清楚的问题。
+          也记录技术选型思考、团队协作演进，以及值得反复推敲的硬核工程问题。
         </p>
         <a className="inline-flex min-h-11 items-center gap-[42px] border-b border-ink text-sm font-bold no-underline" href="#articles">
           开始阅读 <span aria-hidden="true">↓</span>
@@ -29,9 +32,9 @@ export default function HomePage() {
         <div className="mb-11 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
           <div>
             <span className="text-xs font-extrabold text-accent">RECENT WRITING</span>
-            <h2 className="mt-2 mb-0 text-balance font-serif text-5xl font-medium max-md:text-4xl">近期文章</h2>
+            <h2 className="mt-2 mb-0 text-balance font-serif text-5xl font-medium max-md:text-4xl">近期精选文章</h2>
           </div>
-          <p className="text-[13px] text-muted">{recentPosts.length} 篇近期技术与思考</p>
+          <p className="text-[13px] text-muted">{recentPosts.length} 篇深度技术解析与工程思考</p>
         </div>
         <div>
           {recentPosts.map((post, index) => (
@@ -54,9 +57,9 @@ export default function HomePage() {
         <div className="mb-12 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
           <div>
             <span className="text-xs font-extrabold text-accent">ARCHIVE</span>
-            <h2 className="mt-2 mb-0 text-balance font-serif text-5xl font-medium max-md:text-4xl">历史文章</h2>
+            <h2 className="mt-2 mb-0 text-balance font-serif text-5xl font-medium max-md:text-4xl">全站专题归档</h2>
           </div>
-          <p className="text-[13px] text-muted">{archivePostCount} 篇旧博客文章，按原主题归档</p>
+          <p className="text-[13px] text-muted">{archivePostCount} 篇技术博文，按领域体系归档</p>
         </div>
         <div className="grid grid-cols-2 gap-x-16 max-md:grid-cols-1">
           {archiveGroups.map(group => (
@@ -78,7 +81,10 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto mb-[100px] flex w-[min(1120px,calc(100%_-_40px))] items-center justify-between gap-8 border-y border-line py-8 max-md:w-[min(680px,calc(100%_-_28px))] max-md:flex-col max-md:items-start">
-        <p className="m-0 text-pretty font-serif text-lg text-muted">想了解这个博客和作者？</p>
+        <div>
+          <h2 className="m-0 text-balance font-serif text-2xl font-medium">关于博客与作者</h2>
+          <p className="mt-1 text-sm text-muted">了解本站的技术理念、个人项目与联系方式</p>
+        </div>
         <Link className="inline-flex min-h-11 items-center border-b border-ink text-sm font-bold no-underline" href="/about">关于与联系方式 →</Link>
       </section>
     </>
