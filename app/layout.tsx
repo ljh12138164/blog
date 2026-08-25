@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
 import { SiteShell } from './_components/site-shell'
@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     title: site.title,
     description: site.description
   }
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'light',
+  themeColor: '#f5f4ee'
 }
 
 const websiteAndPersonJsonLd = {
@@ -60,7 +65,7 @@ const websiteAndPersonJsonLd = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN">
-      <Head faviconGlyph="✦">
+      <Head backgroundColor={{ light: '#f5f4ee', dark: '#f5f4ee' }}>
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"

@@ -6,6 +6,20 @@ import { site } from '@/lib/site'
 export const metadata: Metadata = {
   title: site.title,
   description: site.description,
+  keywords: [
+    '前端架构',
+    'Web 性能优化',
+    '实时协同',
+    'CRDT',
+    'OT',
+    '全栈开发',
+    '边缘计算',
+    'Cloudflare',
+    'AI 大模型',
+    'LLM',
+    'AI Agent',
+    '技术博客'
+  ],
   alternates: { canonical: '/' }
 }
 

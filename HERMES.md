@@ -18,6 +18,8 @@
 
 SEO 修复已通过 `pnpm typecheck`、`pnpm build` 和 `pnpm verify:seo`；全部导出 HTML 每页只有一个正式域名 canonical。`docker compose config` 通过，本机 Docker Desktop Linux engine 未运行，因此本地镜像构建仍由 CI 验证。线上旧 HTML 需部署新镜像并清除或绕过 Cloudflare 缓存后才会更新。
 
+GitHub Actions 已删除源站 IP 的 `DEPLOY_HOST` 默认值，部署目标必须由 production 环境的 GitHub Variable `DEPLOY_HOST` 提供；站点公开 URL 仍固定为 `https://blog.ljhboard.cn`。
+
 ## 下一步
 
 用户补充文章截图后，将占位块替换为实际图片。生产配置先完成 `blog.ljhboard.cn` Custom Hostname 和 DNS 灰度，验证成功再切 `ai`；根域最后配置 Single Redirect。所有入口稳定后，再用宝塔每 6 小时运行一次优选脚本。
