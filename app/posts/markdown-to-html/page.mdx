@@ -1,0 +1,145 @@
+export const metadata = {
+  title: '如何将 Markdown / MDX 渲染为静态 Web 页面？从 Unified AST 编译流水线到 Nextra 架构选型',
+  description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。',
+  date: '2025-01-25',
+  category: '前端工程化',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/markdown-to-html' },
+  openGraph: {
+    type: 'article',
+    title: '如何将 Markdown / MDX 渲染为静态 Web 页面？从 Unified AST 编译流水线到 Nextra 架构选型',
+    description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。',
+    url: '/posts/markdown-to-html',
+  },
+  twitter: {
+    card: 'summary',
+    title: '如何将 Markdown / MDX 渲染为静态 Web 页面？从 Unified AST 编译流水线到 Nextra 架构选型',
+    description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。',
+  },
+}
+
+在现代内容驱动型网站（如技术博客、产品文档和知识库）中，Markdown / MDX 是内容创作者最青睐的格式。然而，从一段纯文本 `.md` 或带有 React 组件的 `.mdx`，到浏览器中呈现的带有语法高亮、可交互组件和 SEO 优化的 HTML 页面，底层经历了怎样的编译与渲染流水线？
+
+本文结合实际搭建本博客时的选型考量，解析底层编译原理与上层框架对比。
+
+---
+
+## 核心编译链路：Unified 生态下的 AST 流水线
+
+无论上层使用 Nextra、Astro 还是 VitePress，底层的核心标准几乎全部构建在 **Unified.js** 生态之上。它通过将 Markdown 转化为抽象语法树（AST），完成多阶段的变换：
+
+```text
+.md / .mdx 原始文本
+  │
+  ▼ remark-parse (词法与语法分析)
+mdast (Markdown 抽象语法树)
+  │
+  ├─► remark 插件流水线 (如：remark-gfm 表格、remark-math 数学公式)
+  │
+  ▼ remark-rehype (树结构转换)
+hast (HTML 抽象语法树)
+  │
+  ├─► rehype 插件流水线 (如：rehype-pretty-code 代码高亮、rehype-slug 锚点)
+  │
+  ▼ 编译输出
+HTML 字符串 或 React/MDX 渲染组件 (<MDXContent />)
+```
+
+### 1. 为什么需要两套 AST（mdast 与 hast）？
+* **关注点分离**：`mdast` 描述的是 Markdown 的语义结构（如 `Heading`、`List`、`Code`）；而 `hast` 描述的是 DOM 节点的属性与层级（如 `<pre>`、`<code>`、`class`）。
+* **插件生态繁荣**：开发者可以在 `mdast` 阶段做内容预处理（如提取 Frontmatter 元数据），在 `hast` 阶段做 UI 增强（如代码块行号、高亮标记、复制按钮）。
+
+---
+
+## 现代 React / Next.js 文档框架选型与实战
+
+在 Next.js App Router 生态下，将 MDX 渲染为静态站点主要有以下几种主流方案：
+
+```text
+技术选型全景：
+├── 底层库直出: @next/mdx + remark/rehype 插件
+├── 静态文档驱动: Nextra 4 (App Router 原生集成)
+└── 内容集合验证: Fumadocs / Contentlayer / Velite
+```
+
+### 方案对比与踩坑记录
+
+#### 1. Nextra（本博客选型）
+* **特点**：与 Next.js App Router 深度融合，可以直接将 `app/posts/<slug>/page.mdx` 作为页面路由，支持静态导出（Static Export `output: 'export'`）。
+* **优势**：
+  * 开箱即用的代码高亮、目录提取（TOC）和深色模式；
+  * 原生支持自定义组件注入（通过 `mdx-components.tsx`）；
+  * 对静态部署（如 Docker + Nginx 或 Cloudflare Pages）极为友好。
+
+#### 2. Fumadocs
+* **特点**：基于 Zod Schema 对 Markdown 内容进行严格类型校验（Content Collections），内置强大的全文检索（支持 Orama 与 Algolia）。
+* **实战踩坑**：在早期部分版本中，对含有中文 Slug 的路由编码在静态导出时可能出现解析异常或构建断链，因此在全中文分类场景下需要针对性的编码映射配置。
+
+---
+
+## MDX 自定义组件映射：赋予文档交互能力
+
+MDX 的强大之处在于能够将标准 HTML 标签无缝替换为自定义 React 组件：
+
+```tsx
+// mdx-components.tsx
+import type { MDXComponents } from 'mdx/types';
+
+export function useMDXComponents(components: MDXComponents): MDXComponents {
+  return {
+    // 覆盖默认 H2 标签，自动附加锚点与复制链接
+    h2: ({ children, id }) => (
+      <h2 id={id} className="group relative font-bold text-2xl mt-8 mb-4">
+        {children}
+        <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 ml-2 text-blue-500">#</a>
+      </h2>
+    ),
+    // 注入自定义交互组件
+    Alert: ({ children, type = 'info' }) => (
+      <div className={`p-4 rounded-lg my-4 border ${type === 'warning' ? 'border-amber-500 bg-amber-50' : 'border-blue-500 bg-blue-50'}`}>
+        {children}
+      </div>
+    ),
+    ...components,
+  };
+}
+```
+
+在 MDX 文件中可直接使用：
+
+```mdx
+## 这是一个带锚点的标题
+
+<Alert type="warning">
+  这里是一条自定义的交互告警提示组件！
+</Alert>
+```
+
+---
+
+## 全文检索系统构建：Pagefind 离线静态索引
+
+为了让纯静态生成的博客具备极速的站内搜索体验，本站采用了 **Pagefind**：
+
+```text
+Next.js 构建生成静态 HTML (out/)
+  │
+  ▼ 运行 npx pagefind --site out
+自动抓取 HTML 语义标签 (<main>, <article>, data-pagefind-body)
+  │
+  ▼
+生成极小体积的 WebAssembly 离线索引切片 (out/_pagefind/)
+  │
+  ▼
+浏览器端按需加载 wasm 与索引片段，毫秒级本地全文检索
+```
+
+无需维护后端 Elasticsearch 数据库或依赖第三方付费云检索服务，即可实现零网络延迟的即时模糊搜索。
+
+---
+
+## 总结
+
+1. **底层原理**：Markdown 渲染本质是 `Text -> mdast -> hast -> React/HTML` 的 AST 编译与转换流水线。
+2. **架构选型**：Nextra 提供了与 Next.js App Router 结合最自然的 MDX 文件路由体验，配合 `mdx-components.tsx` 可实现完全自定义的视觉与交互。
+3. **检索增强**：采用 Pagefind 离线索引配合静态导出，能够在零后端服务成本下实现企业级搜索体验。

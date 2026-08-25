@@ -1,0 +1,157 @@
+export const metadata = {
+  title: '前端工程化质量守门人：基于 Biome + Simple-Git-Hooks + Lint-Staged 的自动化提交流',
+  description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。',
+  date: '2025-01-22',
+  category: '前端工程化',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/git-commit-validation' },
+  openGraph: {
+    type: 'article',
+    title: '前端工程化质量守门人：基于 Biome + Simple-Git-Hooks + Lint-Staged 的自动化提交流',
+    description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。',
+    url: '/posts/git-commit-validation',
+  },
+  twitter: {
+    card: 'summary',
+    title: '前端工程化质量守门人：基于 Biome + Simple-Git-Hooks + Lint-Staged 的自动化提交流',
+    description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。',
+  },
+}
+
+在多人协作的代码仓库中，常常遇到以下顽疾：
+* 代码格式不一（有的加分号、有的用单引号，Git Diff 产生大量无意义噪音）；
+* 潜在 Bug 溜入生产（未使用的变量、空的 Catch 块、遗留的 `debugger`）；
+* 提交信息随意（如 `git commit -m "fix"`、`"111"`），导致版本历史排查故障极其艰难。
+
+为了从源头拦截低质量代码，必须在 **Git Commit 阶段** 建立自动化的质量守门人流水线。
+
+---
+
+## 现代工具链演进：为什么用 Biome + Simple-Git-Hooks？
+
+```text
+传统方案 vs 现代高性能方案:
+┌──────────────────────────────┬──────────────────────────────┐
+│       传统主流方案           │       现代极速方案           │
+├──────────────────────────────┼──────────────────────────────┤
+│ • ESLint + Prettier          │ • Biome (Rust 编写，单二进   │
+│   (规则冲突、插件多、速度慢) │   制统一 Format + Lint，极快)│
+│ • Husky                      │ • Simple-Git-Hooks           │
+│   (体积较重、配置繁琐)       │   (极轻量，直接写入 .git/hooks│
+│ • Commitlint (传统 Node)     │ • 规范化 Conventional Commit │
+└──────────────────────────────┴──────────────────────────────┘
+```
+
+---
+
+## 核心配置与实战搭建步骤
+
+### 1. 安装核心轻量依赖
+
+```bash
+pnpm add -D @biomejs/biome simple-git-hooks lint-staged @commitlint/cli @commitlint/config-conventional
+```
+
+### 2. 配置 `biome.json`
+
+在根目录下初始化 Biome 配置：
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.json"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedVariables": "error"
+      },
+      "complexity": {
+        "noForEach": "warn"
+      }
+    }
+  }
+}
+```
+
+### 3. 配置 `lint-staged`：仅针对暂存区文件校验
+
+在 `package.json` 中添加 `lint-staged` 配置，确保只扫描本次 `git add` 的文件，绝不浪费时间全量重扫：
+
+```json
+{
+  "lint-staged": {
+    "*.{js,ts,tsx,jsx,json}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "*.{css,scss}": [
+      "stylelint --fix"
+    ]
+  }
+}
+```
+
+### 4. 配置 `simple-git-hooks` 接管 Git 钩子
+
+在 `package.json` 中配置 `pre-commit` 与 `commit-msg` 钩子：
+
+```json
+{
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged",
+    "commit-msg": "pnpm commitlint --edit ${1}"
+  },
+  "scripts": {
+    "prepare": "simple-git-hooks"
+  }
+}
+```
+
+在终端运行一次 `npx simple-git-hooks`，它会直接将极简的 shell 脚本写入 `.git/hooks/` 目录中，零运行时守护开销。
+
+---
+
+## 提交信息规范（Conventional Commits）
+
+通过 `commitlint.config.cjs` 规范团队提交格式：
+
+```js
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'chore', 'revert'],
+    ],
+    'subject-case': [0],
+  },
+};
+```
+
+### 提交验证效果
+* ❌ `git commit -m "update"` -> **被拦截报错**，提示必须包含 `feat:`, `fix:` 等有效类型；
+* ✅ `git commit -m "feat(auth): 增加 Cloudflare Turnstile 人机验证支持"` -> **自动格式化代码并通过校验**。
+
+---
+
+## 总结
+
+* **极速响应**：基于 Rust 的 **Biome** 将格式化与代码分析耗时从秒级压缩至毫秒级（通常不到 50ms），开发者毫无“卡顿感”。
+* **最小侵入**：**Simple-Git-Hooks + Lint-Staged** 仅对本次暂存区代码生效，防止在重构大项目时被老代码的历史 Lint 报错阻塞。
+* **规范一致**：全团队共享统一的提交信息与代码风格规范，显著提升 Code Review 效率。

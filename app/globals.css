@@ -6,7 +6,9 @@
   --color-muted: #64706a;
   --color-line: #d9ddd8;
   --color-paper: #f5f4ee;
-  --color-accent: #c8572c;
+  --color-code: #ebe9e1;
+  --color-code-header: #e2dfd5;
+  --color-accent: #b94f2a;
   --font-serif: Georgia, 'Noto Serif SC', 'Songti SC', serif;
   --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
@@ -14,6 +16,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {
@@ -31,6 +34,36 @@
   input {
     font: inherit;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+.code-block code span {
+  color: var(--shiki-light, var(--color-ink));
+}
+
+.article-content :not(pre) > code {
+  border: 1px solid color-mix(in srgb, var(--color-line) 85%, var(--color-ink));
+  border-radius: 0.35rem;
+  background: var(--color-code);
+  padding: 0.12em 0.35em;
+  color: #8f3f25;
+  font-size: 0.88em;
+  font-weight: 600;
+}
+
+.search-dialog {
+  padding-top: max(12vh, env(safe-area-inset-top));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+}
+
+.search-dialog::backdrop {
+  background: rgb(24 32 29 / 42%);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,113 @@
+export const metadata = {
+  title: 'Jebet 敏捷项目管理平台架构设计：多租户工作区、MobX 响应式状态与 Socket.io 实时协同',
+  description: '全面解析现代团队协作平台的全栈架构设计：涵盖多租户工作区隔离、看板（Kanban）高频拖拽性能治理、MobX 状态中枢与 Socket.io 实时消息总线。',
+  date: '2025-02-14',
+  category: '系统架构',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/jebet-project-management' },
+  openGraph: {
+    type: 'article',
+    title: 'Jebet 敏捷项目管理平台架构设计：多租户工作区、MobX 响应式状态与 Socket.io 实时协同',
+    description: '全面解析现代团队协作平台的全栈架构设计：涵盖多租户工作区隔离、看板（Kanban）高频拖拽性能治理、MobX 状态中枢与 Socket.io 实时消息总线。',
+    url: '/posts/jebet-project-management',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Jebet 敏捷项目管理平台架构设计：多租户工作区、MobX 响应式状态与 Socket.io 实时协同',
+    description: '全面解析现代团队协作平台的全栈架构设计：涵盖多租户工作区隔离、看板（Kanban）高频拖拽性能治理、MobX 状态中枢与 Socket.io 实时消息总线。',
+  },
+}
+
+在研发管理类似 Jira / Linear / Trello 的现代敏捷协作平台时，前端架构不仅需要支撑成百上千个任务卡片的**流畅拖拽编排（Kanban Board）**，还要应对**多成员跨地域实时协作、任务状态秒级推送与多工作区权限隔离**等复杂场景。
+
+**Jebet** 是一套高性能的团队敏捷项目管理系统。本文复盘其核心模块的架构设计与技术落地。
+
+---
+
+## 整体架构分层与数据总线
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ 客户端展示层 (React + TypeScript + TailwindCSS)       │
+│  ├── 敏捷看板 (Kanban) / 甘特图 (Gantt) 视图           │
+│  ├── 成员任务分配与富文本描述抽屉                      │
+│  └── 实时动态活动流 (Activity Feed & Toast Notifications)│
+├────────────────────────────────────────────────────────┤
+│ 双驱状态管理中枢                                       │
+│  ├── MobX Store: 负责高频、细粒度响应式交互 (卡片拖拽) │
+│  └── TanStack Query: 负责异步服务端数据缓存与预加载    │
+├────────────────────────────────────────────────────────┤
+│ 实时通信总线 (Socket.io WebSocket 管道)                │
+│  └── 任务状态流转广播、成员在线心跳、编辑锁定提示      │
+├────────────────────────────────────────────────────────┤
+│ 权限与数据隔离 (RBAC 多工作区)                         │
+│  └── Workspace -> Project -> Sprint -> Task 严格级联   │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 核心设计一：为什么采用 MobX + React Query 双驱模型？
+
+在看板系统中，用户频繁将任务卡片在“待办 -> 进行中 -> 已完成”列之间快速拖拽。
+* **Redux / 单一 State 树的瓶颈**：每次拖拽微调位置，如果引发整棵组件树的浅拷贝，容易在大看板场景下出现掉帧；
+* **MobX 的精准依赖收集**：MobX 基于透明函数式响应（TFRP），只有真正被修改了 `status` 或 `order` 的单张卡片组件会触发重绘，其余 99% 的卡片保持静止；
+* **结合 TanStack Query**：由 React Query 负责数据的初次拉取、缓存过期与后端 API 同步，一旦数据就绪即注入 MobX Domain Model，兼得两者之长。
+
+```tsx
+import { makeAutoObservable } from 'mobx';
+import { observer } from 'mobx-react-lite';
+
+class TaskStore {
+  tasks: Map<string, Task> = new Map();
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  moveTask(taskId: string, targetColumn: string, newOrder: number) {
+    const task = this.tasks.get(taskId);
+    if (task) {
+      task.status = targetColumn;
+      task.order = newOrder;
+      // 触发后台静默同步
+      this.syncToServer(task);
+    }
+  }
+}
+```
+
+---
+
+## 核心设计二：Socket.io 实时事件协同总线
+
+为了避免团队成员“同时修改同一任务发生覆盖”，系统建立了细粒度的房间事件订阅：
+
+```ts
+// 监听特定工作区与项目的事件流
+socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes: any }) => {
+  // 1. 局部更新 MobX 任务状态
+  taskStore.applyRemoteUpdate(payload.taskId, payload.changes);
+  
+  // 2. 弹出轻量通知
+  toast.info(`${payload.updatedBy} 更新了任务状态`);
+});
+```
+
+---
+
+## 核心设计三：多租户与 RBAC 权限隔离
+
+数据模型采用四级严格级联体系：
+1. **Workspace（工作区）**：公司或团队维度，隔离所有计费与顶级成员列表；
+2. **Project（项目空间）**：支持公开或私有权限控制（Owner / Maintainer / Contributor / Viewer）；
+3. **Sprint（迭代周期）**：敏捷冲刺目标与燃尽图计算；
+4. **Task / Issue（原子任务）**：包含子任务、工时估算与附件。
+
+---
+
+## 总结
+
+* **高性能交互**：通过 **MobX 局部精准渲染** 支撑复杂看板的高帧率拖拽体验。
+* **无缝实时协同**：通过 **Socket.io 房间广播** 实现团队状态的毫秒级同步。
+* **高可靠架构**：四级级联设计与 RBAC 权限模型保障了多团队业务数据的绝对安全隔离。

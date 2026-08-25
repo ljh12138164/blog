@@ -1,0 +1,162 @@
+export const metadata = {
+  title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
+  description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。',
+  date: '2025-05-20',
+  category: 'React 进阶',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/react-execution-order' },
+  openGraph: {
+    type: 'article',
+    title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
+    description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。',
+    url: '/posts/react-execution-order',
+  },
+  twitter: {
+    card: 'summary',
+    title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
+    description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。',
+  },
+}
+
+在 React 函数式组件开发中，许多与 DOM 测量、订阅、定时器或事件监听相关的 Bug，往往源于对 **组件函数体、`useLayoutEffect` 与 `useEffect` 在父子组件间的精确执行顺序** 理解不透彻。
+
+本文通过清晰的时序图与对照实验，彻底厘清 React 在**挂载（Mount）**、**更新（Update）** 和 **卸载（Unmount）** 三个完整阶段的底层执行流。
+
+---
+
+## 核心执行模型：深度优先与“自底向上”
+
+React 的工作流程分为两个核心阶段：
+1. **Render 阶段（渲染计算）**：自顶向下递归调用组件函数生成 Fiber / JSX 树，这个阶段是纯计算阶段。
+2. **Commit 阶段（提交与副作用）**：将变更应用到真实 DOM，并执行各类副作用。由于父组件必须在所有子节点准备就绪后才能完整成立，**副作用的触发是“自底向上（Bottom-up）”逆向冒泡完成的**。
+
+```text
+挂载流程时序图 (Parent -> Child):
+
+Render 阶段 (自顶向下):
+  [Parent 函数体执行] ──生成 JSX──> [Child 函数体执行]
+                                          │
+                                          ▼ DOM 树构建完成
+Commit 阶段 (自底向上):
+  [Parent useLayoutEffect] <──同步冒泡── [Child useLayoutEffect]
+                                          │
+                                          ▼ 浏览器完成 Paint (屏幕绘制)
+Passive Effect 阶段 (宏/微任务调度):
+  [Parent useEffect] <──────异步冒泡───── [Child useEffect]
+```
+
+---
+
+## 阶段一：组件首次挂载（Mounting）
+
+假设有父组件 `Parent` 和子组件 `Child`：
+
+```tsx
+function Parent() {
+  console.log('1. Parent: 函数体执行 (Render)');
+
+  useLayoutEffect(() => {
+    console.log('4. Parent: useLayoutEffect (DOM 更新后同步执行)');
+  }, []);
+
+  useEffect(() => {
+    console.log('6. Parent: useEffect (绘制后异步执行)');
+  }, []);
+
+  return <Child />;
+}
+
+function Child() {
+  console.log('2. Child: 函数体执行 (Render)');
+
+  useLayoutEffect(() => {
+    console.log('3. Child: useLayoutEffect');
+  }, []);
+
+  useEffect(() => {
+    console.log('5. Child: useEffect');
+  }, []);
+
+  return <div>Hello</div>;
+}
+```
+
+### 控制台实际输出
+
+```text
+1. Parent: 函数体执行 (Render)
+2. Child: 函数体执行 (Render)
+3. Child: useLayoutEffect
+4. Parent: useLayoutEffect
+--- 浏览器完成屏幕 Paint ---
+5. Child: useEffect
+6. Parent: useEffect
+```
+
+### 关键机制
+* **函数体 Render**：父先子后。父组件调用 `Child()` 才能拿到子组件返回的 JSX。
+* **Effect 执行**：子先父后。子组件的副作用先完成收集和挂载，父组件的副作用才能感知完整的子树。
+* **`useLayoutEffect` vs `useEffect`**：`useLayoutEffect` 在 DOM 更新后**同步阻塞**执行（适合测量 DOM 尺寸防闪烁），而 `useEffect` 会推迟到**浏览器完成绘制后**异步执行，不阻塞首屏交互。
+
+---
+
+## 阶段二：组件更新（Updating）
+
+当父组件状态改变触发重新渲染时，Effect 的清理函数（Cleanup）和新 Effect 的执行时序如下：
+
+```text
+1. Parent 函数体 (Re-render)
+2. Child 函数体 (Re-render)
+3. Child 旧 useLayoutEffect 清理函数
+4. Parent 旧 useLayoutEffect 清理函数
+5. Child 新 useLayoutEffect 执行
+6. Parent 新 useLayoutEffect 执行
+--- 浏览器完成重新绘制 ---
+7. Child 旧 useEffect 清理函数
+8. Parent 旧 useEffect 清理函数
+9. Child 新 useEffect 执行
+10. Parent 新 useEffect 执行
+```
+
+> [!IMPORTANT]
+> **先清理旧副作用，再执行新副作用**：React 严格保证在执行新的 Effect 之前，先执行上一轮渲染留下的 Cleanup 函数，防止内存泄漏或重复注册监听。
+
+---
+
+## 阶段三：组件卸载（Unmounting）
+
+当组件从页面中移除时，仅触发所有已激活 Effect 的清理函数：
+
+```text
+1. Child: useLayoutEffect 清理函数
+2. Parent: useLayoutEffect 清理函数
+3. Child: useEffect 清理函数
+4. Parent: useEffect 清理函数
+```
+
+在卸载过程中，依然严格遵循**自子到父（Bottom-Up）**的顺序，确保子组件优先释放局部资源（如清理特定 DOM 观察器、注销子级 WebSocket 监听），最后父组件再做整体销毁。
+
+---
+
+## 常见时序踩坑与避坑指南
+
+### 1. 在 `useEffect` 中获取子组件 DOM 尺寸导致闪烁
+* **现象**：在 `useEffect` 中测量 DOM 并 setState，页面会出现微小的一瞬间跳动/闪烁。
+* **原因**：`useEffect` 执行时屏幕已经绘制了第一版，随后的 setState 又触发了第二版绘制。
+* **解决**：涉及直接 DOM 测量和同步矫正时，使用 `useLayoutEffect`。
+
+### 2. 父子 Effect 依赖共享 Ref 的竞态
+* **现象**：父组件在 `useEffect` 中试图消费子组件通过 `useEffect` 初始化的实例，发现值为 `undefined`。
+* **解决**：因为挂载时子组件 `useEffect` 先于父组件执行，通常可以获取；但如果是异步网络请求，则必须通过 React 状态升水（State Lifting）或 Context 来做可靠响应，绝不能依赖 Effect 执行顺序做隐式时间契约。
+
+---
+
+## 总结速查表
+
+| 执行环节 | 父子先后顺序 | 执行时机 | 是否阻塞页面绘制 |
+| :--- | :--- | :--- | :--- |
+| **函数体 (Render)** | **父 -> 子** | 计算虚拟 DOM | 是（占用 JS 线程） |
+| **`useLayoutEffect` 清理** | **子 -> 父** | DOM 更新后、Paint 前 | 是 |
+| **`useLayoutEffect` 激活** | **子 -> 父** | DOM 更新后、Paint 前 | 是 |
+| **`useEffect` 清理** | **子 -> 父** | 浏览器 Paint 之后 | 否 |
+| **`useEffect` 激活** | **子 -> 父** | 浏览器 Paint 之后 | 否 |

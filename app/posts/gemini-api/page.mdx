@@ -1,0 +1,225 @@
+export const metadata = {
+  title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
+  description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。',
+  date: '2025-01-12',
+  category: 'AI 工程',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/gemini-api' },
+  openGraph: {
+    type: 'article',
+    title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
+    description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。',
+    url: '/posts/gemini-api',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
+    description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。',
+  },
+}
+
+Google 推出的 **Gemini 1.5 Flash / 2.0 Flash** 凭借超大上下文窗口（高达 100万~200万 Tokens）、超低延迟与极高的性价比，成为当前全栈开发者构建 AI 应用的首选模型之一。
+
+然而在实际落地中，开发者往往需要处理**跨国网络连通性、API Key 安全保密、前端打字机流式输出（Streaming）与结构化 JSON 约束**等工程难题。本文提供一套基于 Hono 边缘网关的全栈落地指南。
+
+---
+
+## 架构拓扑：为什么需要边缘 API 代理？
+
+```text
+客户端浏览器 (React / Next.js)
+  │
+  ▼ POST /api/chat/stream (避免客户端直连暴露 API Key，解决 CORS 跨域)
+Hono 边缘网关 (部署于 Cloudflare / Vercel Edge)
+  │
+  ├── 1. 业务鉴权与速率限制 (Rate Limit)
+  ├── 2. 注入服务端环境变量 GEMINI_API_KEY
+  │
+  ▼ Google Generative AI SDK (流式调用)
+Google Gemini API (googleapis.com)
+  │
+  ▼ SSE (Server-Sent Events) 逐字推回
+客户端实时打字机渲染
+```
+
+---
+
+## 第一步：服务端 Hono 边缘路由实现
+
+安装官方 SDK 与 Hono 流式响应工具包：
+
+```bash
+pnpm add @google/generative-ai hono
+```
+
+### 1. 实现流式输出（Streaming SSE）接口
+
+```ts
+// src/routes/gemini.ts
+import { Hono } from 'hono';
+import { streamText } from 'hono/streaming';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const geminiRoute = new Hono();
+
+geminiRoute.post('/chat/stream', async (c) => {
+  const { prompt, history = [] } = await c.req.json();
+  const apiKey = c.env?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return c.json({ error: 'API Key 未配置' }, 500);
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  // 使用高性价比的 Gemini 1.5 Flash 或最新的 2.0 Flash
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  // 开启流式 SSE 响应
+  return streamText(c, async (stream) => {
+    try {
+      const chat = model.startChat({
+        history: history.map((h: any) => ({
+          role: h.role === 'user' ? 'user' : 'model',
+          parts: [{ text: h.content }],
+        })),
+      });
+
+      const result = await chat.sendMessageStream(prompt);
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        await stream.write(chunkText);
+      }
+    } catch (err: any) {
+      await stream.write(`\n[Error: ${err.message}]`);
+    }
+  });
+});
+
+export default geminiRoute;
+```
+
+---
+
+## 第二步：结构化输出（JSON Mode / Function Calling）
+
+让大模型返回可直接被程序消费的强类型 JSON 数据：
+
+```ts
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+const model = genAI.getGenerativeModel({
+  model: 'gemini-1.5-flash',
+  generationConfig: {
+    responseMimeType: 'application/json',
+    responseSchema: {
+      type: SchemaType.OBJECT,
+      properties: {
+        sentiment: {
+          type: SchemaType.STRING,
+          enum: ['positive', 'neutral', 'negative'],
+          description: '情感倾向分析结果',
+        },
+        confidence: {
+          type: SchemaType.NUMBER,
+          description: '置信度得分 (0-1)',
+        },
+        tags: {
+          type: SchemaType.ARRAY,
+          items: { type: SchemaType.STRING },
+          description: '提取出的核心关键词',
+        },
+      },
+      required: ['sentiment', 'confidence', 'tags'],
+    },
+  },
+});
+
+async function analyzeFeedback(text: string) {
+  const result = await model.generateContent(`请分析以下用户评论：${text}`);
+  const jsonResponse = JSON.parse(result.response.text());
+  return jsonResponse;
+}
+```
+
+---
+
+## 第三步：前端 React 打字机效果消费
+
+在 React 组件中使用原生 `ReadableStream` 消费流式接口：
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+
+export function GeminiChat() {
+  const [input, setInput] = useState('');
+  const [reply, setReply] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim() || isGenerating) return;
+    
+    setIsGenerating(true);
+    setReply('');
+
+    try {
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input }),
+      });
+
+      if (!response.body) throw new Error('ReadableStream 不可用');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const textChunk = decoder.decode(value, { stream: true });
+        setReply((prev) => prev + textChunk);
+      }
+    } catch (err: any) {
+      setReply(`发生错误: ${err.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4 max-w-xl">
+      <div className="p-4 bg-gray-50 border rounded-lg min-h-[120px] whitespace-pre-wrap">
+        {reply || (isGenerating ? 'Gemini 正在思考中...' : '等待输入提问...')}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="问问 Gemini..."
+          className="flex-1 px-3 py-2 border rounded-md"
+        />
+        <button
+          onClick={handleSend}
+          disabled={isGenerating}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-400"
+        >
+          发送
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 总结
+
+* **安全边界**：始终通过后端或边缘网关代理请求，杜绝 API Key 在前端暴露。
+* **交互体验**：优先使用 `streamText` 与 `ReadableStream` 实现流式 SSE 响应，将用户感知的首字耗时（TTFT）降低到 300ms 以内。
+* **可靠数据**：配合 `responseSchema` 强制模型输出强类型 JSON，无缝衔接下游业务系统。

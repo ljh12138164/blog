@@ -1,0 +1,141 @@
+export const metadata = {
+  title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
+  description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。',
+  date: '2025-01-26',
+  category: '前端工程化',
+  readingTime: '8 分钟',
+  alternates: { canonical: '/posts/tsup-bundler' },
+  openGraph: {
+    type: 'article',
+    title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
+    description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。',
+    url: '/posts/tsup-bundler',
+  },
+  twitter: {
+    card: 'summary',
+    title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
+    description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。',
+  },
+}
+
+在开发 TypeScript 工具库、React 组件库或 Monorepo 内部公共包时，配置 Webpack 或 Rollup 往往需要编写冗长的配置文件，处理复杂的 Babel / SWC 插件和类型声明插件。
+
+**tsup** 基于 Go 语言编写的 **esbuild** 构建，主打“开箱即用、零配置或极简配置”，能在毫秒级时间内完成 TypeScript 源码到 ESM / CommonJS 双格式产物与 `.d.ts` 类型文件的编译。
+
+本文记录了在为开源项目 [autoform](https://github.com/vantezzen/autoform)（[PR #145](https://github.com/vantezzen/autoform/pull/145)）贡献构建优化时，使用 tsup 提升 DX 的实战经验。
+
+---
+
+## 为什么选择 tsup？核心优势剖析
+
+```text
+传统 Rollup/Webpack 流程:
+  TS 源码 -> Babel/TSC 单线程解析 -> AST 转换 -> 插件链 -> 打包 (耗时 5~15s)
+
+tsup 架构:
+  TS 源码 ──► esbuild (Go 原生并行编译) ──► 极速产出 ESM/CJS (耗时 50~200ms)
+          └──► 并行触发 tsc 提取类型 ────► 产出 .d.ts 声明文件
+```
+
+1. **极致构建速度**：底层由 esbuild 驱动，比纯 JavaScript 编写的编译器快 10~100 倍。
+2. **开箱即用的双模块格式（Dual Formats）**：一条命令同时输出 Modern ESM (`.mjs`) 与 Node.js 兼容的 CommonJS (`.cjs`)。
+3. **无痛生成类型声明**：通过 `--dts` 自动调用 TypeScript Compiler 提取 `.d.ts`，无需繁琐的 `rollup-plugin-dts` 配置。
+4. **Monorepo 级热重载**：内置 `--watch` 模式，子包代码变更毫秒级重新打包，上层 App 页面实时更新。
+
+---
+
+## 快速上手与生产级配置文件
+
+### 1. 安装依赖
+
+```bash
+pnpm add -D tsup typescript
+```
+
+### 2. 编写 `tsup.config.ts`
+
+虽然可以在命令行传递参数，但通过配置文件能沉淀更标准、可复用的构建策略：
+
+```ts
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  // 入口文件
+  entry: ['src/index.ts'],
+  // 同时输出 ESM 和 CJS 格式
+  format: ['cjs', 'esm'],
+  // 自动生成类型声明文件 .d.ts
+  dts: true,
+  // 开启源码映射，方便调试
+  sourcemap: true,
+  // 每次构建前清空 dist 目录
+  clean: true,
+  // 代码压缩（生产发布时开启）
+  minify: false,
+  // 排除外部依赖，避免把 react 或 lodash 打入产物
+  external: ['react', 'react-dom'],
+  // 摇树优化 (Tree Shaking)
+  treeshaking: true,
+});
+```
+
+---
+
+## 现代 `package.json` 导出规范（Package Exports）
+
+仅打包出文件还不够，要让 npm 消费者（包括 Vite、Next.js、Node.js CJS/ESM）正确解析你的包，必须配合现代 `exports` 字段：
+
+```json
+{
+  "name": "@my-org/core-utils",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "files": [
+    "dist"
+  ]
+}
+```
+
+> [!TIP]
+> **条件导出顺序原则**：在 `exports` 字段中，`types` 必须排在最前面，否则部分 TypeScript 版本可能无法优先解析类型声明。
+
+---
+
+## 在 Monorepo 中的绝佳协同体验
+
+在 pnpm workspace 或 Turborepo 架构中，公共 UI 组件包或通用工具库常被多个业务应用引用：
+
+```text
+apps/
+  ├── web-portal/ (Next.js 应用)
+packages/
+  └── ui-kit/ (使用 tsup 构建)
+```
+
+1. 在 `packages/ui-kit` 中启动 `pnpm dev`（即 `tsup --watch`）。
+2. 在 `apps/web-portal` 中直接导入 `@my-org/ui-kit`。
+3. 当修改 `ui-kit` 中的组件代码时，tsup 在 **80ms** 内完成增量打包，Vite / Next.js 的 HMR 立即捕捉到变化并刷新页面。
+4. 这种方式既保证了多包隔离与严格的发布边界，又完全不牺牲单体开发的流畅体验。
+
+---
+
+## 总结
+
+* **定位清晰**：tsup 是目前开发 TypeScript 库、SDK 和 Monorepo 公共包最高效的构建利器。
+* **低心智负担**：告别上百行的 Rollup 配置，一条命令搞定 CJS、ESM、d.ts 与 SourceMap。
+* **开发体验**：毫秒级的 Watch 模式让跨包联调如丝般顺滑。

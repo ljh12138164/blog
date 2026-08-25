@@ -1,5 +1,17 @@
 export const site = {
-  name: '个人博客',
-  description: '记录技术、阅读、生活与那些值得反复思考的问题。',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  name: 'ljh的技术博客',
+  title: 'ljh的技术博客 - 前端架构、实时协同与 AI 工程化实践',
+  description:
+    '专注分享前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优、全栈边缘计算与 AI 大模型（LLM/Agent）工程化落地实践的技术博客。',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://blog.ljhboard.cn',
+  author: {
+    name: '李建辉',
+    englishName: 'ljh',
+    url: 'https://blog.ljhboard.cn/about',
+    github: 'https://github.com/ljh12138164',
+    jobTitle: '前端架构师 / 全栈工程师',
+    sameAs: [
+      'https://github.com/ljh12138164'
+    ]
+  }
 }

@@ -1,0 +1,192 @@
+export const metadata = {
+  title: '用 Hono + Zod 在 Next.js 中构建端到端类型安全的 RPC API 路由',
+  description: '告别无类型 fetch 与分散的 Route Handlers：利用 Hono RPC、zValidator 与 hc 客户端在 Next.js 全栈应用中实现从后端到 React Query 的端到端类型推导。',
+  date: '2025-01-26',
+  category: '全栈开发',
+  readingTime: '9 分钟',
+  alternates: { canonical: '/posts/type-safe-routing' },
+  openGraph: {
+    type: 'article',
+    title: '用 Hono + Zod 在 Next.js 中构建端到端类型安全的 RPC API 路由',
+    description: '告别无类型 fetch 与分散的 Route Handlers：利用 Hono RPC、zValidator 与 hc 客户端在 Next.js 全栈应用中实现从后端到 React Query 的端到端类型推导。',
+    url: '/posts/type-safe-routing',
+  },
+  twitter: {
+    card: 'summary',
+    title: '用 Hono + Zod 在 Next.js 中构建端到端类型安全的 RPC API 路由',
+    description: '告别无类型 fetch 与分散的 Route Handlers：利用 Hono RPC、zValidator 与 hc 客户端在 Next.js 全栈应用中实现从后端到 React Query 的端到端类型推导。',
+  },
+}
+
+在传统的 Next.js App Router API 开发中，通常面临两大痛点：
+1. **文件琐碎分散**：每个路由都需要新建一个目录并创建 `route.ts`（例如 `app/api/users/route.ts`、`app/api/posts/[id]/route.ts`）；
+2. **前后端类型割裂**：前端调用时往往使用裸字符串 `fetch('/api/users?id=123')`，参数名称、查询参数类型以及返回结果的 Schema 无法自动推导，重构时极易埋雷。
+
+通过将 **Hono** 作为 API 路由引擎嵌入 Next.js，并结合 **Zod** 与 **Hono RPC (`hc`)**，我们能够用极简的代码实现媲美 tRPC 的**全栈端到端强类型约束**。
+
+---
+
+## 架构设计：Next.js Catch-All + Hono RPC
+
+```text
+前端 React 组件 (或 TanStack Query)
+  │
+  ▼ hc<AppType> 客户端调用 (享受 IDE 强类型自动补全与入参检查)
+HTTP 请求 /api/posts/create
+  │
+  ▼ Next.js Catch-all: app/api/[[...route]]/route.ts
+Hono 路由中心
+  │
+  ├── zValidator('json', schema) 运行时入参强校验
+  ├── 业务 Handler 处理
+  └── 返回 c.json(data) 并自动向前端推导响应类型
+```
+
+---
+
+## 第一步：依赖安装
+
+```bash
+pnpm add hono @hono/zod-validator zod @tanstack/react-query
+```
+
+---
+
+## 第二步：在 Next.js 中挂载 Hono 路由
+
+在 `app/api/[[...route]]/route.ts` 中创建统一入口，并使用 Hono 的子路由（`.route()`）模块化组织代码：
+
+```ts
+// app/api/[[...route]]/route.ts
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+
+const app = new Hono().basePath('/api');
+
+// 1. 定义入参验证 Schema
+const createPostSchema = z.object({
+  title: z.string().min(3, '标题至少 3 个字符'),
+  content: z.string().min(10, '内容至少 10 个字符'),
+  tags: z.array(z.string()).default([]),
+});
+
+// 2. 链式定义路由（必须链式调用以便 TypeScript 提取 AppType）
+const routes = app
+  .get('/hello', (c) => {
+    return c.json({ message: 'Hello from Type-Safe Hono!' });
+  })
+  .post('/posts', zValidator('json', createPostSchema), async (c) => {
+    // validData 自动获得准确的 TypeScript 类型
+    const validData = c.req.valid('json');
+
+    // 模拟数据库保存
+    const post = {
+      id: crypto.randomUUID(),
+      ...validData,
+      createdAt: new Date().toISOString(),
+    };
+
+    return c.json({ success: true, data: post }, 201);
+  });
+
+// 导出 Next.js 请求处理器
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const DELETE = handle(app);
+
+// 3. 导出整个 API 的类型定义供前端使用
+export type AppType = typeof routes;
+```
+
+---
+
+## 第三步：前端初始化强类型客户端（`hc`）
+
+在客户端创建 RPC Client 实例，无需任何代码生成步骤（Code-gen），即可直接引用服务端的 `AppType`：
+
+```ts
+// lib/rpc-client.ts
+import { hc } from 'hono/client';
+import type { AppType } from '@/app/api/[[...route]]/route';
+
+// 获得拥有完整路径补全与入参检查的强类型客户端
+export const client = hc<AppType>(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+```
+
+---
+
+## 第四步：在 React / TanStack Query 中深度集成
+
+Hono 提供了 `InferRequestType` 和 `InferResponseType` 工具类型，可以无缝对接 TanStack Query：
+
+```tsx
+// components/CreatePostForm.tsx
+'use client';
+
+import { useMutation } from '@tanstack/react-query';
+import { client } from '@/lib/rpc-client';
+import type { InferRequestType, InferResponseType } from 'hono';
+
+// 提取指定接口的请求与响应类型
+type ReqType = InferRequestType<typeof client.api.posts.$post>['json'];
+type ResType = InferResponseType<typeof client.api.posts.$post, 201>;
+
+export function CreatePostForm() {
+  const mutation = useMutation<ResType, Error, ReqType>({
+    mutationFn: async (json) => {
+      // client.api.posts.$post 享受完整类型检查，输错字段在 IDE 中直接标红
+      const res = await client.api.posts.$post({ json });
+      if (!res.ok) {
+        throw new Error('创建文章失败');
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      console.log('创建成功，返回文章 ID:', data.data.id);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate({
+      title: '端到端类型安全实践',
+      content: '本文详细记录了 Hono + Zod 在 Next.js 中的全流程打通...',
+      tags: ['TypeScript', 'Next.js', 'Hono'],
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <button
+        type="submit"
+        disabled={mutation.isPending}
+        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      >
+        {mutation.isPending ? '提交中...' : '创建文章'}
+      </button>
+    </form>
+  );
+}
+```
+
+---
+
+## 相比传统方案的核心收益
+
+| 维度 | 传统 Next.js Route Handlers | tRPC | Hono RPC + Zod |
+| :--- | :--- | :--- | :--- |
+| **路由文件管理** | 目录嵌套深，每个 API 一个文件 | 集中 Router 组织 | 集中或模块化 Sub-routing |
+| **类型安全** | ❌ 前端需手动写 interface 强转 | ✅ 全链路类型推导 | ✅ 全链路类型推导 |
+| **标准 REST 支持** | ✅ 原生 HTTP | ❌ 默认专有 RPC 协议 | ✅ 标准 HTTP / REST，对外开放 API 零负担 |
+| **运行时体积** | 极小 | 较重 | **极轻量（适合 Edge Runtime）** |
+
+---
+
+## 总结
+
+* **高内聚低割裂**：利用 Next.js Catch-All 路由，将所有 API 路由逻辑统一收敛至 Hono。
+* **运行时安全 + 编译期推导**：`zValidator` 守住入参边界，`AppType` 与 `hc` 赋予前端极致的代码补全体验。
+* **前后端重构零恐惧**：服务端一旦修改字段或返回格式，前端对应的调用代码会立刻在编译期标红报错，彻底告别运行时静默 Bug。
