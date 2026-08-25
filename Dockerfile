@@ -9,10 +9,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-ARG NEXT_PUBLIC_SITE_URL=http://60.205.171.159
-ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-ENV SITE_URL=$NEXT_PUBLIC_SITE_URL
-
 RUN pnpm build
 
 FROM nginx:1.29-alpine AS runtime

@@ -36,10 +36,10 @@ The static-file deployment removed Docker even though the repository must contin
 ## Verification
 
 - Passed: `docker compose config` renders the local `blog:latest` image with `pull_policy: never`.
-- Passed: `pnpm typecheck`, `NEXT_PUBLIC_SITE_URL=http://60.205.171.159 pnpm build`, and required `out/` artifacts (`index.html`, Pagefind, sitemap, robots).
+- Passed: `pnpm typecheck`, `pnpm build`, and required `out/` artifacts (`index.html`, Pagefind, sitemap, robots). The canonical origin is fixed by `site.config.json` and must not use the origin IP.
 - Passed: `bash -n deploy/server/deploy-blog`, `bash -n deploy/server/blog-deploy-gate`, workflow YAML parsing, no-registry workflow scan, and `git diff --check`.
 - Passed: the corrected host Nginx virtual host targets the Compose-published `127.0.0.1:18080` endpoint; production deployment additionally runs the server's Nginx syntax test before reload and rolls configuration back on failure.
-- Blocked locally: `docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .` cannot connect because Docker Desktop's Linux engine is not running on this workstation. The deploy workflow performs the same build on GitHub-hosted Linux runners.
+- Blocked locally: `docker build -t blog:local .` cannot connect because Docker Desktop's Linux engine is not running on this workstation. The deploy workflow performs the same build on GitHub-hosted Linux runners.
 
 ## Risks
 

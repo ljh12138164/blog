@@ -48,7 +48,7 @@ When container files change, also run:
 
 ```bash
 docker compose config
-docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .
+docker build -t blog:local .
 ```
 
 Do not deploy merely because verification passes. Deploy only when the user explicitly requests production publication.

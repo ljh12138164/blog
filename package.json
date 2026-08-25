@@ -10,7 +10,8 @@
     "cloudflare:worker:preview": "wrangler deploy --env=\"\" --config cloudflare/worker/wrangler.jsonc",
     "cloudflare:worker:production": "wrangler deploy --env production --config cloudflare/worker/wrangler.jsonc",
     "update:skill": "git submodule update --remote utils",
-    "postbuild": "node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs",
+    "postbuild": "node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs && node scripts/verify-seo.mjs",
+    "verify:seo": "node scripts/verify-seo.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -6,7 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://blog.ljhboard.cn';
+const SITE_URL = JSON.parse(
+  fs.readFileSync(path.join(rootDir, 'site.config.json'), 'utf-8'),
+).url;
 const SITE_NAME = 'ljh的技术博客';
 const SITE_DESC = '专注分享前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优、全栈边缘计算与 AI 大模型（LLM/Agent）工程化落地实践的技术博客。';
 

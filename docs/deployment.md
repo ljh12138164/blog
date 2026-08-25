@@ -19,7 +19,7 @@ GitHub master
 
 - `DEPLOY_SSH_KEY`：仅用于 `blog-deploy` 强制命令的私钥。
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH Ed25519 主机公钥对应的 `known_hosts` 行。
-- `DEPLOY_HOST`、`DEPLOY_PORT`、`DEPLOY_USER`（`blog-deploy`）和 `SITE_URL`：Actions variables。
+- `DEPLOY_HOST`、`DEPLOY_PORT` 和 `DEPLOY_USER`（`blog-deploy`）：Actions variables。
 
 不需要 GHCR token、Packages token 或 Docker registry 凭据。
 
@@ -70,9 +70,9 @@ docker compose -f /opt/stacks/blog/compose.yaml ps
 ```bash
 pnpm install --frozen-lockfile
 pnpm typecheck
-NEXT_PUBLIC_SITE_URL=http://60.205.171.159 pnpm build
+pnpm build
 docker compose config
-docker build --build-arg NEXT_PUBLIC_SITE_URL=http://60.205.171.159 -t blog:local .
+docker build -t blog:local .
 ```
 
 构建必须生成 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml` 和 `out/robots.txt`。

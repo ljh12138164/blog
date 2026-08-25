@@ -14,6 +14,10 @@
 
 站点头部博客名称左侧的“✦”已替换为项目 `/favicon.ico`，保留原 30px 圆形图标布局。
 
+已定位线上 canonical 冲突：CI 和 Dockerfile 曾把源站 IP 作为 `NEXT_PUBLIC_SITE_URL` 默认值，Cloudflare 又只重写了部分 HTTP URL。站点公开 URL 现统一由 `site.config.json` 固定为 `https://blog.ljhboard.cn`，构建流程不再接受 IP build arg，并新增全量静态 HTML canonical/og:url 校验。
+
+SEO 修复已通过 `pnpm typecheck`、`pnpm build` 和 `pnpm verify:seo`；全部导出 HTML 每页只有一个正式域名 canonical。`docker compose config` 通过，本机 Docker Desktop Linux engine 未运行，因此本地镜像构建仍由 CI 验证。线上旧 HTML 需部署新镜像并清除或绕过 Cloudflare 缓存后才会更新。
+
 ## 下一步
 
 用户补充文章截图后，将占位块替换为实际图片。生产配置先完成 `blog.ljhboard.cn` Custom Hostname 和 DNS 灰度，验证成功再切 `ai`；根域最后配置 Single Redirect。所有入口稳定后，再用宝塔每 6 小时运行一次优选脚本。

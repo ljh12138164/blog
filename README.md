@@ -19,7 +19,7 @@ pnpm build
 
 ## SEO 配置
 
-复制 `.env.example` 为 `.env.local`，将 `NEXT_PUBLIC_SITE_URL` 改为正式域名。该值用于 canonical、Open Graph、`sitemap.xml` 与 `robots.txt`。
+正式站点域名统一配置在 `site.config.json`。该值用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引；不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于正式域名的 canonical。
 
 新增文章时，需要同时：
 

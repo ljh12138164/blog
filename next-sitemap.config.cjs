@@ -1,9 +1,8 @@
+const siteConfig = require('./site.config.json')
+
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl:
-    process.env.SITE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'https://blog.ljhboard.cn',
+  siteUrl: siteConfig.url,
   generateRobotsTxt: true,
   outDir: 'out',
   changefreq: 'weekly',
