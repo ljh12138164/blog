@@ -1,5 +1,13 @@
 export const recentPosts = [
   {
+    slug: 'pagefind-chinese-search-and-stemming',
+    title: '为什么 Pagefind 提示不支持中文 Stemming？深入解析搜索引擎中的分词与词干提取',
+    description: '深度剖析静态搜索引擎 Pagefind 的多语言检索架构：从自然语言处理视角解析为什么中文需要分词（Jieba）而非词干提取（Stemming），并详解 Pagefind v1.5.0 的 Rust Jieba 机制与 CLI 日志真相。',
+    date: '2026-08-25',
+    category: '建站与专题',
+    readingTime: '8 分钟'
+  },
+  {
     slug: 'agent-fundamentals',
     title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环',
     description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。',
@@ -107,6 +115,7 @@ export const archiveGroups = [
   {
     title: '建站与专题',
     posts: [
+      { title: 'Pagefind中文分词与Stemming机制', href: '/posts/pagefind-chinese-search-and-stemming' },
       { title: '基于 Next.js 和 Nextra 搭建个人技术博客', href: '/posts/nextra-blog-setup' },
       { title: '流程图的自定义连接', href: '/posts/custom-flowchart-connections' },
       { title: '让websocket服务运行在边缘函数中', href: '/posts/websocket-edge-functions' },

@@ -6,6 +6,11 @@
 
 ## 全站技术专题与文章索引
 
+### 建站与专题
+
+- [为什么 Pagefind 提示不支持中文 Stemming？深入解析搜索引擎中的分词（Segmentation）与词干提取（Stemming）](https://blog.ljhboard.cn/posts/pagefind-chinese-search-and-stemming): 深度剖析静态搜索引擎 Pagefind 的多语言检索架构：从自然语言处理（NLP）视角解析为什么中文需要分词（Jieba）而非词干提取（Stemming），并详解 Pagefind v1.5.0 的 Rust Jieba 分词机制与 CLI 日志真相。 (发布日期: 2026-08-25)
+- [基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程](https://blog.ljhboard.cn/posts/nextra-blog-setup): 全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。 (发布日期: 2025-01-28)
+
 ### AI 工程
 
 - [Agent 不是更长的 Prompt：从工具调用到受控执行循环](https://blog.ljhboard.cn/posts/agent-fundamentals): 从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。 (发布日期: 2026-08-19)
@@ -79,10 +84,6 @@
 
 - [为什么 Biome / ESLint 推荐用 for...of 替代 forEach？从异步文件上传的踩坑说起](https://blog.ljhboard.cn/posts/for-of-vs-foreach): 深入剖析 Array.prototype.forEach 无法 await 异步回调的底层机制，对比 for...of 串行执行与 Promise.all 并发控制的最佳实践。 (发布日期: 2025-01-30)
 
-### 建站与专题
-
-- [基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程](https://blog.ljhboard.cn/posts/nextra-blog-setup): 全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。 (发布日期: 2025-01-28)
-
 ### 协同架构
 
 - [基于 Tiptap + Yjs + Hocuspocus 的企业级多人富文本协同架构实战](https://blog.ljhboard.cn/posts/tiptap-collaboration): 详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。 (发布日期: 2025-01-26)
@@ -103,5 +104,5 @@
 
 ## 附加资源与全量数据
 
-- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 35 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
+- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 36 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
 - [全站 XML 站点地图 (sitemap.xml)](https://blog.ljhboard.cn/sitemap.xml): 搜索引擎爬虫索引入口。
