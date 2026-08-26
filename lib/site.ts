@@ -11,9 +11,13 @@ export const site = {
     englishName: 'ljh',
     url: 'https://blog.ljhboard.cn/about',
     github: 'https://github.com/ljh12138164',
-    jobTitle: '前端架构师 / 全栈工程师',
+    jobTitle: '前端全干工程师',
     sameAs: [
       'https://github.com/ljh12138164'
     ]
+  },
+  icp: {
+    number: '浙ICP备2026067260号-1',
+    link: 'https://beian.miit.gov.cn/'
   }
 }
