@@ -4,10 +4,10 @@ const siteConfig = require('./site.config.json')
 module.exports = {
   siteUrl: siteConfig.url,
   generateRobotsTxt: true,
+  generateIndexSitemap: false,
   outDir: 'out',
   changefreq: 'weekly',
   priority: 0.7,
-  sitemapSize: 5000,
   exclude: ['/_pagefind/*'],
   robotsTxtOptions: {
     policies: [
