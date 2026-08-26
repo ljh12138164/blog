@@ -48,7 +48,7 @@ for (const htmlPath of collectHtmlFiles(outDir)) {
   }
 }
 
-for (const outputName of ['sitemap.xml', 'sitemap-0.xml', 'robots.txt', 'llms.txt']) {
+for (const outputName of ['sitemap.xml', 'robots.txt', 'llms.txt']) {
   const outputPath = path.join(outDir, outputName)
   if (!fs.existsSync(outputPath)) {
     errors.push(`out/${outputName}: missing`)
@@ -59,6 +59,14 @@ for (const outputName of ['sitemap.xml', 'sitemap-0.xml', 'robots.txt', 'llms.tx
   if (/https?:\/\/(?:\d{1,3}\.){3}\d{1,3}/i.test(output)) {
     errors.push(`out/${outputName}: contains an IP-based public URL`)
   }
+}
+
+const sitemapFragments = fs
+  .readdirSync(outDir)
+  .filter(outputName => /^sitemap-.*\.xml$/.test(outputName))
+
+if (sitemapFragments.length > 0) {
+  errors.push(`out/: unexpected sitemap fragments: ${sitemapFragments.join(', ')}`)
 }
 
 if (errors.length > 0) {
