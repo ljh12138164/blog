@@ -6,6 +6,7 @@ export const site = {
   description:
     '专注分享前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优、全栈边缘计算与 AI 大模型（LLM/Agent）工程化落地实践的技术博客。',
   url: siteConfig.url,
+  googleAnalyticsId: 'G-CNJ6XX4XBJ',
   author: {
     name: '李建辉',
     englishName: 'ljh',

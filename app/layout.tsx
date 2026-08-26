@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Head } from 'nextra/components'
+import Script from 'next/script'
 import type { ReactNode } from 'react'
 import { SiteShell } from './_components/site-shell'
 import { site } from '@/lib/site'
@@ -73,6 +74,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </Head>
       <body>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${site.googleAnalyticsId}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '${site.googleAnalyticsId}');
+          `}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndPersonJsonLd) }}
