@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@theguild/remark-mermaid':
+        specifier: 0.3.0
+        version: 0.3.0(react@19.1.0)
       next:
         specifier: 16.0.7
         version: 16.0.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

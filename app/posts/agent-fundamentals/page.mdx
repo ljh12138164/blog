@@ -11,15 +11,35 @@ export const metadata = {
 
 普通聊天模型只能生成内容。你让它“创建一个 `todo.md` 文件”，它最多返回一段 Markdown；文件是否真的出现在磁盘上，模型既不知道，也做不到。
 
-Agent 的变化并不是提示词更长，而是模型被放进了一个执行循环：它可以选择工具，应用负责执行工具，执行结果回到上下文，模型再决定下一步。只要任务尚未完成，循环就可以继续。
+Agent 的变化并不是提示词更长，而是模型被放进了一个执行循环：它可以选择工具，应用负责执行工具，执行结果回到上下文，模型再决定下一步。只要任务尚未完成，循环就可以继续。AI SDK 的[Agent 概览](https://ai-sdk.dev/docs/agents/overview)也把 Agent 概括为模型、工具与循环三部分。
 
-```text
-用户目标
-  -> 模型决定下一步
-  -> 生成结构化工具调用
-  -> 应用校验并执行
-  -> 工具结果返回模型
-  -> 模型继续行动或给出最终回答
+## 读完你能做什么
+
+- 解释“模型提出动作”和“应用执行动作”的权限边界。
+- 写出带 schema、结果回传和停止条件的最小工具循环。
+- 判断什么时候该用 MCP，什么时候内部函数已经足够。
+- 为高风险工具设计预算、可见状态和人工审批。
+
+```mermaid
+sequenceDiagram
+  actor U as 用户
+  participant A as Agent 应用
+  participant M as 模型
+  participant T as 工具
+
+  U->>A: 提交目标
+  A->>M: 指令、消息、工具定义
+  M-->>A: 结构化工具调用
+  A->>A: 校验参数与权限
+  A->>T: 执行动作
+  T-->>A: 返回结构化结果
+  A->>M: 工具结果进入下一步上下文
+  alt 任务尚未完成
+    M-->>A: 下一次工具调用
+  else 任务完成或达到停止条件
+    M-->>A: 最终回答
+    A-->>U: 展示结果与执行记录
+  end
 ```
 
 这个循环让模型从“会说”变成“能做”，也引入了新的工程问题：工具参数如何校验，循环何时停止，前端如何展示中间状态，外部能力如何接入，以及哪些动作必须先让人确认。
@@ -233,6 +253,8 @@ stdio 的优点是工具运行环境在自己控制之下，代价是必须执�
 
 MCP 解决的是工具发现和通信协议，不会自动解决权限问题。拿到 GitHub MCP server 的全部工具，不代表每个用户都应该拥有创建仓库、关闭 Issue 或合并 PR 的能力。应用仍然需要限制可用工具、缩小凭证权限、校验参数，并记录每次外部操作。
 
+MCP 官方的[架构说明](https://modelcontextprotocol.io/specification/2025-06-18/architecture)把 host、client 与 server 的职责分开：host 负责权限、生命周期和用户授权，server 只暴露约定的能力。这个边界解释了为什么“接入 MCP”不能替代应用自己的授权系统。
+
 ## Approval：在不可逆动作前暂停循环
 
 文件助手在沙箱里写一份 Markdown，失败后通常可以重试；发送邮件、付款、删除生产数据则可能无法撤销。Agent 越有用，潜在副作用越大。可靠系统不能只靠提示词里的“请小心”，而应在执行层插入人工审批。
@@ -303,3 +325,27 @@ const {
 因此，评估 Agent 不能只看它是否完成了一次精彩演示。还要观察它是否选对工具、参数是否有效、失败后是否合理恢复、循环能否按预算停止、UI 是否如实展示动作，以及高风险操作是否真的被执行层拦截。
 
 最值得坚持的一条原则是：**让模型决定意图，让代码决定权限。** 模型可以判断“下一步应该发送邮件”，但收件人格式由 schema 校验，是否允许发送由权限系统和用户审批决定，真正的发送由应用执行并返回可审计结果。这样构建出来的 Agent 不只是会调用更多工具，而是在清楚的边界内，把一个目标可靠地推进到完成。
+
+## 自检：你是否掌握了执行边界
+
+<details>
+  <summary>模型生成了合法的 deletePath 参数，是否应该立刻执行？</summary>
+  <p><strong>不应该只凭参数合法就执行。</strong>Schema 只能证明结构正确；应用还要检查路径范围、用户权限、可恢复性与审批策略。</p>
+</details>
+
+<details>
+  <summary>设置最多 10 步，是否已经限制了全部成本？</summary>
+  <p><strong>没有。</strong>还应限制总时间、Token、费用与高成本工具调用次数，并允许外部取消。</p>
+</details>
+
+<details>
+  <summary>MCP server 提供了工具，谁决定当前用户能否调用？</summary>
+  <p><strong>Host 应用。</strong>它负责选择暴露哪些工具、使用什么凭证、何时审批，并保存审计记录。</p>
+</details>
+
+## 延伸阅读
+
+- [AI SDK：Agents overview](https://ai-sdk.dev/docs/agents/overview)
+- [AI SDK：Loop control](https://ai-sdk.dev/docs/agents/loop-control)
+- [AI SDK：Tools and tool calling](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling)
+- [Model Context Protocol：Architecture](https://modelcontextprotocol.io/specification/2025-06-18/architecture)
