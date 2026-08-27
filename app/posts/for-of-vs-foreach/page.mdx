@@ -18,6 +18,22 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 解释为什么 `forEach(async () => {})` 不会等待回调完成。
+- 在串行、受控并发和全并发之间按业务约束选择写法。
+- 正确收集异步错误与结果，避免函数提前返回。
+
+```mermaid
+flowchart TD
+  A[一组异步任务] --> B{任务能并行吗}
+  B -->|必须保持顺序| C[for...of + await]
+  B -->|全部可并行且规模可控| D[Promise.all]
+  B -->|可并行但需限流| E[并发队列]
+```
+
+真正的问题不是两种循环语法谁更高级，而是调用者需要等待什么。先定义顺序、并发上限和失败策略，再选择控制流。
+
 在现代前端开发中，许多代码规范工具（如 Biome 的 `noForEach` 规则或 ESLint 的相关插件）都强烈建议使用 `for...of` 替代 `Array.prototype.forEach`。
 
 很多开发者最初可能以为这只是纯粹的代码风格偏好，直到在处理 **多文件异步上传（如上传至 Supabase / S3 存储桶）** 或 **表单批量提交** 时踩到一个致命的“异步静默跳过” Bug。
@@ -162,6 +178,14 @@ async function handleUploadFilesParallel(files: File[]) {
 | **性能与调用栈** | 每次迭代创建新的函数调用栈帧 | 语言级语句，零额外闭包开销 |
 
 ---
+
+## 官方资料
+
+- [MDN：`for...of`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for...of)
+
+## 自检：把知识变成判断
+
+面对批量上传，你能否明确顺序要求、并发上限和单个失败是否终止整体，再选择循环方案？
 
 ## 总结
 

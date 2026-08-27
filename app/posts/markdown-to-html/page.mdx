@@ -18,6 +18,24 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 解释 Markdown 从文本、MDAST、HAST 到 HTML 的转换阶段。
+- 判断何时需要 MDX 组件、框架路由与静态全文检索。
+- 把不可信 Markdown 的解析与 HTML 安全边界纳入设计。
+
+```mermaid
+flowchart LR
+  M[Markdown / MDX 源文] --> P[parse: MDAST]
+  P --> R[remark 转换]
+  R --> H[HAST]
+  H --> E[rehype 转换]
+  E --> O[HTML 或 React 页面]
+  O --> I[Pagefind 静态索引]
+```
+
+把每一层的输入输出想清楚，插件顺序就不再神秘：remark 处理 Markdown 语义树，rehype 处理 HTML 语义树，框架负责路由、组件映射与最终构建。
+
 在现代内容驱动型网站（如技术博客、产品文档和知识库）中，Markdown / MDX 是内容创作者最青睐的格式。然而，从一段纯文本 `.md` 或带有 React 组件的 `.mdx`，到浏览器中呈现的带有语法高亮、可交互组件和 SEO 优化的 HTML 页面，底层经历了怎样的编译与渲染流水线？
 
 本文结合实际搭建本博客时的选型考量，解析底层编译原理与上层框架对比。
@@ -137,6 +155,14 @@ Next.js 构建生成静态 HTML (out/)
 无需维护后端 Elasticsearch 数据库或依赖第三方付费云检索服务，即可实现零网络延迟的即时模糊搜索。
 
 ---
+
+## 官方资料
+
+- [Unified：官方文档](https://unifiedjs.com/learn/)
+
+## 自检：把知识变成判断
+
+一个插件接收的是 MDAST 还是 HAST？不可信 HTML 在哪一步被过滤？最终索引取自什么产物？
 
 ## 总结
 

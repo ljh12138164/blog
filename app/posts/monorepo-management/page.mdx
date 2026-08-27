@@ -18,6 +18,24 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 判断团队的问题是否真的需要 Monorepo，而不是把仓库合并当成目标。
+- 用 pnpm workspace 表达包依赖，用 Turborepo 表达任务依赖与缓存边界。
+- 让构建缓存依赖明确输入，避免复用过期产物。
+
+```mermaid
+flowchart TD
+  UI[packages/ui] --> WEB[apps/web]
+  CFG[packages/config] --> UI
+  CFG --> WEB
+  API[packages/api-client] --> WEB
+  WEB --> BUILD[web build]
+  UI --> BUILD
+```
+
+Workspace 管依赖安装与包链接，任务编排器管命令顺序和缓存。把两者职责分开，才能定位“依赖没解析”和“任务没重跑”这两类不同问题。
+
 在复杂企业级前端架构中，随着业务模块和公共组件库（如 UI 组件库、工具函数包、SDK、管理后台、移动端 H5）的膨胀，**多仓库（Multi-Repo）**模式面临版本联动升级繁琐、跨仓库联调困难、依赖重复安装等痛点。
 
 将所有关联项目聚合在单一代码仓库中的 **Monorepo（单体多包）** 成为主流解法。本文剖析从早期 Lerna 到现代 **pnpm Workspace + Turborepo** 的性能飞跃与最佳工程拓扑。
@@ -129,6 +147,14 @@ packages:
 | **增量热构建（Hot Build）** | 62 秒（无法缓存） | **0.3 秒**（`FULL TURBO` 命中缓存直接恢复产物） |
 
 ---
+
+## 官方资料
+
+- [pnpm：Workspaces](https://pnpm.io/workspaces)
+
+## 自检：把知识变成判断
+
+修改公共包时，任务图能否只重建受影响消费者，同时保证缓存键包含真实输入？
 
 ## 总结
 

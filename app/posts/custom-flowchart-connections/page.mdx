@@ -18,6 +18,22 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 从起点、终点和方向向量推导贝塞尔曲线控制点。
+- 把几何计算与 React Flow 的 Edge 渲染组件分开实现和测试。
+- 在节点拖动时保持路径更新，并为标签、删除按钮留出交互层。
+
+```mermaid
+flowchart LR
+  A[读取 source / target 坐标] --> B[按端口方向计算控制点]
+  B --> C[生成 SVG path]
+  C --> D[渲染路径与命中区域]
+  D --> E[节点移动后重新计算]
+```
+
+实现时先保证“同一组坐标总能得到同一路径”，再接入拖拽与交互。这样几何错误和 React 状态错误不会混在一起排查。
+
 在可视化流程图编排（如审批流、工作流引擎、思维导图、低代码逻辑编排）中，**节点之间的连线（Edge / Connection）** 不仅需要清晰表达数据流向，还必须支持复杂的交互能力：
 * 动态计算三次贝塞尔曲线（Cubic Bezier）或折线（Smooth Step）；
 * 节点拖拽移动时，连线锚点（Handle）智能吸附并实时重绘；
@@ -158,6 +174,14 @@ export function FlowEditor() {
 ```
 
 ---
+
+## 官方资料
+
+- [React Flow：Custom Edges](https://reactflow.dev/learn/customization/custom-edges)
+
+## 自检：把知识变成判断
+
+给定四个端口方向与两点坐标，你能否在不依赖 React 的纯函数中生成并测试路径？
 
 ## 总结
 

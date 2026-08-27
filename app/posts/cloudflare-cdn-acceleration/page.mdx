@@ -18,6 +18,23 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 画出一次请求在浏览器、Cloudflare 边缘节点与源站之间的路径。
+- 根据资源是否可公开复用，设计 Cache Rule 与缓存键，而不是盲目“缓存所有内容”。
+- 用响应头定位命中、回源和过期问题，并安全地执行精准清除。
+
+```mermaid
+flowchart LR
+  U[浏览器] --> E[Cloudflare 边缘节点]
+  E -->|缓存命中| U
+  E -->|未命中或过期| O[源站]
+  O --> E
+  E -->|写入可缓存响应| C[(边缘缓存)]
+```
+
+CDN 优化的核心不是“离用户更近”这一句话，而是让**可复用响应在正确的缓存键下命中，同时让私有或动态响应继续回源**。
+
 在 Web 站点的全球访问优化中，内容分发网络（Content Delivery Network, CDN）是降低网络延迟、削减源站带宽负载和抵御 DDoS 攻击的核心基础设施。
 
 将域名接入 **Cloudflare** 后，用户请求不再直接击穿到单点源站服务器，而是被智能调度至分布在全球 300 多个城市的边缘 PoP（Point of Presence）节点。本文解析 CDN 的底层加速机理与 Cloudflare 缓存调优实践。
@@ -110,6 +127,14 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 在 GitHub Actions CI/CD 流水线末尾集成上述指令，即可实现“代码合并即自动发布并秒级刷新全网 CDN”。
 
 ---
+
+## 官方资料
+
+- [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
+
+## 自检：把知识变成判断
+
+看到 `MISS`、`HIT` 与 `BYPASS` 时，你能否沿着缓存规则、缓存键和源站响应头逐层定位原因？
 
 ## 总结
 

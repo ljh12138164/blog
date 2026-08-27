@@ -18,6 +18,25 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 从使用方环境反推库需要发布 ESM、CJS、类型声明中的哪些产物。
+- 配置 tsup 入口、外部依赖与 source map，并写出正确的 `exports`。
+- 在真正发布前用打包结果和消费端小项目验证导入路径。
+
+```mermaid
+flowchart LR
+  S[TypeScript 源码] --> T[tsup / esbuild]
+  T --> E[ESM 产物]
+  T --> C[CommonJS 产物]
+  T --> D[类型声明 d.ts]
+  E --> P[package exports]
+  C --> P
+  D --> P
+```
+
+库打包的成功标准不是“命令执行成功”，而是目标消费者能按声明的入口加载代码和类型。格式越多，验证矩阵也越大，只发布确实需要的产物。
+
 在开发 TypeScript 工具库、React 组件库或 Monorepo 内部公共包时，配置 Webpack 或 Rollup 往往需要编写冗长的配置文件，处理复杂的 Babel / SWC 插件和类型声明插件。
 
 **tsup** 基于 Go 语言编写的 **esbuild** 构建，主打“开箱即用、零配置或极简配置”，能在毫秒级时间内完成 TypeScript 源码到 ESM / CommonJS 双格式产物与 `.d.ts` 类型文件的编译。
@@ -133,6 +152,14 @@ packages/
 4. 这种方式既保证了多包隔离与严格的发布边界，又完全不牺牲单体开发的流畅体验。
 
 ---
+
+## 官方资料
+
+- [tsup：官方仓库](https://github.com/egoist/tsup)
+
+## 自检：把知识变成判断
+
+在 ESM 与 CJS 测试项目中，代码和类型是否都能通过 `exports` 声明的路径正确加载？
 
 ## 总结
 

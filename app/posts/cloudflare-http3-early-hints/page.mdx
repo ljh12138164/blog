@@ -18,6 +18,27 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 区分 HTTP/3 解决的传输层问题与 103 Early Hints 缩短的资源发现等待。
+- 看懂 103、最终响应与关键资源请求之间的时序关系。
+- 用浏览器网络面板和真实用户指标判断优化是否生效。
+
+```mermaid
+sequenceDiagram
+  participant B as 浏览器
+  participant E as 边缘节点
+  participant O as 源站
+  B->>E: 请求 HTML
+  E->>O: 回源
+  E-->>B: 103 + Link 预加载提示
+  B->>E: 提前请求 CSS / 字体
+  O-->>E: 200 HTML
+  E-->>B: 最终 HTML
+```
+
+两项能力可以叠加，但不要混为一谈：HTTP/3 改善连接与丢包条件下的传输；Early Hints 让浏览器更早发现关键资源。
+
 在衡量现代 Web 页面性能的核心体验指标（Core Web Vitals）中，**LCP（最大内容绘制）** 和 **FCP（首次内容绘制）** 往往决定了用户的留存与第一印象。
 
 传统请求中，浏览器必须等待服务器完成 HTML 渲染并完整返回 `200 OK` 后，才能解析出页面引用的 CSS、字体和关键 JS。通过在 CDN 边缘启用 **HTTP 103 Early Hints** 与 **HTTP/3 (QUIC)**，我们能够打破这个串行等待瓶颈。
@@ -99,6 +120,14 @@ HTTP/3 (QUIC / UDP):
 * **避免过度预加载**：只对关键渲染路径必需的 CSS 和主要字体使用 preload，避免浪费带宽与内存。
 
 ---
+
+## 官方资料
+
+- [Cloudflare：Early Hints](https://developers.cloudflare.com/speed/optimization/content/early-hints/)
+
+## 自检：把知识变成判断
+
+如果 LCP 没有改善，你能否分别验证 HTTP/3 是否协商成功、103 是否发出、关键资源是否真的提前请求？
 
 ## 总结
 

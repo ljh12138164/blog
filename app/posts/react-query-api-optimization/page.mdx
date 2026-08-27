@@ -18,6 +18,24 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 区分请求函数、服务端状态缓存与客户端 UI 状态。
+- 为 Query Key、`staleTime` 和 `gcTime` 建立可预测的规则。
+- 安全实现预取、失效与乐观更新，并在失败时回滚。
+
+```mermaid
+stateDiagram-v2
+  [*] --> Fresh: 请求成功
+  Fresh --> Stale: 超过 staleTime
+  Stale --> Fresh: 后台重新获取成功
+  Fresh --> Inactive: 无观察者
+  Stale --> Inactive: 无观察者
+  Inactive --> Removed: 超过 gcTime
+```
+
+Axios 负责“怎样发请求”，TanStack Query 负责“何时请求、结果缓存在哪里、何时视为过期”。两者并不竞争，职责边界清楚后配置才有意义。
+
 在前端应用中，许多团队经常混淆 **客户端本地状态（Client State，如弹窗显隐、侧边栏折叠）** 与 **服务端状态（Server State，如用户列表、文章详情、订单流水）**。
 
 传统使用 `useEffect + useState + axios` 获取数据时，不仅需要手写大量的 `isLoading`、`isError` 状态变量，更面临**重复请求泛滥、数据陈旧不同步、Tab 切换无缓存白屏**等问题。
@@ -136,6 +154,14 @@ const mutation = useMutation({
 ```
 
 ---
+
+## 官方资料
+
+- [TanStack Query：Important Defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults)
+
+## 自检：把知识变成判断
+
+相同 Query Key 是否代表相同数据？乐观更新失败时是否能恢复快照并重新验证服务端状态？
 
 ## 总结
 

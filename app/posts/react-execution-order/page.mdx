@@ -18,6 +18,23 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 区分 render、commit、`useLayoutEffect` 与 `useEffect` 所处阶段。
+- 用日志实验预测父子组件挂载、更新和清理的顺序。
+- 判断 DOM 测量、订阅和数据同步分别应该放在哪里。
+
+```mermaid
+flowchart LR
+  R[Render: 计算下一棵 UI] --> C[Commit: 更新 DOM]
+  C --> L[运行 useLayoutEffect]
+  L --> P[浏览器绘制]
+  P --> E[运行 useEffect]
+  E -->|状态更新| R
+```
+
+最重要的边界是：Render 必须保持纯净；Commit 之后才能接触真实 DOM。`useLayoutEffect` 会在绘制前同步执行，`useEffect` 通常在绘制后处理与外部系统的同步。
+
 在 React 函数式组件开发中，许多与 DOM 测量、订阅、定时器或事件监听相关的 Bug，往往源于对 **组件函数体、`useLayoutEffect` 与 `useEffect` 在父子组件间的精确执行顺序** 理解不透彻。
 
 本文通过清晰的时序图与对照实验，彻底厘清 React 在**挂载（Mount）**、**更新（Update）** 和 **卸载（Unmount）** 三个完整阶段的底层执行流。
@@ -150,6 +167,14 @@ function Child() {
 * **解决**：因为挂载时子组件 `useEffect` 先于父组件执行，通常可以获取；但如果是异步网络请求，则必须通过 React 状态升水（State Lifting）或 Context 来做可靠响应，绝不能依赖 Effect 执行顺序做隐式时间契约。
 
 ---
+
+## 官方资料
+
+- [React：`useEffect`](https://react.dev/reference/react/useEffect)
+
+## 自检：把知识变成判断
+
+遇到重复订阅或闪烁时，你能否判断副作用应放在 render、layout effect 还是 effect，并解释原因？
 
 ## 总结速查表
 

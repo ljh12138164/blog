@@ -18,6 +18,23 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 把 UI 状态、服务端缓存与实时事件分配给不同状态通道。
+- 解释 React Query、MobX 与 Socket.io 之间的数据所有权边界。
+- 在多租户系统中让授权校验落在服务端，而不是只隐藏前端按钮。
+
+```mermaid
+flowchart LR
+  API[(REST API)] --> Q[React Query 服务端缓存]
+  WS[Socket.io 事件] --> Q
+  Q --> UI[React 界面]
+  M[MobX 本地交互状态] --> UI
+  UI -->|用户命令| API
+```
+
+双状态方案可行的前提是没有“双重真相”：远端实体由查询缓存持有，弹窗、选择和临时编辑状态由客户端 Store 持有，实时事件负责使缓存失效或合并更新。
+
 在研发管理类似 Jira / Linear / Trello 的现代敏捷协作平台时，前端架构不仅需要支撑成百上千个任务卡片的**流畅拖拽编排（Kanban Board）**，还要应对**多成员跨地域实时协作、任务状态秒级推送与多工作区权限隔离**等复杂场景。
 
 **Jebet** 是一套高性能的团队敏捷项目管理系统。本文复盘其核心模块的架构设计与技术落地。
@@ -105,6 +122,14 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 4. **Task / Issue（原子任务）**：包含子任务、工时估算与附件。
 
 ---
+
+## 官方资料
+
+- [TanStack Query：概览](https://tanstack.com/query/latest/docs/framework/react/overview)
+
+## 自检：把知识变成判断
+
+任意一条数据能否明确说出唯一所有者：查询缓存、MobX 还是临时事件？权限是否在服务端复核？
 
 ## 总结
 

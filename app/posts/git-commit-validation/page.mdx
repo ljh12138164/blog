@@ -18,6 +18,23 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 区分本地提交钩子与 CI 校验的职责，不把安全边界放在可跳过的钩子里。
+- 用 Biome 检查暂存文件，并用规则校验 Conventional Commits。
+- 保持本地反馈快速，同时让远端流水线做最终裁决。
+
+```mermaid
+flowchart LR
+  W[工作区改动] --> S[git add]
+  S --> H[pre-commit 检查暂存文件]
+  H --> M[commit-msg 校验信息]
+  M --> C[创建提交]
+  C --> CI[CI 重新执行完整校验]
+```
+
+本地钩子优化的是反馈速度，不是强制安全。开发者可以跳过钩子，因此分支保护和 CI 必须重复关键检查。
+
 在多人协作的代码仓库中，常常遇到以下顽疾：
 * 代码格式不一（有的加分号、有的用单引号，Git Diff 产生大量无意义噪音）；
 * 潜在 Bug 溜入生产（未使用的变量、空的 Catch 块、遗留的 `debugger`）；
@@ -149,6 +166,14 @@ module.exports = {
 * ✅ `git commit -m "feat(auth): 增加 Cloudflare Turnstile 人机验证支持"` -> **自动格式化代码并通过校验**。
 
 ---
+
+## 官方资料
+
+- [Git：Hooks](https://git-scm.com/docs/githooks)
+
+## 自检：把知识变成判断
+
+跳过本地 Git Hook 后，远端 CI 是否仍会阻止格式、类型或提交规范不合格的改动？
 
 ## 总结
 

@@ -18,6 +18,24 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 用 Zod 在请求边界验证运行时数据，用 TypeScript 在编译期推导类型。
+- 从 Hono 路由导出类型并通过 `hc` 构建客户端。
+- 把 RPC 客户端接入 TanStack Query，同时保留 HTTP 错误处理。
+
+```mermaid
+flowchart LR
+  Z[Zod 输入 Schema] --> H[Hono 路由]
+  H --> T[导出 AppType]
+  T --> C[hc 类型安全客户端]
+  C --> Q[TanStack Query]
+  Q --> UI[React 组件]
+  UI -->|参数受类型约束| H
+```
+
+“类型安全”不能替代运行时校验：浏览器、第三方客户端和旧版本都可能发送任意数据。Zod 守住服务端边界，RPC 类型减少受控代码之间的重复声明。
+
 在传统的 Next.js App Router API 开发中，通常面临两大痛点：
 1. **文件琐碎分散**：每个路由都需要新建一个目录并创建 `route.ts`（例如 `app/api/users/route.ts`、`app/api/posts/[id]/route.ts`）；
 2. **前后端类型割裂**：前端调用时往往使用裸字符串 `fetch('/api/users?id=123')`，参数名称、查询参数类型以及返回结果的 Schema 无法自动推导，重构时极易埋雷。
@@ -184,6 +202,14 @@ export function CreatePostForm() {
 | **运行时体积** | 极小 | 较重 | **极轻量（适合 Edge Runtime）** |
 
 ---
+
+## 官方资料
+
+- [Hono：RPC](https://hono.dev/docs/guides/rpc)
+
+## 自检：把知识变成判断
+
+绕过类型客户端直接发送非法查询参数时，服务端是否仍会返回可预测的校验错误？
 
 ## 总结
 

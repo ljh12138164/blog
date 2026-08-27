@@ -18,6 +18,14 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 解释浏览器为什么阻止顶级窗口直接导航到 `data:` URL，而不是把它误判为代码错误。
+- 把 Data URL 安全地转换为 Blob URL，并在正确的生命周期释放内存。
+- 根据“预览、下载、上传”三种目标选择不同方案。
+
+先记住边界：`data:` 是把内容直接塞进 URL，`blob:` 是浏览器为内存中的二进制对象签发一个临时地址。遇到限制时，正确动作不是绕过安全策略，而是把数据交给适合导航和下载的 Blob URL。
+
 在前端处理图片预览、PDF 导出或文件下载时，开发者常常会拿到 Base64 编码的 Data URL（如 `data:image/png;base64,...`）。一个直觉的操作是动态创建一个 `<a target="_blank">` 并触发 `.click()`，试图在新标签页打开预览：
 
 ```ts
@@ -175,6 +183,14 @@ export function openDataUrlInNewTab(dataUrl: string): void {
    新标签页加载需要时间，直接同步 `revoke` 会导致新标签打开时 404，因此采用延迟释放（如 `setTimeout(..., 5000 ~ 10000)`）最为稳妥。
 
 ---
+
+## 官方资料
+
+- [MDN：Blob URL 与 `URL.createObjectURL()`](https://developer.mozilla.org/docs/Web/API/URL/createObjectURL_static)
+
+## 自检：把知识变成判断
+
+如果浏览器拒绝在新窗口打开 Data URL，你能否说明限制发生在哪一层，并写出“转换、打开、释放”的完整顺序？
 
 ## 总结
 

@@ -18,6 +18,25 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 同时根据永久性与请求方法是否保留选择 301、302、307 或 308。
+- 为域名迁移、HTTP 到 HTTPS 和临时维护设计正确跳转。
+- 用状态码、Location、重定向链和 canonical 验证 SEO 配置。
+
+```mermaid
+flowchart TD
+  A[需要重定向] --> B{是否永久}
+  B -->|是| C{必须保留方法与请求体吗}
+  B -->|否| D{必须保留方法与请求体吗}
+  C -->|否| E[301]
+  C -->|是| F[308]
+  D -->|否| G[302]
+  D -->|是| H[307]
+```
+
+选型时先回答两个问题：跳转是永久还是临时？原请求的方法与请求体是否必须保留？SEO 是重要结果，但不能覆盖 HTTP 语义和业务安全。
+
 在 Web 开发中，重定向（Redirect）是域名迁移、URL 规范化（Canonicalization）以及路由兼容不可或缺的手段。
 
 然而，面对 `301 Moved Permanently`、`302 Found`、`307 Temporary Redirect` 和 `308 Permanent Redirect` 这四个看似相近的状态码，选错状态码可能导致 **表单 POST 请求变为 GET 导致数据丢失**，或引发 **搜索引擎权重归零甚至网址被恶意劫持**。
@@ -111,6 +130,14 @@ server {
 ```
 
 ---
+
+## 官方资料
+
+- [MDN：HTTP 重定向](https://developer.mozilla.org/docs/Web/HTTP/Guides/Redirections)
+
+## 自检：把知识变成判断
+
+对一个永久 POST 迁移与临时 GET 跳转，你能否分别选出状态码并验证方法、Location 和跳转链？
 
 ## 总结选型口诀
 

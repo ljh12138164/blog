@@ -18,6 +18,27 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 完成 Turnstile 小组件、业务表单与服务端 Siteverify 的完整闭环。
+- 解释为什么前端拿到成功 Token 不等于业务请求可信。
+- 正确处理 Token 过期、重复使用、验证失败和密钥泄露风险。
+
+```mermaid
+sequenceDiagram
+  participant U as 用户浏览器
+  participant T as Turnstile
+  participant A as 你的服务端
+  U->>T: 完成挑战
+  T-->>U: 一次性 Token
+  U->>A: 表单数据 + Token
+  A->>T: Siteverify(secret, token)
+  T-->>A: 验证结果
+  A-->>U: 仅在验证成功后执行业务
+```
+
+安全边界只有一句话：**Token 必须由服务端验证，且业务动作必须发生在验证成功之后。**
+
 在登录、注册、评论或高频 API 调用场景中，为了抵御自动化脚本、撞库和恶意爬虫，引入人机验证（CAPTCHA）是常见的防御手段。
 
 然而，传统的“找出所有斑马线/红绿灯”式的图形验证码体验极差，不仅打断正常用户操作，更直接导致转化率暴跌。**Cloudflare Turnstile** 作为 reCAPTCHA 的现代替代品，绝大多数情况下无需用户任何手动点击即可完成静默验证，并且**完全免费、隐私友好**。
@@ -214,6 +235,14 @@ export async function POST(req: Request) {
 | **无障碍体验 (a11y)** | 视障用户很难完成图片点选 | 自动设备特征与 PoW 校验，无视障障碍 |
 
 ---
+
+## 官方资料
+
+- [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
+
+## 自检：把知识变成判断
+
+如果攻击者复用旧 Token，你的服务端是否会在执行业务之前拒绝它？前端验证失败时是否阻止提交？
 
 ## 总结
 

@@ -18,6 +18,25 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 解释 Tiptap、ProseMirror、Yjs 与 Hocuspocus 各自负责哪一层。
+- 接入文档同步与 Awareness 光标，同时避免把在线状态持久化进正文。
+- 设计鉴权、断线重连和服务端持久化边界。
+
+```mermaid
+flowchart LR
+  E1[Tiptap 客户端 A] <--> Y1[Y.Doc A]
+  E2[Tiptap 客户端 B] <--> Y2[Y.Doc B]
+  Y1 <--> H[Hocuspocus WebSocket]
+  Y2 <--> H
+  H <--> DB[(持久化存储)]
+  H -. Awareness .-> E1
+  H -. Awareness .-> E2
+```
+
+正文更新与在线光标是两类数据：Yjs 文档更新需要可靠同步和持久化，Awareness 是短暂状态，用户离线后应自然消失。
+
 在研发类似 Notion、飞书文档的多人实时协作富文本系统时，**Tiptap**（基于 ProseMirror 的 Headless 编辑器框架）配合 **Yjs** 与 **Hocuspocus**，构成了目前生产环境中最成熟、扩展性最强的技术组合。
 
 本文剖析 Tiptap 与 Yjs 的双向绑定机制、Hocuspocus 协同服务端的生命周期钩子，以及高可用数据持久化实践。
@@ -186,6 +205,14 @@ server.listen();
    定期对长篇文档执行 `Y.encodeStateAsUpdate(ydoc)`，合并过往编辑碎片，可让文档加载体积减少 80% 以上。
 
 ---
+
+## 官方资料
+
+- [Tiptap：Collaboration](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
+
+## 自检：把知识变成判断
+
+正文更新与 Awareness 是否分开？断线重连后文档能收敛，离线用户光标又能及时消失吗？
 
 ## 总结
 

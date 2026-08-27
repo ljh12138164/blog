@@ -18,6 +18,26 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 判断目标边缘平台是否支持 WebSocket 升级、长连接和所需 Node.js API。
+- 画出连接升级、文档同步、鉴权与持久化的完整链路。
+- 识别无状态函数与有状态协同房间之间的架构冲突。
+
+```mermaid
+sequenceDiagram
+  participant C as 协同客户端
+  participant E as 边缘入口
+  participant R as 文档房间
+  participant D as 持久化存储
+  C->>E: HTTP Upgrade + 凭证
+  E->>R: 鉴权后绑定文档房间
+  C<<->>R: WebSocket / Yjs 更新
+  R->>D: 检查点或增量持久化
+```
+
+“部署到边缘”不自动解决状态问题。实时协同要求同一文档的连接能够协调；如果平台只提供短生命周期无状态函数，就需要额外的有状态房间或专用协同服务。
+
 在构建类似 Notion 或 Google Docs 的多人实时协同富文本编辑器时，**WebSocket** 是实现客户端 CRDT / Yjs 状态同步的核心通信协议。
 
 传统方案通常需要运维独立的 Node.js / Docker 虚机来保持 WebSocket 长连接。然而借助 **Deno Deploy** 等支持持久 WebSocket 的现代边缘平台（Edge Runtime），我们可以在无需购买固定 VPS、按需计费的无服务器环境下，运行基于 **Hocuspocus** 的企业级实时协同服务。
@@ -156,6 +176,14 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 * **注意多房间分布式路由**：在超大规模集群中，若不同协作者被路由至不同物理节点，需结合 Durable Objects（如 Cloudflare DO）或 Redis Pub/Sub 保证同一个房间（Document Room）的消息在同一个实例汇聚。
 
 ---
+
+## 官方资料
+
+- [MDN：WebSocket](https://developer.mozilla.org/docs/Web/API/WebSocket)
+
+## 自检：把知识变成判断
+
+同一文档的连接由谁协调？实例迁移或休眠时，未持久化更新与重连客户端如何恢复？
 
 ## 总结
 

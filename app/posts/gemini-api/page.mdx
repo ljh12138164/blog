@@ -18,6 +18,26 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 把 Gemini 密钥保留在服务端，通过边缘 API 代理组织模型请求。
+- 根据消费方选择纯文本流、结构化 JSON 或工具调用。
+- 在前端正确处理分片、取消、错误与最终状态。
+
+```mermaid
+sequenceDiagram
+  participant U as React 客户端
+  participant A as Hono API
+  participant G as Gemini API
+  U->>A: 输入 + 请求标识
+  A->>G: 服务端携带密钥请求
+  G-->>A: 流式分片
+  A-->>U: 转发文本或结构化事件
+  U->>U: 增量渲染并处理结束状态
+```
+
+代理层不只是隐藏密钥，它还是统一鉴权、限流、日志和输出契约的边界。不要让浏览器直接持有生产密钥。
+
 Google 推出的 **Gemini 1.5 Flash / 2.0 Flash** 凭借超大上下文窗口（高达 100万~200万 Tokens）、超低延迟与极高的性价比，成为当前全栈开发者构建 AI 应用的首选模型之一。
 
 然而在实际落地中，开发者往往需要处理**跨国网络连通性、API Key 安全保密、前端打字机流式输出（Streaming）与结构化 JSON 约束**等工程难题。本文提供一套基于 Hono 边缘网关的全栈落地指南。
@@ -217,6 +237,14 @@ export function GeminiChat() {
 ```
 
 ---
+
+## 官方资料
+
+- [Google AI：Gemini API 文档](https://ai.google.dev/gemini-api/docs)
+
+## 自检：把知识变成判断
+
+浏览器网络面板里是否看不到模型密钥？流中断和用户取消时，服务端能否停止后续工作？
 
 ## 总结
 

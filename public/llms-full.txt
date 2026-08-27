@@ -944,6 +944,10 @@ OpenAI 的[Prompt Caching 指南](https://developers.openai.com/api/docs/guides/
 - 在生产 usage 中记录输入、输出和缓存 Token。
 - 模型或请求结构变化后，重新校准预算。
 
+## 自检：预算是否完整
+
+你能否列出一次真实请求中的系统指令、历史消息、工具定义、检索材料、当前输入和预留输出，并解释超出预算时先删哪一项？
+
 ## 最后记住
 
 Token 决定输入如何被编码，Context 决定一次推理能使用多少工作区。把二者放在一起，才得到可操作的工程视角：
@@ -1186,6 +1190,10 @@ flowchart LR
   <p>任务：为未参会的项目成员整理会议结论。成功标准：保留决策、责任人和截止日期；未明确的信息标记“待确认”。输出：结论、行动项、风险。测试：正常会议、缺少责任人、讨论很多但没有形成决策。</p>
 </details>
 
+## 自检：提示词是否可验证
+
+换一份未参与编写的输入后，你能否只根据成功标准判断输出合格与否？如果仍需要“凭感觉”，应先补充约束或示例，再继续改写提示词。
+
 ## 最后记住
 
 高质量提示词的核心不是文采，而是可验证性：
@@ -1208,6 +1216,23 @@ flowchart LR
 - **核心导读**: 深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 区分 render、commit、`useLayoutEffect` 与 `useEffect` 所处阶段。
+- 用日志实验预测父子组件挂载、更新和清理的顺序。
+- 判断 DOM 测量、订阅和数据同步分别应该放在哪里。
+
+```mermaid
+flowchart LR
+  R[Render: 计算下一棵 UI] --> C[Commit: 更新 DOM]
+  C --> L[运行 useLayoutEffect]
+  L --> P[浏览器绘制]
+  P --> E[运行 useEffect]
+  E -->|状态更新| R
+```
+
+最重要的边界是：Render 必须保持纯净；Commit 之后才能接触真实 DOM。`useLayoutEffect` 会在绘制前同步执行，`useEffect` 通常在绘制后处理与外部系统的同步。
 
 在 React 函数式组件开发中，许多与 DOM 测量、订阅、定时器或事件监听相关的 Bug，往往源于对 **组件函数体、`useLayoutEffect` 与 `useEffect` 在父子组件间的精确执行顺序** 理解不透彻。
 
@@ -1342,6 +1367,14 @@ function Child() {
 
 ---
 
+## 官方资料
+
+- [React：`useEffect`](https://react.dev/reference/react/useEffect)
+
+## 自检：把知识变成判断
+
+遇到重复订阅或闪烁时，你能否判断副作用应放在 render、layout effect 还是 effect，并解释原因？
+
 ## 总结速查表
 
 | 执行环节 | 父子先后顺序 | 执行时机 | 是否阻塞页面绘制 |
@@ -1362,6 +1395,27 @@ function Child() {
 - **核心导读**: 深入解析 HTTP 103 早期提示（Early Hints）与 HTTP/3 (QUIC) 协议原理，结合 Cloudflare 边缘配置提升 FCP 与 LCP 核心 Web 指标。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 区分 HTTP/3 解决的传输层问题与 103 Early Hints 缩短的资源发现等待。
+- 看懂 103、最终响应与关键资源请求之间的时序关系。
+- 用浏览器网络面板和真实用户指标判断优化是否生效。
+
+```mermaid
+sequenceDiagram
+  participant B as 浏览器
+  participant E as 边缘节点
+  participant O as 源站
+  B->>E: 请求 HTML
+  E->>O: 回源
+  E-->>B: 103 + Link 预加载提示
+  B->>E: 提前请求 CSS / 字体
+  O-->>E: 200 HTML
+  E-->>B: 最终 HTML
+```
+
+两项能力可以叠加，但不要混为一谈：HTTP/3 改善连接与丢包条件下的传输；Early Hints 让浏览器更早发现关键资源。
 
 在衡量现代 Web 页面性能的核心体验指标（Core Web Vitals）中，**LCP（最大内容绘制）** 和 **FCP（首次内容绘制）** 往往决定了用户的留存与第一印象。
 
@@ -1445,6 +1499,14 @@ HTTP/3 (QUIC / UDP):
 
 ---
 
+## 官方资料
+
+- [Cloudflare：Early Hints](https://developers.cloudflare.com/speed/optimization/content/early-hints/)
+
+## 自检：把知识变成判断
+
+如果 LCP 没有改善，你能否分别验证 HTTP/3 是否协商成功、103 是否发出、关键资源是否真的提前请求？
+
 ## 总结
 
 * **HTTP 103 Early Hints** 将浏览器的资源加载阶段提前到了“服务器计算时间”，极大消除首屏白屏。
@@ -1461,6 +1523,26 @@ HTTP/3 (QUIC / UDP):
 - **核心导读**: 探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 判断目标边缘平台是否支持 WebSocket 升级、长连接和所需 Node.js API。
+- 画出连接升级、文档同步、鉴权与持久化的完整链路。
+- 识别无状态函数与有状态协同房间之间的架构冲突。
+
+```mermaid
+sequenceDiagram
+  participant C as 协同客户端
+  participant E as 边缘入口
+  participant R as 文档房间
+  participant D as 持久化存储
+  C->>E: HTTP Upgrade + 凭证
+  E->>R: 鉴权后绑定文档房间
+  C<<->>R: WebSocket / Yjs 更新
+  R->>D: 检查点或增量持久化
+```
+
+“部署到边缘”不自动解决状态问题。实时协同要求同一文档的连接能够协调；如果平台只提供短生命周期无状态函数，就需要额外的有状态房间或专用协同服务。
 
 在构建类似 Notion 或 Google Docs 的多人实时协同富文本编辑器时，**WebSocket** 是实现客户端 CRDT / Yjs 状态同步的核心通信协议。
 
@@ -1601,6 +1683,14 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 
 ---
 
+## 官方资料
+
+- [MDN：WebSocket](https://developer.mozilla.org/docs/Web/API/WebSocket)
+
+## 自检：把知识变成判断
+
+同一文档的连接由谁协调？实例迁移或休眠时，未持久化更新与重连客户端如何恢复？
+
 ## 总结
 
 * 利用 **Deno Deploy** 的原生 Web 标准与 WebSocket 支持，可以极简部署无服务器长连接服务。
@@ -1616,6 +1706,23 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 - **核心导读**: 全面解析低代码/零代码表单设计器架构：涵盖拖拽画布（Drag & Drop）、JSON Schema 字段协议定义、右侧属性联动配置与动态渲染引擎实现。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把设计器拆成物料、画布、属性面板、Schema 与运行时渲染器。
+- 设计一份可版本化、可校验、与具体 UI 库解耦的字段协议。
+- 让编辑态与运行态共享数据协议，而不是共享整套组件状态。
+
+```mermaid
+flowchart LR
+  P[物料面板] -->|拖入字段| C[设计画布]
+  S[属性面板] -->|修改配置| C
+  C --> J[(JSON Schema)]
+  J --> R[运行时渲染器]
+  R --> V[校验与提交]
+```
+
+设计器真正的产品不是三栏 UI，而是中间那份稳定协议。UI 可以替换，Schema 一旦被表单实例和历史数据依赖，就必须可迁移。
 
 在企业级中后台开发中，大量的业务需求集中在问卷调查、活动报名、流程审批和动态数据录入。如果每个表单都由前端工程师手写代码，不仅效率低下，且一旦字段增减就必须走发布流程。
 
@@ -1764,6 +1871,14 @@ export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; 
 
 ---
 
+## 官方资料
+
+- [JSON Schema：官方规范入口](https://json-schema.org/specification)
+
+## 自检：把知识变成判断
+
+如果字段协议新增一种组件类型，旧表单如何迁移？渲染器遇到未知类型时应怎样降级？
+
 ## 总结
 
 * **模型抽象**：将表单行为完全收敛至标准的 JSON Schema。
@@ -1779,6 +1894,23 @@ export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; 
 - **核心导读**: 全面解析现代团队协作平台的全栈架构设计：涵盖多租户工作区隔离、看板（Kanban）高频拖拽性能治理、MobX 状态中枢与 Socket.io 实时消息总线。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把 UI 状态、服务端缓存与实时事件分配给不同状态通道。
+- 解释 React Query、MobX 与 Socket.io 之间的数据所有权边界。
+- 在多租户系统中让授权校验落在服务端，而不是只隐藏前端按钮。
+
+```mermaid
+flowchart LR
+  API[(REST API)] --> Q[React Query 服务端缓存]
+  WS[Socket.io 事件] --> Q
+  Q --> UI[React 界面]
+  M[MobX 本地交互状态] --> UI
+  UI -->|用户命令| API
+```
+
+双状态方案可行的前提是没有“双重真相”：远端实体由查询缓存持有，弹窗、选择和临时编辑状态由客户端 Store 持有，实时事件负责使缓存失效或合并更新。
 
 在研发管理类似 Jira / Linear / Trello 的现代敏捷协作平台时，前端架构不仅需要支撑成百上千个任务卡片的**流畅拖拽编排（Kanban Board）**，还要应对**多成员跨地域实时协作、任务状态秒级推送与多工作区权限隔离**等复杂场景。
 
@@ -1868,6 +2000,14 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 
 ---
 
+## 官方资料
+
+- [TanStack Query：概览](https://tanstack.com/query/latest/docs/framework/react/overview)
+
+## 自检：把知识变成判断
+
+任意一条数据能否明确说出唯一所有者：查询缓存、MobX 还是临时事件？权限是否在服务端复核？
+
 ## 总结
 
 * **高性能交互**：通过 **MobX 局部精准渲染** 支撑复杂看板的高帧率拖拽体验。
@@ -1884,6 +2024,22 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 - **核心导读**: 全面解析现代前端设计系统架构：涵盖原子化 Design Tokens 规范、Headless 无头 UI 原语解耦、深浅主题切换与 AI 辅助界面生成系统的落地实践。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 区分设计令牌、基础组件、组合模式与业务模板的责任层级。
+- 用 CSS 变量承载可运行时切换的视觉决策。
+- 评估 Headless 组件与 AI 生成内容应当遵守的组件契约。
+
+```mermaid
+flowchart BT
+  T[设计令牌] --> P[基础样式与原语]
+  P --> C[可访问组件]
+  C --> M[组合模式]
+  M --> A[产品页面与设计资产]
+```
+
+设计系统的价值不是组件数量，而是让相同决策只定义一次。越靠下的层级越稳定、越通用；业务语义越强的内容越应留在产品层。
 
 在多产品线并行的研发体系中，缺乏统一的设计系统会导致各项目 UI 风格割裂、重复造轮子、无障碍（a11y）标准缺失以及重构维护成本高昂。
 
@@ -2007,6 +2163,14 @@ const buttonVariants = cva(
 
 ---
 
+## 官方资料
+
+- [W3C：Design Tokens Format Module](https://www.designtokens.org/tr/drafts/format/)
+
+## 自检：把知识变成判断
+
+新增一个颜色或交互模式时，你能否判断它应属于令牌、基础组件、组合模式还是业务页面？
+
 ## 总结
 
 * **下层稳固**：通过 Design Tokens 与 Radix UI 确保全平台样式规范与无障碍基线统一。
@@ -2022,6 +2186,25 @@ const buttonVariants = cva(
 - **核心导读**: 全面解析实时协同文档系统的全栈工程架构：涵盖 Yjs 状态同步状态机、千万级文档虚拟目录树、多租户权限控制与历史版本快照差异比对。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把文档内容同步、目录组织、在线感知与历史版本拆成独立子系统。
+- 用状态机描述首次加载、离线编辑、重连同步和冲突收敛。
+- 为权限、持久化与快照分别定义数据边界和恢复路径。
+
+```mermaid
+stateDiagram-v2
+  [*] --> Loading
+  Loading --> Synced: 本地与远端同步完成
+  Loading --> Offline: 网络不可用
+  Synced --> Offline: 连接中断
+  Offline --> Reconnecting: 网络恢复
+  Reconnecting --> Synced: 合并更新成功
+  Reconnecting --> Offline: 重连失败
+```
+
+协同系统不能只画“客户端连 WebSocket”。真正需要设计的是连接断开后仍能编辑、恢复后如何合并、持久化失败怎样告警，以及权限变化何时生效。
 
 随着远程办公与知识管理的普及，现代团队对“云端协同笔记”的要求不再局限于单机 Markdown 编辑，而是要求具备**类似 Notion 的实时多人协同、毫秒级状态同步、多层级无限树状知识库、细粒度权限控制与历史快照回滚**能力。
 
@@ -2142,6 +2325,14 @@ export function createCollaborativeDoc(docId: string, token: string) {
 
 ---
 
+## 官方资料
+
+- [Yjs：Provider 与持久化生态](https://docs.yjs.dev/ecosystem/connection-provider)
+
+## 自检：把知识变成判断
+
+断网编辑、重连、权限撤销和持久化失败四个场景是否都有明确状态与恢复策略？
+
 ## 总结
 
 * **架构核心**：通过 **Yjs CRDT + IndexedDB + WebSocket** 实现真正的离线优先与毫秒级协同。
@@ -2158,6 +2349,23 @@ export function createCollaborativeDoc(docId: string, token: string) {
 - **核心导读**: 深入解析 CDN Anycast 任播路由、边缘 PoP 节点缓存分层与 Cloudflare Cache Rules 规则配置，让静态资源实现毫秒级全球触达。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 画出一次请求在浏览器、Cloudflare 边缘节点与源站之间的路径。
+- 根据资源是否可公开复用，设计 Cache Rule 与缓存键，而不是盲目“缓存所有内容”。
+- 用响应头定位命中、回源和过期问题，并安全地执行精准清除。
+
+```mermaid
+flowchart LR
+  U[浏览器] --> E[Cloudflare 边缘节点]
+  E -->|缓存命中| U
+  E -->|未命中或过期| O[源站]
+  O --> E
+  E -->|写入可缓存响应| C[(边缘缓存)]
+```
+
+CDN 优化的核心不是“离用户更近”这一句话，而是让**可复用响应在正确的缓存键下命中，同时让私有或动态响应继续回源**。
 
 在 Web 站点的全球访问优化中，内容分发网络（Content Delivery Network, CDN）是降低网络延迟、削减源站带宽负载和抵御 DDoS 攻击的核心基础设施。
 
@@ -2252,6 +2460,14 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 
 ---
 
+## 官方资料
+
+- [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
+
+## 自检：把知识变成判断
+
+看到 `MISS`、`HIT` 与 `BYPASS` 时，你能否沿着缓存规则、缓存键和源站响应头逐层定位原因？
+
 ## 总结
 
 * **合理规划缓存分层**：静态资产（带哈希）长效强缓存，HTML 页面使用 `s-maxage` 配合 `stale-while-revalidate`。
@@ -2268,6 +2484,23 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 - **核心导读**: 全面剖析重型设计系统与画板应用的端到端性能治理：涵盖 Canvas (Fabric.js) 与富文本模块动态懒加载、lodash-es 树摇、关键 CSS 提取与 Core Web Vitals 调优。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 从网络、解析执行、渲染和交互四条路径定位性能瓶颈。
+- 只对确认进入首屏关键路径的资源做懒加载、预加载或拆包。
+- 用 Core Web Vitals 与构建报告验证修改，而不是依赖主观体感。
+
+```mermaid
+flowchart LR
+  M[采集真实指标] --> B[定位瓶颈资源或长任务]
+  B --> C[选择一项最小改动]
+  C --> V[相同条件复测]
+  V -->|有效| K[保留并记录]
+  V -->|无效或回退| B
+```
+
+性能治理是测量闭环。动态导入、编译优化和 CSS 调整只是工具，只有能改善目标指标且不损害功能时才值得保留。
 
 在集成图形画布（Fabric.js）、富文本协同（Tiptap / Quill）、代码编辑器（Monaco）与 AI 视觉分析的综合性设计平台中，首屏性能往往面临严峻考验：
 * **首屏 Bundle 动辄超过 2.5MB**，在弱网下白屏时间超 4 秒；
@@ -2376,6 +2609,14 @@ export default nextConfig;
 
 ---
 
+## 官方资料
+
+- [web.dev：Core Web Vitals](https://web.dev/articles/vitals)
+
+## 自检：把知识变成判断
+
+每项优化是否对应一个事前基线、目标指标和相同条件下的复测结果？
+
 ## 总结
 
 * **避免重型库污染首屏**：对 Canvas、富文本、图表库坚决采用 `dynamic(..., { ssr: false })` 异步隔离。
@@ -2392,6 +2633,27 @@ export default nextConfig;
 - **核心导读**: 全面解析 Cloudflare Turnstile 智能人机验证原理，提供 React / Next.js 前端无缝嵌入与 Node.js / Hono 后端 Token 安全校验方案。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 完成 Turnstile 小组件、业务表单与服务端 Siteverify 的完整闭环。
+- 解释为什么前端拿到成功 Token 不等于业务请求可信。
+- 正确处理 Token 过期、重复使用、验证失败和密钥泄露风险。
+
+```mermaid
+sequenceDiagram
+  participant U as 用户浏览器
+  participant T as Turnstile
+  participant A as 你的服务端
+  U->>T: 完成挑战
+  T-->>U: 一次性 Token
+  U->>A: 表单数据 + Token
+  A->>T: Siteverify(secret, token)
+  T-->>A: 验证结果
+  A-->>U: 仅在验证成功后执行业务
+```
+
+安全边界只有一句话：**Token 必须由服务端验证，且业务动作必须发生在验证成功之后。**
 
 在登录、注册、评论或高频 API 调用场景中，为了抵御自动化脚本、撞库和恶意爬虫，引入人机验证（CAPTCHA）是常见的防御手段。
 
@@ -2590,6 +2852,14 @@ export async function POST(req: Request) {
 
 ---
 
+## 官方资料
+
+- [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
+
+## 自检：把知识变成判断
+
+如果攻击者复用旧 Token，你的服务端是否会在执行业务之前拒绝它？前端验证失败时是否阻止提交？
+
 ## 总结
 
 * **前端**：通过 `@marsidev/react-turnstile` 组件在加载完成后获取一次性令牌。
@@ -2606,6 +2876,14 @@ export async function POST(req: Request) {
 - **核心导读**: 解析 Chromium 顶级窗口 Data URL 导航限制的安全背景，并提供 Data URL 转 Blob ObjectURL 的无损转换与内存安全释放方案。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 解释浏览器为什么阻止顶级窗口直接导航到 `data:` URL，而不是把它误判为代码错误。
+- 把 Data URL 安全地转换为 Blob URL，并在正确的生命周期释放内存。
+- 根据“预览、下载、上传”三种目标选择不同方案。
+
+先记住边界：`data:` 是把内容直接塞进 URL，`blob:` 是浏览器为内存中的二进制对象签发一个临时地址。遇到限制时，正确动作不是绕过安全策略，而是把数据交给适合导航和下载的 Blob URL。
 
 在前端处理图片预览、PDF 导出或文件下载时，开发者常常会拿到 Base64 编码的 Data URL（如 `data:image/png;base64,...`）。一个直觉的操作是动态创建一个 `<a target="_blank">` 并触发 `.click()`，试图在新标签页打开预览：
 
@@ -2765,6 +3043,14 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 
 ---
 
+## 官方资料
+
+- [MDN：Blob URL 与 `URL.createObjectURL()`](https://developer.mozilla.org/docs/Web/API/URL/createObjectURL_static)
+
+## 自检：把知识变成判断
+
+如果浏览器拒绝在新窗口打开 Data URL，你能否说明限制发生在哪一层，并写出“转换、打开、释放”的完整顺序？
+
 ## 总结
 
 * **根本原因**：现代浏览器出于防钓鱼、防伪造源和防 XSS 的安全策略，禁止将顶级窗口导航至 `data:` URL。
@@ -2781,6 +3067,14 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 - **核心导读**: 全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 从构建报告中找出大依赖、重复模块和不合理分包。
+- 对 ECharts 与静态图片分别采用按需注册和合适的资源格式。
+- 用首屏请求与缓存命中验证拆包是否真正改善加载。
+
+不要先改 `manualChunks`。先记录入口包、异步包和资源体积，再判断问题属于“引入过多”“压缩不足”还是“缓存边界不稳定”。拆成更多文件不一定更快，它也会增加请求与调度成本。
 
 在 Jebet 敏捷项目管理平台开发初期，随着统计图表（燃尽图、工时分布图、交付漏斗）、富文本编辑器和数据导出功能的加入，生产构建产物（Bundle）直接飙升到了令人触目惊心的 **7.2 MB**！
 
@@ -2904,6 +3198,14 @@ export default defineConfig({
 
 ---
 
+## 官方资料
+
+- [Vite：性能指南](https://vite.dev/guide/performance)
+
+## 自检：把知识变成判断
+
+拆包后首屏实际传输字节、请求数量和缓存复用是否改善，而不只是单个 chunk 看起来变小？
+
 ## 总结
 
 * **避免全量导入**：图表库、图标库和工具库必须执行严格的按需 Tree-Shaking。
@@ -2920,6 +3222,14 @@ export default defineConfig({
 - **核心导读**: 全面剖析大体量动态表单的性能治理链路：涵盖 ExcelJS 重型导出模块动态分包、Iconify 边缘预连接优化、Gzip/Brotli 压缩与输入框卡顿调优。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 用构建分析区分下载体积问题与 React 重渲染问题。
+- 把只在导出时使用的重型依赖移出首屏关键路径。
+- 通过订阅切片让一次输入只更新相关字段，并用 Profiler 复测。
+
+优化顺序应当由证据决定：先记录首屏资源、交互延迟和重渲染次数，再分别调整代码分包、连接建立与状态订阅。没有基线的“优化”无法判断是收益还是迁移成本。
 
 在动态表单系统（包含表单设计、问卷收集与数据导出）运行上线后，往往暴露出两个核心性能痛点：
 1. **首屏 Bundle 严重超标**：用于数据导出的 `exceljs`、大型图标库和验证引擎被静态打入首屏，导致初始包体积高达数兆；
@@ -3002,6 +3312,14 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 ---
 
+## 官方资料
+
+- [React：Profiler API](https://react.dev/reference/react/Profiler)
+
+## 自检：把知识变成判断
+
+你能否用构建分析证明 ExcelJS 未进入首屏包，并用 Profiler 证明输入只重渲染目标字段？
+
 ## 总结
 
 * **剥离非首屏重型依赖**：利用动态 `import()` 隔离 ExcelJS、图表等次要能力。
@@ -3018,6 +3336,25 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 - **核心导读**: 全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 同时根据永久性与请求方法是否保留选择 301、302、307 或 308。
+- 为域名迁移、HTTP 到 HTTPS 和临时维护设计正确跳转。
+- 用状态码、Location、重定向链和 canonical 验证 SEO 配置。
+
+```mermaid
+flowchart TD
+  A[需要重定向] --> B{是否永久}
+  B -->|是| C{必须保留方法与请求体吗}
+  B -->|否| D{必须保留方法与请求体吗}
+  C -->|否| E[301]
+  C -->|是| F[308]
+  D -->|否| G[302]
+  D -->|是| H[307]
+```
+
+选型时先回答两个问题：跳转是永久还是临时？原请求的方法与请求体是否必须保留？SEO 是重要结果，但不能覆盖 HTTP 语义和业务安全。
 
 在 Web 开发中，重定向（Redirect）是域名迁移、URL 规范化（Canonicalization）以及路由兼容不可或缺的手段。
 
@@ -3113,6 +3450,14 @@ server {
 
 ---
 
+## 官方资料
+
+- [MDN：HTTP 重定向](https://developer.mozilla.org/docs/Web/HTTP/Guides/Redirections)
+
+## 自检：把知识变成判断
+
+对一个永久 POST 迁移与临时 GET 跳转，你能否分别选出状态码并验证方法、Location 和跳转链？
+
 ## 总结选型口诀
 
 1. **域名更换 / 永久改版 / 规范化 Canonical**：选 **`301`**（静态页面）或 **`308`**（现代 API/保留 POST）。
@@ -3129,6 +3474,22 @@ server {
 - **核心导读**: 深入剖析 Array.prototype.forEach 无法 await 异步回调的底层机制，对比 for...of 串行执行与 Promise.all 并发控制的最佳实践。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 解释为什么 `forEach(async () => {})` 不会等待回调完成。
+- 在串行、受控并发和全并发之间按业务约束选择写法。
+- 正确收集异步错误与结果，避免函数提前返回。
+
+```mermaid
+flowchart TD
+  A[一组异步任务] --> B{任务能并行吗}
+  B -->|必须保持顺序| C[for...of + await]
+  B -->|全部可并行且规模可控| D[Promise.all]
+  B -->|可并行但需限流| E[并发队列]
+```
+
+真正的问题不是两种循环语法谁更高级，而是调用者需要等待什么。先定义顺序、并发上限和失败策略，再选择控制流。
 
 在现代前端开发中，许多代码规范工具（如 Biome 的 `noForEach` 规则或 ESLint 的相关插件）都强烈建议使用 `for...of` 替代 `Array.prototype.forEach`。
 
@@ -3275,6 +3636,14 @@ async function handleUploadFilesParallel(files: File[]) {
 
 ---
 
+## 官方资料
+
+- [MDN：`for...of`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for...of)
+
+## 自检：把知识变成判断
+
+面对批量上传，你能否明确顺序要求、并发上限和单个失败是否终止整体，再选择循环方案？
+
 ## 总结
 
 1. **绝对不要**在 `Array.prototype.forEach` 回调中使用 `async/await`，因为它永远不会等待异步操作。
@@ -3291,6 +3660,14 @@ async function handleUploadFilesParallel(files: File[]) {
 - **核心导读**: 全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把“刷新 404”“首包过大”“输入或加载变慢”拆成不同故障域。
+- 用路由回退、依赖分析和按需加载分别解决对应问题。
+- 建立优化前基线，用构建产物与 Lighthouse 复测结果证明收益。
+
+本文不是一组互不相关的技巧，而是一条诊断链：先确认请求是否到达正确页面，再确认浏览器下载了什么，最后确认主线程何时可交互。每一步只解决一个已测量的问题。
 
 在富文本协同笔记项目上线后，随着功能的丰富（加入多语言代码高亮、公式渲染、表格扩展和复杂数据请求），应用往往面临两大挑战：
 1. **部署后子路由刷新 404**（SPA HTML5 History 模式在静态服务器上的路由穿透问题）；
@@ -3427,6 +3804,14 @@ export default defineConfig({
 
 ---
 
+## 官方资料
+
+- [web.dev：性能测量](https://web.dev/articles/vitals)
+
+## 自检：把知识变成判断
+
+你能否为路由 404、首包过大和长任务各写出一个可观测证据，而不是用同一个 Lighthouse 分数概括？
+
 ## 总结
 
 * **SPA 路由配置**：在 Vercel / Nginx 端通过重写规则保障 HTML5 History 模式的子路由刷新稳定。
@@ -3443,6 +3828,24 @@ export default defineConfig({
 - **核心导读**: 全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 解释 MDX 文件如何经过 Next.js 与 Nextra 生成静态页面。
+- 配置组件映射、全文检索、站点地图和静态导出。
+- 用生产构建而不是开发服务器验证真实部署产物。
+
+```mermaid
+flowchart LR
+  M[app/posts 下的 MDX] --> N[Nextra 编译与组件映射]
+  N --> X[Next.js 静态导出]
+  X --> O[out 静态页面]
+  O --> P[Pagefind 索引]
+  O --> S[sitemap 与 SEO 校验]
+  P --> D[静态服务器 / 容器]
+```
+
+建站流程应围绕最终产物设计。开发模式只证明页面能热更新，`pnpm build` 才能同时暴露 MDX 编译、静态路由、索引与部署配置问题。
 
 构建个人技术博客时，开发者追求的是：**极速的书写体验（纯 Markdown / MDX）、精美的默认排版与代码高亮、零运维成本的静态导出，以及毫秒级的站内全文检索**。
 
@@ -3557,6 +3960,14 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ---
 
+## 官方资料
+
+- [Nextra：Getting Started](https://nextra.site/docs)
+
+## 自检：把知识变成判断
+
+新文章能否在生产构建后同时出现在静态 HTML、全文索引、站点地图和 canonical 校验中？
+
 ## 总结
 
 * **Nextra 4 + App Router** 提供了与 Next.js 生态最契合的 MDX 写作与组件扩展体验。
@@ -3573,6 +3984,24 @@ CMD ["nginx", "-g", "daemon off;"]
 - **核心导读**: 全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 区分请求函数、服务端状态缓存与客户端 UI 状态。
+- 为 Query Key、`staleTime` 和 `gcTime` 建立可预测的规则。
+- 安全实现预取、失效与乐观更新，并在失败时回滚。
+
+```mermaid
+stateDiagram-v2
+  [*] --> Fresh: 请求成功
+  Fresh --> Stale: 超过 staleTime
+  Stale --> Fresh: 后台重新获取成功
+  Fresh --> Inactive: 无观察者
+  Stale --> Inactive: 无观察者
+  Inactive --> Removed: 超过 gcTime
+```
+
+Axios 负责“怎样发请求”，TanStack Query 负责“何时请求、结果缓存在哪里、何时视为过期”。两者并不竞争，职责边界清楚后配置才有意义。
 
 在前端应用中，许多团队经常混淆 **客户端本地状态（Client State，如弹窗显隐、侧边栏折叠）** 与 **服务端状态（Server State，如用户列表、文章详情、订单流水）**。
 
@@ -3693,6 +4122,14 @@ const mutation = useMutation({
 
 ---
 
+## 官方资料
+
+- [TanStack Query：Important Defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults)
+
+## 自检：把知识变成判断
+
+相同 Query Key 是否代表相同数据？乐观更新失败时是否能恢复快照并重新验证服务端状态？
+
 ## 总结
 
 * **告别手动状态管理**：消除 80% 的样板代码（`useEffect` + `setLoading`）。
@@ -3709,6 +4146,25 @@ const mutation = useMutation({
 - **核心导读**: 详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 解释 Tiptap、ProseMirror、Yjs 与 Hocuspocus 各自负责哪一层。
+- 接入文档同步与 Awareness 光标，同时避免把在线状态持久化进正文。
+- 设计鉴权、断线重连和服务端持久化边界。
+
+```mermaid
+flowchart LR
+  E1[Tiptap 客户端 A] <--> Y1[Y.Doc A]
+  E2[Tiptap 客户端 B] <--> Y2[Y.Doc B]
+  Y1 <--> H[Hocuspocus WebSocket]
+  Y2 <--> H
+  H <--> DB[(持久化存储)]
+  H -. Awareness .-> E1
+  H -. Awareness .-> E2
+```
+
+正文更新与在线光标是两类数据：Yjs 文档更新需要可靠同步和持久化，Awareness 是短暂状态，用户离线后应自然消失。
 
 在研发类似 Notion、飞书文档的多人实时协作富文本系统时，**Tiptap**（基于 ProseMirror 的 Headless 编辑器框架）配合 **Yjs** 与 **Hocuspocus**，构成了目前生产环境中最成熟、扩展性最强的技术组合。
 
@@ -3879,6 +4335,14 @@ server.listen();
 
 ---
 
+## 官方资料
+
+- [Tiptap：Collaboration](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
+
+## 自检：把知识变成判断
+
+正文更新与 Awareness 是否分开？断线重连后文档能收敛，离线用户光标又能及时消失吗？
+
 ## 总结
 
 * **Tiptap + ProseMirror** 提供了极其灵活的富文本 DOM 渲染与 Schema 扩展机制；
@@ -3895,6 +4359,25 @@ server.listen();
 - **核心导读**: 全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 从使用方环境反推库需要发布 ESM、CJS、类型声明中的哪些产物。
+- 配置 tsup 入口、外部依赖与 source map，并写出正确的 `exports`。
+- 在真正发布前用打包结果和消费端小项目验证导入路径。
+
+```mermaid
+flowchart LR
+  S[TypeScript 源码] --> T[tsup / esbuild]
+  T --> E[ESM 产物]
+  T --> C[CommonJS 产物]
+  T --> D[类型声明 d.ts]
+  E --> P[package exports]
+  C --> P
+  D --> P
+```
+
+库打包的成功标准不是“命令执行成功”，而是目标消费者能按声明的入口加载代码和类型。格式越多，验证矩阵也越大，只发布确实需要的产物。
 
 在开发 TypeScript 工具库、React 组件库或 Monorepo 内部公共包时，配置 Webpack 或 Rollup 往往需要编写冗长的配置文件，处理复杂的 Babel / SWC 插件和类型声明插件。
 
@@ -4012,6 +4495,14 @@ packages/
 
 ---
 
+## 官方资料
+
+- [tsup：官方仓库](https://github.com/egoist/tsup)
+
+## 自检：把知识变成判断
+
+在 ESM 与 CJS 测试项目中，代码和类型是否都能通过 `exports` 声明的路径正确加载？
+
 ## 总结
 
 * **定位清晰**：tsup 是目前开发 TypeScript 库、SDK 和 Monorepo 公共包最高效的构建利器。
@@ -4028,6 +4519,24 @@ packages/
 - **核心导读**: 告别无类型 fetch 与分散的 Route Handlers：利用 Hono RPC、zValidator 与 hc 客户端在 Next.js 全栈应用中实现从后端到 React Query 的端到端类型推导。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 用 Zod 在请求边界验证运行时数据，用 TypeScript 在编译期推导类型。
+- 从 Hono 路由导出类型并通过 `hc` 构建客户端。
+- 把 RPC 客户端接入 TanStack Query，同时保留 HTTP 错误处理。
+
+```mermaid
+flowchart LR
+  Z[Zod 输入 Schema] --> H[Hono 路由]
+  H --> T[导出 AppType]
+  T --> C[hc 类型安全客户端]
+  C --> Q[TanStack Query]
+  Q --> UI[React 组件]
+  UI -->|参数受类型约束| H
+```
+
+“类型安全”不能替代运行时校验：浏览器、第三方客户端和旧版本都可能发送任意数据。Zod 守住服务端边界，RPC 类型减少受控代码之间的重复声明。
 
 在传统的 Next.js App Router API 开发中，通常面临两大痛点：
 1. **文件琐碎分散**：每个路由都需要新建一个目录并创建 `route.ts`（例如 `app/api/users/route.ts`、`app/api/posts/[id]/route.ts`）；
@@ -4196,6 +4705,14 @@ export function CreatePostForm() {
 
 ---
 
+## 官方资料
+
+- [Hono：RPC](https://hono.dev/docs/guides/rpc)
+
+## 自检：把知识变成判断
+
+绕过类型客户端直接发送非法查询参数时，服务端是否仍会返回可预测的校验错误？
+
 ## 总结
 
 * **高内聚低割裂**：利用 Next.js Catch-All 路由，将所有 API 路由逻辑统一收敛至 Hono。
@@ -4212,6 +4729,26 @@ export function CreatePostForm() {
 - **核心导读**: 全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把浏览器中的图片转换成模型接口接受的 MIME 类型与二进制数据。
+- 在服务端校验文件大小、类型与请求权限，再调用多模态模型。
+- 为识别失败、超时和结构化输出不合法设计可恢复路径。
+
+```mermaid
+sequenceDiagram
+  participant U as 浏览器
+  participant A as 服务端 API
+  participant G as Gemini
+  U->>A: 图片 + 提示词
+  A->>A: 校验类型、大小与权限
+  A->>G: 文本 + 图像数据
+  G-->>A: 识别结果
+  A-->>U: 经过校验的响应
+```
+
+多模态调用的难点通常不在“把图片发过去”，而在输入边界和输出契约。生产接口应限制体积与 MIME 类型，并把模型输出当作不可信数据继续校验。
 
 Gemini 1.5 / 2.0 Flash 具备原生的**原生多模态（Native Multimodal）**架构，不仅能理解文字，还能直接对高分辨率图像、图表、UI 界面截图乃至 PDF 扫描件进行毫秒级的视觉理解与结构化字段提取。
 
@@ -4379,6 +4916,14 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 ---
 
+## 官方资料
+
+- [Google AI：图像理解](https://ai.google.dev/gemini-api/docs/image-understanding)
+
+## 自检：把知识变成判断
+
+服务端是否同时限制 MIME、体积和权限？模型返回非预期结构时是否会被校验层拒绝？
+
 ## 总结
 
 * **全格式支持**：结合 `inlineData` 与 Base64，可无缝对接 URL 抓取与文件直传。
@@ -4394,6 +4939,24 @@ visionRoute.post('/upload-invoice', async (c) => {
 - **核心导读**: 全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 解释 Markdown 从文本、MDAST、HAST 到 HTML 的转换阶段。
+- 判断何时需要 MDX 组件、框架路由与静态全文检索。
+- 把不可信 Markdown 的解析与 HTML 安全边界纳入设计。
+
+```mermaid
+flowchart LR
+  M[Markdown / MDX 源文] --> P[parse: MDAST]
+  P --> R[remark 转换]
+  R --> H[HAST]
+  H --> E[rehype 转换]
+  E --> O[HTML 或 React 页面]
+  O --> I[Pagefind 静态索引]
+```
+
+把每一层的输入输出想清楚，插件顺序就不再神秘：remark 处理 Markdown 语义树，rehype 处理 HTML 语义树，框架负责路由、组件映射与最终构建。
 
 在现代内容驱动型网站（如技术博客、产品文档和知识库）中，Markdown / MDX 是内容创作者最青睐的格式。然而，从一段纯文本 `.md` 或带有 React 组件的 `.mdx`，到浏览器中呈现的带有语法高亮、可交互组件和 SEO 优化的 HTML 页面，底层经历了怎样的编译与渲染流水线？
 
@@ -4515,6 +5078,14 @@ Next.js 构建生成静态 HTML (out/)
 
 ---
 
+## 官方资料
+
+- [Unified：官方文档](https://unifiedjs.com/learn/)
+
+## 自检：把知识变成判断
+
+一个插件接收的是 MDAST 还是 HAST？不可信 HTML 在哪一步被过滤？最终索引取自什么产物？
+
 ## 总结
 
 1. **底层原理**：Markdown 渲染本质是 `Text -> mdast -> hast -> React/HTML` 的 AST 编译与转换流水线。
@@ -4531,6 +5102,14 @@ Next.js 构建生成静态 HTML (out/)
 - **核心导读**: 全面评测主流 Web Canvas 图形库：对比 Fabric.js 的对象模型与 SVG 序列化、Konva 的分层缓存机制、Pixi.js 的 WebGL 极致性能与 Paper.js 的矢量布尔运算。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 先按交互模型、图元数量和导出需求缩小选型范围，再比较 API 风格。
+- 区分对象画布、场景图、WebGL 渲染器和矢量几何工具各自解决的问题。
+- 用一个最小原型验证事件命中、序列化和性能，而不是只看基准表。
+
+这不是“哪一个库最好”的排名。选型的关键是先写出约束：是否需要对象编辑手柄、是否必须导出 SVG、典型场景有多少图元、是否依赖复杂几何运算。约束不同，答案就会不同。
 
 HTML5 原生 Canvas 仅提供了极低级的像素绘制 API（如 `ctx.fillRect()`、`ctx.arc()`）。它没有内置的 DOM 树、没有事件委托、没有选区变换（Bounding Box 缩放/旋转手柄），更无法记录历史图元对象。
 
@@ -4593,6 +5172,14 @@ Canvas 图形库生态矩阵:
 
 ---
 
+## 官方资料
+
+- [MDN：Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
+
+## 自检：把知识变成判断
+
+不看库名，只给出“10 万粒子”“可编辑海报”“矢量布尔运算”三个需求时，你能否分别列出最重要的验证指标？
+
 ## 结论与选型建议
 
 1. **如果是做类似 Canva / 稿定设计的“图层排版、文字排版、海报生成”应用**：**首选 Fabric.js**，能节省 80% 的交互手柄与 SVG 序列化工作量。
@@ -4609,6 +5196,22 @@ Canvas 图形库生态矩阵:
 - **核心导读**: 深入解析流程图与拓扑图中的自定义连线算法：涵盖贝塞尔曲线控制点计算、SVG 动态路径生成、锚点吸附算法与 React Flow Custom Edge 实战。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 从起点、终点和方向向量推导贝塞尔曲线控制点。
+- 把几何计算与 React Flow 的 Edge 渲染组件分开实现和测试。
+- 在节点拖动时保持路径更新，并为标签、删除按钮留出交互层。
+
+```mermaid
+flowchart LR
+  A[读取 source / target 坐标] --> B[按端口方向计算控制点]
+  B --> C[生成 SVG path]
+  C --> D[渲染路径与命中区域]
+  D --> E[节点移动后重新计算]
+```
+
+实现时先保证“同一组坐标总能得到同一路径”，再接入拖拽与交互。这样几何错误和 React 状态错误不会混在一起排查。
 
 在可视化流程图编排（如审批流、工作流引擎、思维导图、低代码逻辑编排）中，**节点之间的连线（Edge / Connection）** 不仅需要清晰表达数据流向，还必须支持复杂的交互能力：
 * 动态计算三次贝塞尔曲线（Cubic Bezier）或折线（Smooth Step）；
@@ -4751,6 +5354,14 @@ export function FlowEditor() {
 
 ---
 
+## 官方资料
+
+- [React Flow：Custom Edges](https://reactflow.dev/learn/customization/custom-edges)
+
+## 自检：把知识变成判断
+
+给定四个端口方向与两点坐标，你能否在不依赖 React 的纯函数中生成并测试路径？
+
 ## 总结
 
 * **数学基础**：贝塞尔曲线通过控制点偏移量赋予连线符合直觉的流体美感。
@@ -4766,6 +5377,23 @@ export function FlowEditor() {
 - **核心导读**: 全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 区分本地提交钩子与 CI 校验的职责，不把安全边界放在可跳过的钩子里。
+- 用 Biome 检查暂存文件，并用规则校验 Conventional Commits。
+- 保持本地反馈快速，同时让远端流水线做最终裁决。
+
+```mermaid
+flowchart LR
+  W[工作区改动] --> S[git add]
+  S --> H[pre-commit 检查暂存文件]
+  H --> M[commit-msg 校验信息]
+  M --> C[创建提交]
+  C --> CI[CI 重新执行完整校验]
+```
+
+本地钩子优化的是反馈速度，不是强制安全。开发者可以跳过钩子，因此分支保护和 CI 必须重复关键检查。
 
 在多人协作的代码仓库中，常常遇到以下顽疾：
 * 代码格式不一（有的加分号、有的用单引号，Git Diff 产生大量无意义噪音）；
@@ -4899,6 +5527,14 @@ module.exports = {
 
 ---
 
+## 官方资料
+
+- [Git：Hooks](https://git-scm.com/docs/githooks)
+
+## 自检：把知识变成判断
+
+跳过本地 Git Hook 后，远端 CI 是否仍会阻止格式、类型或提交规范不合格的改动？
+
 ## 总结
 
 * **极速响应**：基于 Rust 的 **Biome** 将格式化与代码分析耗时从秒级压缩至毫秒级（通常不到 50ms），开发者毫无“卡顿感”。
@@ -4915,6 +5551,23 @@ module.exports = {
 - **核心导读**: 全面解析分布式与实时协同编辑的核心冲突算法：对比 Google Docs 的 OT 集中式转换矩阵，与 Yjs / Automerge 所采用的 CRDT（状态型与操作型）数学模型及 YATA 算法实现。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 用同一个并发插入例子解释“收敛”到底要求什么。
+- 区分 OT 的操作转换与 CRDT 的可交换合并思路。
+- 根据离线编辑、中心服务和元数据开销选择实现路线。
+
+```mermaid
+flowchart TD
+  A[两个客户端基于同一版本编辑] --> B{采用哪种协调模型}
+  B -->|OT| C[服务端排序并转换操作]
+  B -->|CRDT| D[操作携带稳定标识并可交换合并]
+  C --> E[各副本收敛]
+  D --> E
+```
+
+先把目标说准确：协同算法不保证所有用户在每个瞬间看到相同内容，它保证在收到同一组更新后，副本能够得到一致结果。
 
 在开发多人同时在线编辑的富文本编辑器（如 Google Docs、Notion、Figma 或代码协作工具）时，最底层的核心难题是：**当多个用户在不同的地理位置、不同的网络延迟下对同一个文档的同一段落进行并发插入与删除时，如何保证所有人最终看到完全一致的文档内容？**
 
@@ -5011,6 +5664,14 @@ Yjs 链表结构 (Struct / Item):
 
 ---
 
+## 官方资料
+
+- [Yjs：官方文档](https://docs.yjs.dev/)
+
+## 自检：把知识变成判断
+
+两个客户端离线后在同一位置插入不同字符，你能否解释所选算法如何标识、排序并最终收敛？
+
 ## 总结
 
 * **OT** 属于上一代以中心服务器为绝对权威的协同技术。
@@ -5026,6 +5687,26 @@ Yjs 链表结构 (Struct / Item):
 - **核心导读**: 全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 把 Gemini 密钥保留在服务端，通过边缘 API 代理组织模型请求。
+- 根据消费方选择纯文本流、结构化 JSON 或工具调用。
+- 在前端正确处理分片、取消、错误与最终状态。
+
+```mermaid
+sequenceDiagram
+  participant U as React 客户端
+  participant A as Hono API
+  participant G as Gemini API
+  U->>A: 输入 + 请求标识
+  A->>G: 服务端携带密钥请求
+  G-->>A: 流式分片
+  A-->>U: 转发文本或结构化事件
+  U->>U: 增量渲染并处理结束状态
+```
+
+代理层不只是隐藏密钥，它还是统一鉴权、限流、日志和输出契约的边界。不要让浏览器直接持有生产密钥。
 
 Google 推出的 **Gemini 1.5 Flash / 2.0 Flash** 凭借超大上下文窗口（高达 100万~200万 Tokens）、超低延迟与极高的性价比，成为当前全栈开发者构建 AI 应用的首选模型之一。
 
@@ -5227,6 +5908,14 @@ export function GeminiChat() {
 
 ---
 
+## 官方资料
+
+- [Google AI：Gemini API 文档](https://ai.google.dev/gemini-api/docs)
+
+## 自检：把知识变成判断
+
+浏览器网络面板里是否看不到模型密钥？流中断和用户取消时，服务端能否停止后续工作？
+
 ## 总结
 
 * **安全边界**：始终通过后端或边缘网关代理请求，杜绝 API Key 在前端暴露。
@@ -5243,6 +5932,23 @@ export function GeminiChat() {
 - **核心导读**: 全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 根据执行位置、启动方式、运行时 API 与连接生命周期选择部署形态。
+- 用 Hono 写出可部署到边缘运行时的最小 API，并识别 Node.js 专属依赖。
+- 为边缘函数选择适配的数据库连接方案，而不是照搬常驻服务器连接池。
+
+```mermaid
+flowchart LR
+  U[用户] --> E[就近边缘函数]
+  E --> A[鉴权与业务逻辑]
+  A --> D[(HTTP 数据服务或边缘数据库)]
+  D --> A
+  A --> U
+```
+
+边缘运行时的优势来自就近执行和弹性调度，约束也来自短生命周期与受限运行时。先列出依赖的系统 API 和数据库连接模式，再决定是否迁移。
 
 随着云原生和 Serverless 技术的演进，传统的“买 VPS -> 配 Nginx -> 跑 Node.js Docker 容器”的后端部署模式正受到**边缘计算（Edge Computing）**的强烈冲击。
 
@@ -5360,6 +6066,14 @@ app.get('/api/posts', async (c) => {
 
 ---
 
+## 官方资料
+
+- [Hono：Getting Started](https://hono.dev/docs/getting-started/basic)
+
+## 自检：把知识变成判断
+
+列出应用使用的 Node.js API、数据库驱动与长连接需求后，它们是否都被目标边缘运行时支持？
+
 ## 总结
 
 * **适用场景**：边缘函数极其适合用于轻量级 API 代理、鉴权中心、地理位置路由、Webhook 接收器和高性能元数据服务。
@@ -5375,6 +6089,24 @@ app.get('/api/posts', async (c) => {
 - **核心导读**: 深度解析前端 Monorepo 架构演进：对比 Lerna 与 Turborepo 的构建管道与哈希缓存，详解 pnpm workspace 依赖拓扑、软硬链接去重与多包统一发版。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 判断团队的问题是否真的需要 Monorepo，而不是把仓库合并当成目标。
+- 用 pnpm workspace 表达包依赖，用 Turborepo 表达任务依赖与缓存边界。
+- 让构建缓存依赖明确输入，避免复用过期产物。
+
+```mermaid
+flowchart TD
+  UI[packages/ui] --> WEB[apps/web]
+  CFG[packages/config] --> UI
+  CFG --> WEB
+  API[packages/api-client] --> WEB
+  WEB --> BUILD[web build]
+  UI --> BUILD
+```
+
+Workspace 管依赖安装与包链接，任务编排器管命令顺序和缓存。把两者职责分开，才能定位“依赖没解析”和“任务没重跑”这两类不同问题。
 
 在复杂企业级前端架构中，随着业务模块和公共组件库（如 UI 组件库、工具函数包、SDK、管理后台、移动端 H5）的膨胀，**多仓库（Multi-Repo）**模式面临版本联动升级繁琐、跨仓库联调困难、依赖重复安装等痛点。
 
@@ -5488,6 +6220,14 @@ packages:
 
 ---
 
+## 官方资料
+
+- [pnpm：Workspaces](https://pnpm.io/workspaces)
+
+## 自检：把知识变成判断
+
+修改公共包时，任务图能否只重建受影响消费者，同时保证缓存键包含真实输入？
+
 ## 总结
 
 * **依赖隔离与空间节省**：pnpm workspace 彻底解决了幽灵依赖与磁盘空间浪费。
@@ -5504,6 +6244,23 @@ packages:
 - **核心导读**: 深度探索以 Zod Schema 为单一事实来源（Single Source of Truth）自动推导 UI 表单的可行性：涵盖类型反射、字段配置覆盖（fieldConfig）与复杂嵌套校验。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 判断哪些表单可以从 Zod Schema 自动推导，哪些必须显式补充 UI 配置。
+- 把数据类型、校验规则与展示意图放在正确层级。
+- 用最小字段映射器验证 AutoForm 的收益与边界。
+
+```mermaid
+flowchart LR
+  Z[Zod Schema] --> I[字段类型推导]
+  F[fieldConfig] --> M[UI 映射器]
+  I --> M
+  M --> U[表单组件]
+  U -->|提交| Z
+```
+
+关键结论是：Zod 能描述“什么数据有效”，却不总能表达“这个字段应该怎样呈现”。因此 Schema 可以成为校验的单一事实来源，但复杂 UI 仍需要显式配置。
 
 在现代 TypeScript 全栈开发中，一个典型的前端表单通常要写三遍：
 1. **类型定义一遍**（`interface FormValues { ... }`）；
@@ -5606,6 +6363,14 @@ export function ProfileFormPage() {
 
 ---
 
+## 官方资料
+
+- [Zod：官方文档](https://zod.dev/)
+
+## 自检：把知识变成判断
+
+哪些信息属于 Zod 校验，哪些属于 `fieldConfig` 展示配置？你能否举出一个无法仅靠类型推导的字段？
+
 ## 总结
 
 * **中后台降本增效利器**：对于标准的数据录入、配置页、后台 CRUD 模块，基于 Zod 的 AutoForm 能够消除 90% 的模板代码。
@@ -5621,6 +6386,14 @@ export function ProfileFormPage() {
 - **核心导读**: 全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。
 
 ## 正文内容
+
+## 读完你能做什么
+
+- 根据参数规模、量化格式与上下文长度估算本机是否能运行目标模型。
+- 在 Ollama 与 LM Studio 之间按自动化、可视化和 API 需求选型。
+- 验证模型实际加载位置、推理速度与服务暴露边界。
+
+本地部署不是“下载一个模型就结束”。你需要同时决定模型权重、运行时、硬件预算和访问方式。先用小模型打通下载、推理与 API，再逐步提高参数规模，最容易定位资源不足问题。
 
 随着 **DeepSeek-R1 / V3** 等顶尖开源模型的发布，在本地消费级显卡或私有服务器上部署大模型，已成为保障数据隐私、实现零外网依赖与低成本推理的主流选择。
 
@@ -5723,6 +6496,14 @@ docker run -d -p 3000:8080 \
 浏览器访问 `http://localhost:3000`，即可享受沉浸式对话、文档嵌入解析（RAG）与代码高亮。
 
 ---
+
+## 官方资料
+
+- [Ollama：官方文档](https://docs.ollama.com/)
+
+## 自检：把知识变成判断
+
+在下载模型前，你能否估算权重与上下文的内存预算，并说明服务是否只监听可信网络接口？
 
 ## 总结
 

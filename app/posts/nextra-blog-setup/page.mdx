@@ -18,6 +18,24 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 解释 MDX 文件如何经过 Next.js 与 Nextra 生成静态页面。
+- 配置组件映射、全文检索、站点地图和静态导出。
+- 用生产构建而不是开发服务器验证真实部署产物。
+
+```mermaid
+flowchart LR
+  M[app/posts 下的 MDX] --> N[Nextra 编译与组件映射]
+  N --> X[Next.js 静态导出]
+  X --> O[out 静态页面]
+  O --> P[Pagefind 索引]
+  O --> S[sitemap 与 SEO 校验]
+  P --> D[静态服务器 / 容器]
+```
+
+建站流程应围绕最终产物设计。开发模式只证明页面能热更新，`pnpm build` 才能同时暴露 MDX 编译、静态路由、索引与部署配置问题。
+
 构建个人技术博客时，开发者追求的是：**极速的书写体验（纯 Markdown / MDX）、精美的默认排版与代码高亮、零运维成本的静态导出，以及毫秒级的站内全文检索**。
 
 **Nextra 4** 深度融合了 Next.js App Router 架构，允许直接将 `app/posts/<slug>/page.mdx` 映射为标准页面路由。本文完整记录本博客的工程搭建全流程。
@@ -130,6 +148,14 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ---
+
+## 官方资料
+
+- [Nextra：Getting Started](https://nextra.site/docs)
+
+## 自检：把知识变成判断
+
+新文章能否在生产构建后同时出现在静态 HTML、全文索引、站点地图和 canonical 校验中？
 
 ## 总结
 

@@ -18,6 +18,23 @@ export const metadata = {
   },
 }
 
+## 读完你能做什么
+
+- 根据执行位置、启动方式、运行时 API 与连接生命周期选择部署形态。
+- 用 Hono 写出可部署到边缘运行时的最小 API，并识别 Node.js 专属依赖。
+- 为边缘函数选择适配的数据库连接方案，而不是照搬常驻服务器连接池。
+
+```mermaid
+flowchart LR
+  U[用户] --> E[就近边缘函数]
+  E --> A[鉴权与业务逻辑]
+  A --> D[(HTTP 数据服务或边缘数据库)]
+  D --> A
+  A --> U
+```
+
+边缘运行时的优势来自就近执行和弹性调度，约束也来自短生命周期与受限运行时。先列出依赖的系统 API 和数据库连接模式，再决定是否迁移。
+
 随着云原生和 Serverless 技术的演进，传统的“买 VPS -> 配 Nginx -> 跑 Node.js Docker 容器”的后端部署模式正受到**边缘计算（Edge Computing）**的强烈冲击。
 
 在边缘计算模式下，后端代码不再跑在某个单机房的服务器中，而是直接运行在遍布全球 CDN 节点的 **V8 沙箱隔离环境（Edge Runtime）**。本文记录基于轻量级 Web 框架 **Hono** 构建并部署边缘后端的全流程与技术权衡。
@@ -133,6 +150,14 @@ app.get('/api/posts', async (c) => {
    默认生成的 `*.vercel.app` 域名在部分网络环境下可能受阻。最佳实践是在 Vercel 项目设置中绑定自己的自定义二级域名（如 `api.example.com`），并通过 CNAME 解析至 `cname.vercel-dns.com`，享受自动签发的 SSL 证书。
 
 ---
+
+## 官方资料
+
+- [Hono：Getting Started](https://hono.dev/docs/getting-started/basic)
+
+## 自检：把知识变成判断
+
+列出应用使用的 Node.js API、数据库驱动与长连接需求后，它们是否都被目标边缘运行时支持？
 
 ## 总结
 
