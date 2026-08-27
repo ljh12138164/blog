@@ -132,7 +132,7 @@ export function Search() {
                   onClick={closeSearch}
                 >
                   <strong className="text-pretty">{result.meta.title ?? '未命名文章'}</strong>
-                  <span className="text-pretty font-serif text-sm leading-6 text-muted">
+                  <span className="text-pretty text-sm leading-6 text-muted">
                     {result.excerpt.replace(/<[^>]*>/g, '')}
                   </span>
                 </a>

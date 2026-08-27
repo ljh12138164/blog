@@ -46,7 +46,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </nav>
       </header>
       <main>{children}</main>
-      <footer className="mx-auto flex w-[min(1120px,calc(100%_-_40px))] flex-col gap-4 border-t border-ink py-[42px] font-serif text-[13px] text-muted max-md:w-[min(680px,calc(100%_-_28px))]">
+      <footer className="mx-auto flex w-[min(1120px,calc(100%_-_40px))] flex-col gap-4 border-t border-ink py-[42px] text-[13px] text-muted max-md:w-[min(680px,calc(100%_-_28px))]">
         <div className="flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
           <p className="m-0">持续学习，不断进步。</p>
           <div className="flex flex-wrap items-center gap-5 text-[13px]">

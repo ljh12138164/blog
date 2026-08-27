@@ -2,11 +2,13 @@
 
 ## 当前目标
 
-无。
+重构站点字体体系与首页，采用标题衬线、正文/UI 无衬线，以及编辑型首页方案 A。
 
 ## 状态
 
-空闲。本次 Google 脚本加载优化已实现并验证，详细范围与结果记录于 `docs/development/optimize-google-scripts.md`。
+进行中：字体与首页方案 A 已实现，类型检查、lint、完整构建、静态产物和桌面/移动视觉验证通过。开发文档见 `docs/development/editorial-homepage-fonts.md`。
+
+此前 Google 脚本加载优化已实现并验证，详细范围与结果记录于 `docs/development/optimize-google-scripts.md`。
 
 此前中国内地访问优化工作仍等待用户补充文章截图与执行生产 DNS 灰度，不在本次代码改动范围内。
 
@@ -24,11 +26,11 @@ GitHub Actions 已删除源站 IP 的 `DEPLOY_HOST` 默认值，部署目标必�
 
 ## 下一步
 
-无。
+提交已验证实现，完成规范与规格双轴评审，处理阻塞项后创建 Pull Request。
 
 ## 计划验证
 
-无。
+运行 `pnpm typecheck`、`pnpm build`，检查必需静态产物，并视觉检查桌面/移动首页与代表性文章。
 
 ## 阻塞
 

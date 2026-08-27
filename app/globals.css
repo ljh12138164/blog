@@ -9,8 +9,10 @@
   --color-code: #ebe9e1;
   --color-code-header: #e2dfd5;
   --color-accent: #b94f2a;
-  --font-serif: Georgia, "Noto Serif SC", "Songti SC", serif;
-  --font-sans: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, Georgia, serif;
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+    "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 @layer base {

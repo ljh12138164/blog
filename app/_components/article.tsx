@@ -93,7 +93,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         />
       )}
       <article
-        className="article-content prose prose-lg min-w-0 max-w-none font-serif prose-headings:text-balance prose-headings:font-serif prose-headings:text-ink prose-p:text-pretty prose-p:text-[#303b36] prose-li:text-[#303b36] prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[32px] prose-h2:leading-[1.35] prose-h3:mt-[38px] prose-h3:text-[23px] prose-blockquote:my-[34px] prose-blockquote:border-l-[3px] prose-blockquote:border-accent prose-blockquote:bg-accent/[.06] prose-blockquote:px-6 prose-blockquote:py-3"
+        className="article-content prose prose-lg min-w-0 max-w-none prose-headings:text-balance prose-headings:font-serif prose-headings:text-ink prose-p:text-pretty prose-p:leading-[1.85] prose-p:text-[#303b36] prose-li:leading-[1.8] prose-li:text-[#303b36] prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[32px] prose-h2:leading-[1.35] prose-h3:mt-[38px] prose-h3:text-[23px] prose-blockquote:my-[34px] prose-blockquote:border-l-[3px] prose-blockquote:border-accent prose-blockquote:bg-accent/[.06] prose-blockquote:px-6 prose-blockquote:py-3"
         data-pagefind-body
       >
         <header className="not-prose mb-[46px] border-b border-line pb-[46px]">
@@ -104,16 +104,14 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           )}
           {meta.title && (
             <h1
-              className="my-[18px] mb-5 text-balance font-serif text-[clamp(42px,6vw,68px)] leading-[1.12] font-medium"
+              className="my-[18px] mb-5 text-balance font-serif text-[clamp(42px,6vw,68px)] leading-[1.12] font-medium max-md:text-[38px]"
               data-pagefind-meta="title"
             >
               {meta.title}
             </h1>
           )}
           {meta.description && (
-            <p className="text-pretty font-serif text-xl leading-[1.7] text-muted">
-              {meta.description}
-            </p>
+            <p className="text-pretty text-lg leading-[1.8] text-muted">{meta.description}</p>
           )}
           {meta.date && (
             <p className="mb-3 text-xs tracking-[.06em] text-muted uppercase">
