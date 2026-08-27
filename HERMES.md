@@ -2,11 +2,13 @@
 
 ## 当前目标
 
-只使用 `ljhboard.cn` 一个注册域名，通过 Custom Hostnames 与 CFST 动态优选入口改善中国内地访问，并将实践整理为博客文章。
+无。
 
 ## 状态
 
-进行中。用户已确认单域名方案：复用 `origin-ai.ljhboard.cn` 回源，`cdn.ljhboard.cn` 作为 CFST 更新的 DNS-only A 记录，`ai`/`blog` 使用 Custom Hostnames；根域不使用 Worker，保持橙云并通过 Single Redirect 跳转到 `blog.ljhboard.cn`。Cloudflare for SaaS fallback origin 已设置并显示有效，现有生产 DNS 仍由用户手工切换。
+空闲。本次 Google 脚本加载优化已实现并验证，详细范围与结果记录于 `docs/development/optimize-google-scripts.md`。
+
+此前中国内地访问优化工作仍等待用户补充文章截图与执行生产 DNS 灰度，不在本次代码改动范围内。
 
 已新增《Cloudflare 的优选 IP 优化》文章，覆盖启用前绑定支付方式、DNS 拓扑、Custom Hostname、CFST 安装、API Token 与 Record ID、更新脚本、宝塔计划任务、根域重定向、验证和回滚，并保留 8 个图片占位。文章已加入首页最新文章与 Cloudflare 归档，`pnpm typecheck`、`pnpm build` 和静态产物检查通过。
 
@@ -22,11 +24,11 @@ GitHub Actions 已删除源站 IP 的 `DEPLOY_HOST` 默认值，部署目标必�
 
 ## 下一步
 
-用户补充文章截图后，将占位块替换为实际图片。生产配置先完成 `blog.ljhboard.cn` Custom Hostname 和 DNS 灰度，验证成功再切 `ai`；根域最后配置 Single Redirect。所有入口稳定后，再用宝塔每 6 小时运行一次优选脚本。
+无。
 
 ## 计划验证
 
-文章阶段已完成 `pnpm typecheck`、`pnpm build`、Pagefind、sitemap 与静态产物检查。部署阶段仍需运行 `docker compose config` 与 Docker 构建，再验证三个正式主机名的 DNS、TLS、状态、内容和三网数据。
+无。
 
 ## 阻塞
 
