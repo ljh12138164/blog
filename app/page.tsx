@@ -120,11 +120,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-[min(1120px,calc(100%_-_40px))] border-t border-ink py-20 max-md:w-[min(680px,calc(100%_-_28px))] max-md:py-16">
-        <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start max-md:gap-3">
+      <section className="mx-auto w-[min(1120px,calc(100%_-_40px))] border-t border-ink py-16 max-md:w-[min(680px,calc(100%_-_28px))] max-md:py-14">
+        <div className="mb-8 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start max-md:gap-3">
           <div>
             <span className="text-xs font-extrabold text-accent">ARCHIVE</span>
-            <h2 className="mt-2 mb-0 text-balance font-serif text-[42px] font-medium max-md:text-4xl">
+            <h2 className="mt-2 mb-0 text-balance font-serif text-[34px] font-medium max-md:text-[32px]">
               全站专题归档
             </h2>
           </div>
