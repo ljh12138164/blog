@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@plugin '@tailwindcss/typography';
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --color-ink: #18201d;
@@ -9,8 +9,8 @@
   --color-code: #ebe9e1;
   --color-code-header: #e2dfd5;
   --color-accent: #b94f2a;
-  --font-serif: Georgia, 'Noto Serif SC', 'Songti SC', serif;
-  --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: Georgia, "Noto Serif SC", "Songti SC", serif;
+  --font-sans: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 @layer base {

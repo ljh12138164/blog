@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { GoogleAnalytics } from '@next/third-parties/google'
-import { Head } from 'nextra/components'
 import Script from 'next/script'
+import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
-import { SiteShell } from './_components/site-shell'
 import { site } from '@/lib/site'
+import { SiteShell } from './_components/site-shell'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -69,17 +68,30 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-CN">
       <Head backgroundColor={{ light: '#f5f4ee', dark: '#f5f4ee' }} />
       <body>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"
+          strategy="lazyOnload"
+          crossOrigin="anonymous"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '${site.googleAnalyticsId}');
+          `}
+        </Script>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${site.googleAnalyticsId}`}
+          strategy="afterInteractive"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndPersonJsonLd) }}
         />
         <SiteShell>{children}</SiteShell>
-        <GoogleAnalytics gaId={site.googleAnalyticsId} />
-        <Script
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"
-          strategy="lazyOnload"
-          crossOrigin="anonymous"
-        />
       </body>
     </html>
   )

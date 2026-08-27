@@ -17,6 +17,15 @@ pnpm build
 
 `pnpm build` 生成 `out/` 静态站点；`postbuild` 随后生成 `out/_pagefind` 搜索索引、`sitemap.xml` 和 `robots.txt`。
 
+## 代码检查与提交钩子
+
+```bash
+pnpm check
+pnpm check:write
+```
+
+`pnpm check` 执行全仓 lint；`pnpm check:write` 适合主动统一全仓格式。`pnpm install` 会通过 simple-git-hooks 安装 `pre-commit` 钩子，提交时 lint-staged 仅将暂存的 JavaScript、TypeScript、JSON 和 CSS 文件交给 Biome 检查并安全修复。
+
 ## SEO 配置
 
 正式站点域名统一配置在 `site.config.json`。该值用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引；不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于正式域名的 canonical。

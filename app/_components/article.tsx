@@ -22,7 +22,9 @@ type ArticleMetadata = {
 export function Article({ children, toc, metadata = {} }: ArticleProps) {
   const meta = metadata as ArticleMetadata
   const canonicalPath = meta.alternates?.canonical || ''
-  const articleUrl = canonicalPath ? `${site.url}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}` : site.url
+  const articleUrl = canonicalPath
+    ? `${site.url}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}`
+    : site.url
 
   const articleJsonLd = meta.title
     ? {
@@ -95,9 +97,24 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         data-pagefind-body
       >
         <header className="not-prose mb-[46px] border-b border-line pb-[46px]">
-          {meta.category && <span className="text-xs font-extrabold tracking-[.18em] text-accent">{meta.category}</span>}
-          {meta.title && <h1 className="my-[18px] mb-5 text-balance font-serif text-[clamp(42px,6vw,68px)] leading-[1.12] font-medium" data-pagefind-meta="title">{meta.title}</h1>}
-          {meta.description && <p className="text-pretty font-serif text-xl leading-[1.7] text-muted">{meta.description}</p>}
+          {meta.category && (
+            <span className="text-xs font-extrabold tracking-[.18em] text-accent">
+              {meta.category}
+            </span>
+          )}
+          {meta.title && (
+            <h1
+              className="my-[18px] mb-5 text-balance font-serif text-[clamp(42px,6vw,68px)] leading-[1.12] font-medium"
+              data-pagefind-meta="title"
+            >
+              {meta.title}
+            </h1>
+          )}
+          {meta.description && (
+            <p className="text-pretty font-serif text-xl leading-[1.7] text-muted">
+              {meta.description}
+            </p>
+          )}
           {meta.date && (
             <p className="mb-3 text-xs tracking-[.06em] text-muted uppercase">
               <time dateTime={meta.date}>{meta.date}</time>
@@ -108,12 +125,21 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         {children}
       </article>
       {toc && toc.length > 0 && (
-        <aside className="sticky top-28 self-start border-l border-line pl-5 text-[13px] max-md:hidden" aria-label="文章目录" data-pagefind-ignore>
+        <aside
+          className="sticky top-28 self-start border-l border-line pl-5 text-[13px] max-md:hidden"
+          aria-label="文章目录"
+          data-pagefind-ignore
+        >
           <strong>本页目录</strong>
           <ol className="list-none p-0">
-            {toc.map(item => (
+            {toc.map((item) => (
               <li key={item.id} className={`my-3 ${item.depth === 3 ? 'pl-3' : ''}`}>
-                <a className="text-muted no-underline transition-colors hover:text-accent" href={`#${item.id}`}>{item.value}</a>
+                <a
+                  className="text-muted no-underline transition-colors hover:text-accent"
+                  href={`#${item.id}`}
+                >
+                  {item.value}
+                </a>
               </li>
             ))}
           </ol>

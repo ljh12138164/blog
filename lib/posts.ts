@@ -2,7 +2,8 @@ export const recentPosts = [
   {
     slug: 'cloudflare-custom-hostname-fast-ip',
     title: 'Cloudflare 的优选 IP 优化',
-    description: '用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。',
+    description:
+      '用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。',
     date: '2026-08-25',
     category: 'Cloudflare 优化',
     readingTime: '15 分钟'
@@ -10,7 +11,8 @@ export const recentPosts = [
   {
     slug: 'agent-fundamentals',
     title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环',
-    description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。',
+    description:
+      '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。',
     date: '2026-08-19',
     category: 'AI 工程',
     readingTime: '12 分钟'
@@ -18,7 +20,8 @@ export const recentPosts = [
   {
     slug: 'token-and-context',
     title: 'Token 与 Context：模型究竟看见了什么？',
-    description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。',
+    description:
+      '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。',
     date: '2026-08-19',
     category: 'AI 基础',
     readingTime: '8 分钟'
@@ -98,4 +101,7 @@ export const archiveGroups = [
   }
 ] as const
 
-export const archivePostCount = archiveGroups.reduce((count, group) => count + group.posts.length, 0)
+export const archivePostCount = archiveGroups.reduce(
+  (count, group) => count + group.posts.length,
+  0
+)

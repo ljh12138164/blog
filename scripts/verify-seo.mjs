@@ -4,14 +4,12 @@ import { fileURLToPath } from 'node:url'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = path.join(rootDir, 'out')
-const { url: siteUrl } = JSON.parse(
-  fs.readFileSync(path.join(rootDir, 'site.config.json'), 'utf8'),
-)
+const { url: siteUrl } = JSON.parse(fs.readFileSync(path.join(rootDir, 'site.config.json'), 'utf8'))
 const expectedOrigin = new URL(siteUrl).origin
 const errors = []
 
 function collectHtmlFiles(directory) {
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = path.join(directory, entry.name)
     if (entry.isDirectory()) return collectHtmlFiles(entryPath)
     return entry.isFile() && entry.name.endsWith('.html') ? [entryPath] : []
@@ -25,8 +23,8 @@ function attribute(tag, name) {
 for (const htmlPath of collectHtmlFiles(outDir)) {
   const html = fs.readFileSync(htmlPath, 'utf8')
   const relativePath = path.relative(rootDir, htmlPath)
-  const canonicalTags = (html.match(/<link\b[^>]*>/gi) ?? []).filter(tag =>
-    /\brel=["']canonical["']/i.test(tag),
+  const canonicalTags = (html.match(/<link\b[^>]*>/gi) ?? []).filter((tag) =>
+    /\brel=["']canonical["']/i.test(tag)
   )
 
   if (canonicalTags.length !== 1) {
@@ -63,7 +61,7 @@ for (const outputName of ['sitemap.xml', 'robots.txt', 'llms.txt']) {
 
 const sitemapFragments = fs
   .readdirSync(outDir)
-  .filter(outputName => /^sitemap-.*\.xml$/.test(outputName))
+  .filter((outputName) => /^sitemap-.*\.xml$/.test(outputName))
 
 if (sitemapFragments.length > 0) {
   errors.push(`out/: unexpected sitemap fragments: ${sitemapFragments.join(', ')}`)
