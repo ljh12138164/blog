@@ -69,6 +69,8 @@ UI Skills MCP 注册表在当前任务中未暴露工具或资源，无法加载
 - 视觉检查：桌面首页在首屏同时显示品牌介绍、最新文章主推荐和下一节入口；390px 首页为单列且页面宽度无溢出，“从这里开始”包含 3 篇文章。
 - 视觉检查：390px 代表文章中，实际计算字体确认标题为衬线栈，摘要和正文为无衬线栈；H1、摘要和正文均正常换行。
 - UI Skills MCP 注册表不可用，因此以上视觉验证依据仓库 UI quality 规则完成，不声明 UI Skills MCP 评审通过。
+- 双轴最终复审：Standards 0 个问题，Spec 0 个问题；此前归档视觉降权问题已修复并复审确认。
+- 评审分类：无剩余 blocking；文章表格移动端横向溢出作为 accepted follow-up；无 rejected finding。后续计划见 [roadmap](../roadmaps/editorial-homepage-fonts.md)。
 
 ## Risks
 

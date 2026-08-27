@@ -6,7 +6,7 @@
 
 ## 状态
 
-进行中：字体与首页方案 A 已实现，双轴评审发现的归档视觉降权阻塞项已修复；类型检查、lint、完整构建、静态产物和桌面/移动视觉复核再次通过。开发文档见 `docs/development/editorial-homepage-fonts.md`。
+进行中：字体与首页方案 A 已实现并通过最终双轴复审，Standards 与 Spec 均无剩余问题；类型检查、lint、完整构建、静态产物和桌面/移动视觉复核通过。开发文档见 `docs/development/editorial-homepage-fonts.md`。
 
 此前 Google 脚本加载优化已实现并验证，详细范围与结果记录于 `docs/development/optimize-google-scripts.md`。
 
@@ -26,7 +26,7 @@ GitHub Actions 已删除源站 IP 的 `DEPLOY_HOST` 默认值，部署目标必�
 
 ## 下一步
 
-提交评审修复，复审确认无阻塞项后创建 Pull Request。
+提交评审结论与路线图，推送分支并创建 Pull Request，然后检查 CI。
 
 ## 计划验证
 
