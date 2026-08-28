@@ -24,6 +24,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm test:early-hints
       - run: pnpm typecheck
       - run: pnpm build
       - name: Verify static artifacts
@@ -33,6 +34,53 @@ jobs:
           test -f out/_pagefind/pagefind.js
           test -f out/sitemap.xml
           test -f out/robots.txt
+          test -f .next/early-hints-map.conf
+      - name: Build and verify runtime image
+        shell: bash
+        run: |
+          image="blog:verify-${GITHUB_SHA}"
+          container="blog-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          temporary=$(mktemp -d)
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$temporary"' EXIT
+
+          docker build --tag "$image" .
+          docker run --detach --name "$container" --publish 127.0.0.1:18081:8080 "$image"
+
+          ready=0
+          for _ in {1..15}; do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:18081/healthz; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+
+          curl --fail --silent --show-error \
+            --dump-header "$temporary/root.headers" \
+            --output /dev/null \
+            "http://127.0.0.1:18081/?verify=1"
+          grep -Eiq '^link: .*rel=preload; as=style' "$temporary/root.headers"
+
+          curl --fail --silent --show-error \
+            --dump-header "$temporary/article.headers" \
+            --output /dev/null \
+            "http://127.0.0.1:18081/posts/cloudflare-http3-early-hints?verify=1"
+          grep -Eiq '^link: .*rel=preload; as=style' "$temporary/article.headers"
+
+          stylesheet=$(sed -nE 's/^Link: <([^>]+\.css)>;.*/\1/ip' "$temporary/root.headers" | head -n 1)
+          test -n "$stylesheet"
+          curl --fail --silent --show-error \
+            --dump-header "$temporary/asset.headers" \
+            --output /dev/null \
+            "http://127.0.0.1:18081${stylesheet}"
+          ! grep -Eiq '^link:' "$temporary/asset.headers"
+
+          curl --fail --silent --show-error \
+            --dump-header "$temporary/health.headers" \
+            --output /dev/null \
+            http://127.0.0.1:18081/healthz
+          ! grep -Eiq '^link:' "$temporary/health.headers"
 
   deploy:
     if: >-
@@ -101,17 +149,27 @@ jobs:
         shell: bash
         run: |
           page=$(mktemp)
-          trap 'rm -f "$page"' EXIT
+          headers=$(mktemp)
+          final_headers=$(mktemp)
+          trap 'rm -f "$page" "$headers" "$final_headers"' EXIT
           curl --fail --silent --show-error \
             --header "Cache-Control: no-cache" \
+            --dump-header "$headers" \
             --output "$page" \
             --retry 5 \
             --retry-delay 5 \
             --retry-all-errors \
             "https://blog.ljhboard.cn/"
+          awk '
+            /^HTTP\// { block = $0 ORS; next }
+            { block = block $0 ORS }
+            END { printf "%s", block }
+          ' "$headers" > "$final_headers"
           test "$(grep -o '<link rel="canonical"' "$page" | wc -l)" -eq 1
           grep -Fq '<link rel="canonical" href="https://blog.ljhboard.cn"' "$page"
           ! grep -Eq 'https?://([0-9]{1,3}\.){3}[0-9]{1,3}' "$page"
+          grep -Eq '^HTTP/[^ ]+ 200' "$final_headers"
+          grep -Eiq '^link: .*rel=preload; as=style' "$final_headers"
           curl --fail --silent --show-error --location \
             --header "Cache-Control: no-cache" \
             --output /dev/null \

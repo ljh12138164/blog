@@ -12,10 +12,11 @@ pnpm dev
 ## 构建与搜索索引
 
 ```bash
+pnpm test:early-hints
 pnpm build
 ```
 
-`pnpm build` 生成 `out/` 静态站点；`postbuild` 随后生成 `out/_pagefind` 搜索索引、`sitemap.xml` 和 `robots.txt`。
+`pnpm test:early-hints` 验证静态页面到 Nginx `Link` 响应头映射的生成规则。`pnpm build` 生成 `out/` 静态站点；`postbuild` 随后生成 `out/_pagefind` 搜索索引、`sitemap.xml`、`robots.txt` 和 `.next/early-hints-map.conf`。
 
 ## 代码检查与提交钩子
 
@@ -37,7 +38,7 @@ pnpm check:write
 
 ## 自动部署
 
-推送到 `master` 后，GitHub Actions 会验证站点、构建不可变 `blog:sha-<commit>` Docker 镜像，并将镜像和仓库中的 Compose、Nginx、部署配置通过受限 SSH 发送到服务器。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。
+Pull Request 会验证站点并构建、启动临时 Docker 镜像，检查 HTML 的 Early Hints `Link` 响应头以及静态资源和健康检查的隔离。推送到 `master` 后，GitHub Actions 会构建不可变 `blog:sha-<commit>` Docker 镜像，并将镜像和仓库中的 Compose、Nginx、部署配置通过受限 SSH 发送到服务器。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。
 
 完整的首次服务器引导、变量、回滚和排障说明见 [部署文档](docs/deployment.md)。
 
