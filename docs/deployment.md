@@ -65,14 +65,29 @@ ls -la /opt/stacks/blog/backups
 docker compose -f /opt/stacks/blog/compose.yaml ps
 ```
 
+## Cloudflare 103 Early Hints
+
+每次静态构建都会从导出的 HTML 提取页面样式表和显式 `preconnect`，生成 `.next/early-hints-map.conf`。Docker 镜像把该映射与同一次构建的静态文件一起打包，容器 Nginx 据此为 HTML 页面返回 `Link` 响应头。宝塔 Nginx 默认透传该响应头。
+
+生产区域还必须在 Cloudflare 控制台进入 `Speed → Settings → Content Optimization`，把 **Early Hints** 切换为开启。Early Hints 只在 HTTP/2 或 HTTP/3 上生效；Cloudflare 需要先从正常页面响应缓存 `Link` 提示，才可能在后续请求中异步发出 `103`。
+
+发布后先验证稳定的响应头契约：
+
+```bash
+curl --http2 --silent --show-error --dump-header - --output /dev/null https://blog.ljhboard.cn/
+```
+
+最终 `200` 响应应包含带 `rel=preload; as=style` 的 `Link`。随后可重复请求，或使用 Chrome DevTools、WebPageTest 观察 `103 Early Hints`。Cloudflare 在主响应头更快到达、客户端不兼容或 Early Hints 缓存尚未命中时可能不发出 `103`，因此不能把“每次请求都出现 103”作为稳定健康检查。
+
 ## 本地验证
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm test:early-hints
 pnpm typecheck
 pnpm build
 docker compose config
 docker build -t blog:local .
 ```
 
-构建必须生成 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml` 和 `out/robots.txt`。
+构建必须生成 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml`、`out/robots.txt` 和 `.next/early-hints-map.conf`。Pull Request 流水线还会启动临时镜像，验证首页与文章页包含 stylesheet preload `Link`，而静态资源与健康检查不包含页面级提示。

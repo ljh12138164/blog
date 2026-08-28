@@ -14,6 +14,7 @@ RUN pnpm build
 FROM nginx:1.29-alpine AS runtime
 
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/.next/early-hints-map.conf /etc/nginx/conf.d/early-hints-map.conf
 COPY --from=builder /app/out /usr/share/nginx/html
 
 EXPOSE 8080
