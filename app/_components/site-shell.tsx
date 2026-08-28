@@ -29,10 +29,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <span className="truncate">ljh的技术博客</span>
           </Link>
           <div className="flex items-center gap-7 text-sm">
-            <Link
-              className="no-underline transition-colors hover:text-accent max-md:hidden"
-              href="/#articles"
-            >
+            <Link className="no-underline transition-colors hover:text-accent" href="/posts">
               文章
             </Link>
             <Link
