@@ -13,6 +13,8 @@ Google's Indexing API is not part of this design. Google restricts that API to p
 - Submit the live sitemap's unique, same-origin URLs in one UTF-8 JSON request.
 - Replace the Baidu-specific script, tests, workflow step, secret documentation, and commands.
 - Make protocol and filtering failures visible in GitHub Actions without exposing private credentials.
+- Remove all explicit third-party `preconnect` hints while preserving low-cost `dns-prefetch` hints and same-origin stylesheet preloads.
+- Shorten the five reported article titles across page, Open Graph, and Twitter metadata.
 
 ## Out of scope
 
@@ -21,6 +23,7 @@ Google's Indexing API is not part of this design. Google restricts that API to p
 - Guaranteeing that a participating search engine crawls or indexes a submitted URL.
 - Deployment, Search Console, or Bing Webmaster Tools automation.
 - A reusable multi-provider search submission abstraction.
+- Broader title rewrites outside the five reported routes.
 
 ## Architecture
 
@@ -38,12 +41,24 @@ The submission rejects an empty eligible URL list before making a request. It tr
 
 The implementation sends at most 10,000 URLs, the protocol's documented per-request maximum. This blog is far below that limit; exceeding it is an explicit error rather than silently truncating coverage.
 
+The root layout removes explicit `preconnect` elements for Cloudflare Insights, Google Tag Manager, Google Analytics, and Google Ads. Their existing `dns-prefetch` elements remain. Exported same-origin stylesheets continue to be converted into `rel=preload; as=style` Early Hints; no external connection is opened speculatively before the corresponding lazy or post-interactive script needs it.
+
+The following metadata titles replace the reported overlong titles in the top-level, Open Graph, and Twitter fields:
+
+- `websocket-edge-functions`: `边缘 WebSocket 实时协同：Deno Deploy 与 Hocuspocus`
+- `git-commit-validation`: `Biome 与 Git Hooks：前端提交自动校验实践`
+- `monorepo-management`: `Monorepo 实践：pnpm Workspace 与 Turborepo`
+- `markdown-to-html`: `Markdown/MDX 渲染原理与 Nextra 选型`
+- `canvas-library-research`: `Web Canvas 2D 图形库选型与性能对比`
+
 ## Verification
 
 - Unit tests prove same-site filtering, XML entity decoding, deduplication, the JSON payload, successful `2xx` handling, empty-list rejection, the 10,000 URL limit, and non-success handling.
 - `pnpm typecheck` passes.
 - `pnpm build` exports the key file, sitemap, robots file, Pagefind index, and existing Early Hints map.
 - CI verifies the exported key file exists and matches the tracked public key file.
+- The resource-hint regression test proves the root layout contains no explicit `preconnect`, retains the four `dns-prefetch` origins, and leaves stylesheet Early Hints covered by the existing generator test.
+- A fresh static build proves the five final document titles use the shortened metadata values.
 - `git diff --check` reports no whitespace errors.
 
 ## Risks
@@ -52,6 +67,7 @@ The implementation sends at most 10,000 URLs, the protocol's documented per-requ
 - Re-submitting the complete sitemap on each production deployment is less precise than change-only notification. It is intentionally retained as the smallest reliable replacement for the existing deployment flow; exact route-change detection is deferred unless deployment frequency or rate limiting makes it necessary.
 - A `403` indicates that the public key cannot be validated; public deployment verification must therefore precede submission.
 - A `429` indicates rate limiting. The workflow should surface it rather than retry aggressively and risk further throttling.
+- Removing speculative third-party connections may defer their handshakes until their scripts execute; this is intentional because those scripts are lazy or post-interactive and the audit reports excessive preconnect usage.
 
 ## Sources
 
@@ -59,4 +75,3 @@ The implementation sends at most 10,000 URLs, the protocol's documented per-requ
 - [IndexNow FAQ](https://www.indexnow.org/faq)
 - [Bing IndexNow setup](https://www.bing.com/indexnow/getstarted)
 - [Google Indexing API usage restrictions](https://developers.google.com/search/apis/indexing-api/v3/using-api)
-
