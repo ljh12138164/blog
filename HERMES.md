@@ -6,7 +6,7 @@
 
 ## 状态
 
-实现、仓库级验证与双轴评审均完成；尚未推送或创建 PR。
+本地实现、仓库级验证与双轴评审均完成。推送连续两次因本机无法连接 `github.com:443` 而超时；`gh` 当前也没有登录会话，因此尚未创建 PR。
 
 ## 验证
 
@@ -19,7 +19,8 @@
 - 首次 Docker 构建复现缺少 `.dockerignore` 导致 Windows 依赖覆盖 Linux 依赖；添加构建上下文边界后，同命令成功生成 `blog:local`，上下文从 1.15 GB 降至 36 KB。
 - 完整验证通过：9 项测试、Biome、typecheck、42 页静态构建、Pagefind 38 页、workflow YAML、关键产物、Compose 与 Docker 镜像。
 - 双轴评审无阻塞项；无接受的后续工作，因此不创建路线图。
+- `git push -u origin feat/indexnow-integration` 连续两次在约 21 秒后连接 GitHub 超时；分支和工作区保持完整。
 
 ## 下一步
 
-提交文档与 `.dockerignore`，运行最终完成门验证，然后推送分支并创建 PR。
+网络恢复后运行 `git push -u origin feat/indexnow-integration`；登录 `gh` 后创建面向 `master` 的 PR，再把 PR 链接与 CI 状态写回本文件。
