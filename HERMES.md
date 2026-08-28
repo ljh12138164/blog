@@ -6,11 +6,11 @@
 
 ## 状态
 
-实现、全量验证与双轴评审均已完成，等待提交并创建 PR。
+实现、全量验证、双轴评审、提交与分支推送均已完成。当前环境没有 `gh`，GitHub PR 页面在内置浏览器和 Chrome 中均连接超时，因此 PR 尚未创建。
 
 ## 下一步
 
-分批提交 UI Skills 配置与文章索引实现，推送 `feat/article-index` 并创建面向 `master` 的 PR。
+打开 <https://github.com/ljh12138164/blog/compare/master...feat/article-index?expand=1> 创建面向 `master` 的 PR；分支 `feat/article-index` 已推送并跟踪远端。
 
 ## 计划验证
 
