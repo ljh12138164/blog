@@ -8,6 +8,7 @@
 
 ### Cloudflare 优化
 
+- [从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现](https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints): 以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。 (发布日期: 2026-08-28)
 - [Cloudflare 的优选 IP 优化](https://blog.ljhboard.cn/posts/cloudflare-custom-hostname-fast-ip): 用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。 (发布日期: 2026-08-25)
 
 ### AI 工程
@@ -29,10 +30,6 @@
 
 - [图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段](https://blog.ljhboard.cn/posts/react-execution-order): 深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。 (发布日期: 2025-05-20)
 - [TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取](https://blog.ljhboard.cn/posts/react-query-api-optimization): 全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。 (发布日期: 2025-01-28)
-
-### 网络与性能
-
-- [攻克首屏关键渲染路径：HTTP/3 QUIC 与 103 Early Hints 性能优化实战](https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints): 深入解析 HTTP 103 早期提示（Early Hints）与 HTTP/3 (QUIC) 协议原理，结合 Cloudflare 边缘配置提升 FCP 与 LCP 核心 Web 指标。 (发布日期: 2025-02-21)
 
 ### 全栈与边缘计算
 

@@ -1,5 +1,14 @@
 export const recentPosts = [
   {
+    slug: 'cloudflare-http3-early-hints',
+    title: '从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现',
+    description:
+      '以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。',
+    date: '2026-08-28',
+    category: 'Cloudflare 优化',
+    readingTime: '12 分钟'
+  },
+  {
     slug: 'cloudflare-custom-hostname-fast-ip',
     title: 'Cloudflare 的优选 IP 优化',
     description:
@@ -25,14 +34,6 @@ export const recentPosts = [
     date: '2026-08-19',
     category: 'AI 基础',
     readingTime: '8 分钟'
-  },
-  {
-    slug: 'prompting-principles',
-    title: '如何为 AI 应用设计高质量提示词',
-    description: '用成功标准、指令边界、示例和评测，把提示词从“会写”变成可验证的工程组件。',
-    date: '2026-08-08',
-    category: '实践方法',
-    readingTime: '8 分钟'
   }
 ] as const
 
@@ -50,7 +51,10 @@ export const archiveGroups = [
       { title: 'Cloudflare 的优选 IP 优化', href: '/posts/cloudflare-custom-hostname-fast-ip' },
       { title: 'cdn加速', href: '/posts/cloudflare-cdn-acceleration' },
       { title: '人机验证', href: '/posts/cloudflare-turnstile' },
-      { title: 'http3和103请求头', href: '/posts/cloudflare-http3-early-hints' }
+      {
+        title: '从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现',
+        href: '/posts/cloudflare-http3-early-hints'
+      }
     ]
   },
   {
