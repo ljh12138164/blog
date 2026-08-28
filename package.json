@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "test:early-hints": "node --test scripts/generate-early-hints.test.mjs",
-    "test:baidu-submit": "node --test scripts/submit-baidu-urls.test.mjs",
+    "test:indexnow-submit": "node --test scripts/submit-indexnow-urls.test.mjs",
     "update:skill": "git submodule update --remote utils",
     "postbuild": "node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs && node scripts/verify-seo.mjs && node scripts/generate-early-hints.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
