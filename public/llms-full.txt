@@ -6,6 +6,412 @@
 
 ================================================================================
 
+# 从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现
+
+- **URL**: https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints
+- **分类**: Cloudflare 优化
+- **发布日期**: 2026-08-28
+- **核心导读**: 以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。
+
+## 正文内容
+
+## 读完你能做什么
+
+这篇文章不只解释 103 的概念，而是带你完成一条可以落地的链路：
+
+- 判断静态站点中究竟应该由谁生成 `103 Early Hints`。
+- 从 Next.js 构建产物中提取每条路由真正使用的 CSS。
+- 让 Nginx 在最终响应中返回正确的 `Link`，而不是硬编码带哈希的资源名。
+- 在 Cloudflare 开启 Early Hints，并区分“源站准备完成”和“线上真的出现 103”。
+- 用 `curl` 读懂 `103`、`200` 和代理隧道产生的三段响应。
+
+## 先看最终结果
+
+部署完成后执行：
+
+```powershell
+curl.exe --http2 -sS -D - -o NUL https://blog.ljhboard.cn/
+```
+
+真实响应如下。可以看到 Cloudflare 先返回 `HTTP/2 103`，其中包含 CSS 的 `preload` 和第三方域名的 `preconnect`；随后才返回最终的 `HTTP/2 200`。
+
+![curl 验证 Cloudflare 先返回 HTTP/2 103，再返回 HTTP/2 200](./early-hints-success.png)
+
+最前面的 `HTTP/1.1 200 Connection established` 不是站点响应，而是本机代理建立 HTTPS CONNECT 隧道时返回的结果。真正需要观察的是后面的 `HTTP/2 103` 与 `HTTP/2 200`。
+
+## 先建立正确的心智模型
+
+103 是最终响应之前的临时响应。浏览器拿到其中的 `Link` 后，可以在 HTML 到达之前连接目标域名或请求关键 CSS。
+
+```mermaid
+sequenceDiagram
+  participant B as 浏览器
+  participant C as Cloudflare
+  participant N as Nginx
+
+  B->>C: GET /posts/...
+  C-->>B: 103 + Link
+  B->>C: 提前请求 CSS / 建立第三方连接
+  C->>N: 回源请求 HTML
+  N-->>C: 200 HTML + Link
+  C-->>B: 200 HTML + Link
+```
+
+这里最容易产生一个误区：**是不是给 Nginx 加一句 `early_hints on` 就够了？**
+
+不是。Nginx 1.29 的 `early_hints` 指令用于选择性转发上游服务器已经产生的 103。这个博客由 Nginx 直接读取静态 HTML，没有一个会产生 103 的 SSR 上游。因此本方案的职责分工是：
+
+1. Nginx 在最终 `200` 响应中提供可靠的 `Link`。
+2. Cloudflare 读取并缓存符合条件的 `Link`。
+3. Cloudflare 在后续符合条件的 HTTP/2 或 HTTP/3 请求中生成 103。
+
+## 整体实现：把构建产物变成响应头
+
+Next.js 的 CSS 文件名包含构建哈希，不能在 Nginx 配置中手写：
+
+```text
+/_next/static/chunks/67cc0429f4ae64ac.css
+```
+
+每次构建都可能变化，而且不同路由可能引用不同的样式文件。因此映射必须和本次静态导出一起生成、一起装进镜像。
+
+```mermaid
+flowchart LR
+  A[Next.js 构建] --> B[out 目录中的 HTML]
+  B --> C[扫描 link 标签]
+  C --> D[生成路由级 Nginx map]
+  D --> E[复制到运行时镜像]
+  E --> F[Nginx 返回 200 + Link]
+  F --> G[Cloudflare 生成 103]
+```
+
+### 第一步：声明可以提前连接的第三方域名
+
+根布局已经会加载 Cloudflare Insights、Google Tag Manager、Google Analytics 和 AdSense。使用 Nextra 的 `Head` 为这些真实依赖添加 `preconnect`：
+
+```tsx
+<Head backgroundColor={{ light: '#f5f4ee', dark: '#f5f4ee' }}>
+  <link
+    rel="preconnect"
+    href="https://static.cloudflareinsights.com"
+    crossOrigin="anonymous"
+  />
+  <link rel="preconnect" href="https://www.googletagmanager.com" />
+  <link rel="preconnect" href="https://www.google-analytics.com" />
+  <link
+    rel="preconnect"
+    href="https://pagead2.googlesyndication.com"
+    crossOrigin="anonymous"
+  />
+</Head>
+```
+
+项目同时保留 `dns-prefetch` 作为普通 HTML 提示，但构建脚本不会把它写入 Early Hints 响应头。103 只保留真正需要提前握手的 `preconnect`，避免重复和噪声。
+
+### 第二步：扫描导出的 HTML
+
+`scripts/generate-early-hints.mjs` 递归读取 `out/**/*.html`，从每个页面的 `<link>` 中提取两类信息：
+
+- `rel="stylesheet"` 转换为 `rel=preload; as=style`。
+- `rel="preconnect"` 保留，并规范化 `crossorigin`。
+
+核心判断可以压缩为：
+
+```js
+if (relations.has('stylesheet')) {
+  hints.add(`<${href}>; rel=preload; as=style`)
+  continue
+}
+
+if (relations.has('preconnect')) {
+  hints.add(`<${href}>; rel=preconnect${crossOrigin}`)
+}
+```
+
+脚本有意排除了三类内容：
+
+- 脚本 preload：分析和广告脚本不应该与关键 CSS 抢带宽。
+- `dns-prefetch`：它不是当前 Cloudflare Early Hints 合约需要的核心提示。
+- `404.html` 与 `_not-found.html`：错误页不应该进入正常路由映射。
+
+### 第三步：生成稳定的 Nginx 路由映射
+
+构建后会生成 `.next/early-hints-map.conf`：
+
+```nginx
+map $request_uri $early_hints_request_path {
+    ~^([^?]*) $1;
+}
+
+map $early_hints_request_path $early_hints_link {
+    default "";
+
+    "/" "</_next/static/chunks/example.css>; rel=preload; as=style";
+    "/posts/cloudflare-http3-early-hints" "</_next/static/chunks/example.css>; rel=preload; as=style";
+}
+```
+
+第一段 `map` 专门移除查询字符串。这里不能直接依赖 `$uri`：项目使用 `try_files $uri.html` 提供无扩展名路由，Nginx 内部重写后 `$uri` 可能已经变成 `.html` 文件路径，导致公开路由匹配失败。`$request_uri` 保留原始请求，再单独去掉 `?query`，行为更稳定。
+
+生成器还会转义 Nginx 字符串中的反斜杠、双引号和 `$`，并拒绝控制字符与重复规范化路由，避免构建产物生成不可加载的配置。
+
+### 第四步：只给 HTML 返回 Link
+
+Nginx 在两个提供 HTML 的 location 中加入映射结果：
+
+```nginx
+location = / {
+    try_files /index.html =404;
+    add_header Cache-Control "public, max-age=0, s-maxage=7200, stale-while-revalidate=60";
+    add_header Link $early_hints_link always;
+}
+
+location / {
+    rewrite ^(.+)/$ $1 permanent;
+    try_files $uri.html $uri =404;
+    add_header Cache-Control "public, max-age=0, s-maxage=7200, stale-while-revalidate=60";
+    add_header Link $early_hints_link always;
+}
+```
+
+空字符串不会产生 `Link` 响应头，因此 CSS、Pagefind 文件、图片和 `/healthz` 不会错误携带页面级提示。
+
+需要特别注意 Nginx 的 `add_header` 继承规则：location 一旦定义自己的 `add_header`，上层同类配置不会按直觉自动叠加。所以 `Link` 必须明确写在这两个 HTML location 内。
+
+### 第五步：保证映射与 HTML 来自同一次构建
+
+`postbuild` 在静态导出、Pagefind、sitemap 和 SEO 校验后运行生成器。Docker 运行阶段再复制生成的映射：
+
+```dockerfile
+COPY --from=builder /app/.next/early-hints-map.conf /etc/nginx/conf.d/early-hints-map.conf
+COPY --from=builder /app/out /usr/share/nginx/html
+```
+
+这条约束非常重要：**HTML、带哈希的 CSS 和 Nginx map 必须来自同一个构建**。如果只更新 HTML 或只复用旧 map，浏览器可能预加载已经不存在的资源。
+
+## Cloudflare 侧如何开启
+
+源站准备好 `Link` 后，在 Cloudflare 控制台进入：
+
+```text
+Speed → Optimization → Content Optimization → Early Hints
+```
+
+开启后不要把“每次请求都必须看到 103”写进 CI。Cloudflare 会根据 URI、最终状态码、客户端协议、缓存状态和响应时机决定是否发送 103；稳定可验证的工程合约仍然是最终 `200` 中存在正确的 `Link`。
+
+## 分两层验收
+
+### 验收源站合约
+
+无论 Cloudflare 是否发送 103，最终 HTML 响应都应该包含样式 preload：
+
+```powershell
+curl.exe --http2 -sS -D - -o NUL https://blog.ljhboard.cn/
+```
+
+至少应该看到：
+
+```http
+HTTP/2 200
+link: </_next/static/chunks/example.css>; rel=preload; as=style
+```
+
+### 验收 Cloudflare 103
+
+对同一个稳定 URL 连续请求两次，让 Cloudflare 有机会填充 Early Hints 缓存。成功标志是两个状态块按顺序出现：
+
+```http
+HTTP/2 103
+link: </_next/static/chunks/example.css>; rel=preload; as=style
+
+HTTP/2 200
+link: </_next/static/chunks/example.css>; rel=preload; as=style
+```
+
+还要抽取一个真实 CSS URL 再请求一次。静态资源应该只有正常的 `200`，不应携带整页的 `Link` 映射。
+
+## 常见故障怎么判断
+
+| 现象 | 更可能的原因 | 检查位置 |
+| --- | --- | --- |
+| `200` 中没有 `Link` | map 未生成、未复制或路由未匹配 | 构建日志、Docker 镜像、Nginx 配置 |
+| `200` 有 `Link`，但没有 `103` | Cloudflare 未开启、缓存未就绪或本次请求未被选中 | Dashboard、连续请求、HTTP/2/3 |
+| 首页有 `Link`，文章页没有 | `$uri` 被内部重写或文章路由没进入 map | `$request_uri` 去查询参数后的映射 |
+| CSS 资源也有页面级 `Link` | `add_header` 放置范围过大 | Nginx location |
+| 预加载 URL 返回 404 | map 与静态 HTML 不是同一次构建 | Docker 构建阶段与镜像内容 |
+
+## 完整的 103 映射生成脚本
+
+前文展示的是关键判断，下面是项目实际运行的完整 `scripts/generate-early-hints.mjs`。它只依赖 Node.js 标准库，可以直接放进其他 Next.js 静态导出项目：
+
+```js
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+
+const LINK_TAG_PATTERN = /<link\b[^>]*>/gi
+const ATTRIBUTE_PATTERN = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
+
+async function findHtmlFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true })
+  const files = []
+
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name)
+
+    if (entry.isDirectory()) {
+      files.push(...(await findHtmlFiles(entryPath)))
+    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      files.push(entryPath)
+    }
+  }
+
+  return files
+}
+
+function parseAttributes(tag) {
+  const attributes = new Map()
+  const source = tag.slice('<link'.length, -1)
+
+  for (const match of source.matchAll(ATTRIBUTE_PATTERN)) {
+    const [, name, doubleQuoted, singleQuoted, unquoted] = match
+    attributes.set(name.toLowerCase(), doubleQuoted ?? singleQuoted ?? unquoted ?? '')
+  }
+
+  return attributes
+}
+
+function extractEarlyHints(html) {
+  const hints = new Set()
+
+  for (const tag of html.match(LINK_TAG_PATTERN) ?? []) {
+    const attributes = parseAttributes(tag)
+    const href = attributes.get('href')
+    const relations = new Set((attributes.get('rel') ?? '').toLowerCase().split(/\s+/))
+
+    if (!href) continue
+
+    if (relations.has('stylesheet')) {
+      hints.add(`<${href}>; rel=preload; as=style`)
+      continue
+    }
+
+    if (relations.has('preconnect')) {
+      const crossOriginValue = attributes.get('crossorigin')?.toLowerCase()
+      const crossOrigin = attributes.has('crossorigin')
+        ? `; crossorigin=${crossOriginValue === 'use-credentials' ? 'use-credentials' : 'anonymous'}`
+        : ''
+      hints.add(`<${href}>; rel=preconnect${crossOrigin}`)
+    }
+  }
+
+  return [...hints]
+}
+
+function routeFromHtmlFile(exportDir, filePath) {
+  const relativePath = path.relative(exportDir, filePath).split(path.sep).join('/')
+
+  if (relativePath === 'index.html') return '/'
+  if (relativePath === '404.html' || relativePath === '_not-found.html') return null
+
+  const withoutExtension = relativePath.slice(0, -'.html'.length)
+  const route = withoutExtension.endsWith('/index')
+    ? withoutExtension.slice(0, -'/index'.length)
+    : withoutExtension
+
+  return `/${route}`
+}
+
+function escapeNginxValue(value) {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('$', '\\$')
+}
+
+export async function generateEarlyHintsMap(exportDir) {
+  const mappings = []
+  const routes = new Set()
+
+  for (const filePath of await findHtmlFiles(exportDir)) {
+    const route = routeFromHtmlFile(exportDir, filePath)
+    if (!route) continue
+
+    if (routes.has(route)) {
+      throw new Error(`Multiple HTML files map to the Early Hints route ${route}`)
+    }
+    if (
+      [...route].some((character) => {
+        const codePoint = character.codePointAt(0)
+        return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f)
+      })
+    ) {
+      throw new Error(`Early Hints route contains unsupported control characters: ${route}`)
+    }
+
+    const hints = extractEarlyHints(await readFile(filePath, 'utf8'))
+    if (hints.length === 0) continue
+
+    routes.add(route)
+    mappings.push([route, hints.join(', ')])
+  }
+
+  mappings.sort(([left], [right]) => left.localeCompare(right, 'en'))
+
+  const lines = [
+    'map $request_uri $early_hints_request_path {',
+    '    ~^([^?]*) $1;',
+    '}',
+    '',
+    'map $early_hints_request_path $early_hints_link {',
+    '    default "";',
+    ''
+  ]
+  for (const [route, hints] of mappings) {
+    lines.push(`    "${escapeNginxValue(route)}" "${escapeNginxValue(hints)}";`)
+  }
+  lines.push('}', '')
+
+  return lines.join('\n')
+}
+
+async function main() {
+  const exportDir = path.resolve(process.argv[2] ?? 'out')
+  const outputPath = path.resolve(process.argv[3] ?? '.next/early-hints-map.conf')
+  const config = await generateEarlyHintsMap(exportDir)
+
+  await mkdir(path.dirname(outputPath), { recursive: true })
+  await writeFile(outputPath, config, 'utf8')
+}
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  await main()
+}
+```
+
+在 `package.json` 的 `postbuild` 末尾执行：
+
+```json
+{
+  "scripts": {
+    "postbuild": "... && node scripts/generate-early-hints.mjs"
+  }
+}
+```
+
+默认输入是 `out`，输出是 `.next/early-hints-map.conf`。如果项目目录不同，也可以显式传参：
+
+```bash
+node scripts/generate-early-hints.mjs ./out ./.next/early-hints-map.conf
+```
+
+## 官方资料
+
+- [RFC 8297：103 Early Hints](https://www.rfc-editor.org/rfc/rfc8297)
+- [Cloudflare：Early Hints](https://developers.cloudflare.com/cache/advanced-configuration/early-hints/)
+- [Nginx：`early_hints` 指令](https://nginx.org/en/docs/http/ngx_http_core_module.html#early_hints)
+
+如果某一步与你的部署结构不同，可以继续提问，并把最终 `200` 的响应头、Nginx location 和部署链路一起提供；这三项通常足以定位问题。
+
+--------------------------------------------------------------------------------
+
 # Cloudflare 的优选 IP 优化
 
 - **URL**: https://blog.ljhboard.cn/posts/cloudflare-custom-hostname-fast-ip
@@ -692,23 +1098,6 @@ const {
 
 最值得坚持的一条原则是：**让模型决定意图，让代码决定权限。** 模型可以判断“下一步应该发送邮件”，但收件人格式由 schema 校验，是否允许发送由权限系统和用户审批决定，真正的发送由应用执行并返回可审计结果。这样构建出来的 Agent 不只是会调用更多工具，而是在清楚的边界内，把一个目标可靠地推进到完成。
 
-## 自检：你是否掌握了执行边界
-
-<details>
-  <summary>模型生成了合法的 deletePath 参数，是否应该立刻执行？</summary>
-  <p><strong>不应该只凭参数合法就执行。</strong>Schema 只能证明结构正确；应用还要检查路径范围、用户权限、可恢复性与审批策略。</p>
-</details>
-
-<details>
-  <summary>设置最多 10 步，是否已经限制了全部成本？</summary>
-  <p><strong>没有。</strong>还应限制总时间、Token、费用与高成本工具调用次数，并允许外部取消。</p>
-</details>
-
-<details>
-  <summary>MCP server 提供了工具，谁决定当前用户能否调用？</summary>
-  <p><strong>Host 应用。</strong>它负责选择暴露哪些工具、使用什么凭证、何时审批，并保存审计记录。</p>
-</details>
-
 ## 延伸阅读
 
 - [AI SDK：Agents overview](https://ai-sdk.dev/docs/agents/overview)
@@ -943,10 +1332,6 @@ OpenAI 的[Prompt Caching 指南](https://developers.openai.com/api/docs/guides/
 - 稳定内容在前，动态内容在后。
 - 在生产 usage 中记录输入、输出和缓存 Token。
 - 模型或请求结构变化后，重新校准预算。
-
-## 自检：预算是否完整
-
-你能否列出一次真实请求中的系统指令、历史消息、工具定义、检索材料、当前输入和预留输出，并解释超出预算时先删哪一项？
 
 ## 最后记住
 
@@ -1190,10 +1575,6 @@ flowchart LR
   <p>任务：为未参会的项目成员整理会议结论。成功标准：保留决策、责任人和截止日期；未明确的信息标记“待确认”。输出：结论、行动项、风险。测试：正常会议、缺少责任人、讨论很多但没有形成决策。</p>
 </details>
 
-## 自检：提示词是否可验证
-
-换一份未参与编写的输入后，你能否只根据成功标准判断输出合格与否？如果仍需要“凭感觉”，应先补充约束或示例，再继续改写提示词。
-
 ## 最后记住
 
 高质量提示词的核心不是文采，而是可验证性：
@@ -1371,10 +1752,6 @@ function Child() {
 
 - [React：`useEffect`](https://react.dev/reference/react/useEffect)
 
-## 自检：把知识变成判断
-
-遇到重复订阅或闪烁时，你能否判断副作用应放在 render、layout effect 还是 effect，并解释原因？
-
 ## 总结速查表
 
 | 执行环节 | 父子先后顺序 | 执行时机 | 是否阻塞页面绘制 |
@@ -1384,134 +1761,6 @@ function Child() {
 | **`useLayoutEffect` 激活** | **子 -> 父** | DOM 更新后、Paint 前 | 是 |
 | **`useEffect` 清理** | **子 -> 父** | 浏览器 Paint 之后 | 否 |
 | **`useEffect` 激活** | **子 -> 父** | 浏览器 Paint 之后 | 否 |
-
---------------------------------------------------------------------------------
-
-# 攻克首屏关键渲染路径：HTTP/3 QUIC 与 103 Early Hints 性能优化实战
-
-- **URL**: https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints
-- **分类**: 网络与性能
-- **发布日期**: 2025-02-21
-- **核心导读**: 深入解析 HTTP 103 早期提示（Early Hints）与 HTTP/3 (QUIC) 协议原理，结合 Cloudflare 边缘配置提升 FCP 与 LCP 核心 Web 指标。
-
-## 正文内容
-
-## 读完你能做什么
-
-- 区分 HTTP/3 解决的传输层问题与 103 Early Hints 缩短的资源发现等待。
-- 看懂 103、最终响应与关键资源请求之间的时序关系。
-- 用浏览器网络面板和真实用户指标判断优化是否生效。
-
-```mermaid
-sequenceDiagram
-  participant B as 浏览器
-  participant E as 边缘节点
-  participant O as 源站
-  B->>E: 请求 HTML
-  E->>O: 回源
-  E-->>B: 103 + Link 预加载提示
-  B->>E: 提前请求 CSS / 字体
-  O-->>E: 200 HTML
-  E-->>B: 最终 HTML
-```
-
-两项能力可以叠加，但不要混为一谈：HTTP/3 改善连接与丢包条件下的传输；Early Hints 让浏览器更早发现关键资源。
-
-在衡量现代 Web 页面性能的核心体验指标（Core Web Vitals）中，**LCP（最大内容绘制）** 和 **FCP（首次内容绘制）** 往往决定了用户的留存与第一印象。
-
-传统请求中，浏览器必须等待服务器完成 HTML 渲染并完整返回 `200 OK` 后，才能解析出页面引用的 CSS、字体和关键 JS。通过在 CDN 边缘启用 **HTTP 103 Early Hints** 与 **HTTP/3 (QUIC)**，我们能够打破这个串行等待瓶颈。
-
----
-
-## 传统串行瓶颈 vs HTTP 103 Early Hints
-
-```text
-传统 HTTP 请求时序:
-  浏览器 ─── 请求 HTML ───► CDN / 源站 (开始准备 HTML 数据)
-  浏览器 ◄── 等待 (Server Think Time: 200~500ms 闲置) ───
-  浏览器 ◄── 接收 200 OK (含 HTML) ───
-  浏览器 ─── 解析 HTML，发现 style.css ───► 请求 CSS (延迟加载)
-
-HTTP 103 Early Hints 优化时序:
-  浏览器 ─── 请求 HTML ───► CDN 边缘
-  浏览器 ◄── 毫秒级返回 103 Early Hints (带 Link: <style.css>; rel=preload)
-  浏览器 ─── [在源站还在计算 HTML 时，已提前开始下载 CSS 与字体] ───►
-  浏览器 ◄── 接收 200 OK (HTML 准备完毕)
-  浏览器 ─── [CSS 已下载完毕，瞬间完成页面首屏绘制！]
-```
-
-### 核心机制：提前填补“服务器思考时间”
-当服务端在进行数据库查询或 SSR 渲染计算时（通常耗时 100~500ms），浏览器连接处于空闲等待状态。
-
-RFC 8297 定义的 **HTTP 103 Early Hints** 允许 CDN 边缘在源站尚未生成最终响应时，立即向客户端发送临时的 103 状态码和关键资源 `Link` 标头：
-
-```http
-HTTP/1.1 103 Early Hints
-Link: </_next/static/css/app.css>; rel=preload; as=style
-Link: </fonts/inter.woff2>; rel=preload; as=font; crossorigin
-```
-
-浏览器收到后，会立即在后台启动高优先级的网络管道预加载这些关键渲染阻塞资源。
-
----
-
-## HTTP/3 与 QUIC 协议的双重加速
-
-与 HTTP/2 基于 TCP 不同，HTTP/3 底层采用了基于 UDP 的 **QUIC 协议**：
-
-```text
-HTTP/2 (TCP):
-  [Stream 1 丢包] ──► 触发 TCP 重传 ──► [Stream 2, 3, 4 全部被阻塞] (队头阻塞 Head-of-Line Blocking)
-
-HTTP/3 (QUIC / UDP):
-  [Stream 1 丢包] ──► 仅重传 Stream 1 ──► [Stream 2, 3, 4 正常流转] (彻底消除传输层队头阻塞)
-```
-
-1. **0-RTT / 1-RTT 极速握手**：QUIC 将传输层连接（UDP）与安全层握手（TLS 1.3）合二为一，极大缩短移动弱网环境下的首包耗时。
-2. **连接迁移（Connection Migration）**：当移动设备从 Wi-Fi 切换到 5G 基站时，由于连接由 Connection ID 标识而非 IP+端口四元组，TCP 连接不会断开重连。
-
----
-
-## Cloudflare 开启实战配置
-
-在 Cloudflare 控制台中，开启这两项黑科技非常简便：
-
-### 1. 开启 HTTP/3 (with QUIC)
-1. 登录 Cloudflare Dashboard 并选择对应域名。
-2. 进入左侧菜单 **Network**（网络）。
-3. 找到 **HTTP/3 (with QUIC)** 并切换为开启。
-4. 勾选 **0-RTT Connection Resumption**（0-RTT 连接恢复）。
-
-### 2. 开启 103 Early Hints
-1. 进入左侧菜单 **Speed** -> **Optimization**（速度与优化）。
-2. 在 **Content Optimization** 区域找到 **Early Hints** 选项。
-3. 切换开启。Cloudflare 边缘节点会自动分析你页面中导出的 `<link rel="preload">` 响应头，自动在边缘生成 103 提示响应。
-
----
-
-## 性能收益与注意事项
-
-* **实测收益**：根据 Cloudflare 与 Google Chrome 官方实验室数据，开启 Early Hints 后：
-  * **LCP 指标提升 20% ~ 30%**；
-  * 关键样式表加载平均提前 100ms ~ 250ms。
-* **浏览器兼容性**：Chrome 103+、Edge 及现代 Chromium 内核浏览器已完全原生支持。对于尚未支持的旧客户端，103 响应会被安全忽略，完全不影响正常业务回退。
-* **避免过度预加载**：只对关键渲染路径必需的 CSS 和主要字体使用 preload，避免浪费带宽与内存。
-
----
-
-## 官方资料
-
-- [Cloudflare：Early Hints](https://developers.cloudflare.com/speed/optimization/content/early-hints/)
-
-## 自检：把知识变成判断
-
-如果 LCP 没有改善，你能否分别验证 HTTP/3 是否协商成功、103 是否发出、关键资源是否真的提前请求？
-
-## 总结
-
-* **HTTP 103 Early Hints** 将浏览器的资源加载阶段提前到了“服务器计算时间”，极大消除首屏白屏。
-* **HTTP/3 (QUIC)** 从传输层彻底解决了丢包队头阻塞，提升弱网稳定性。
-* 在 Cloudflare CDN 开启这两项设置是当前性价比最高的前端性能基建升级。
 
 --------------------------------------------------------------------------------
 
@@ -1686,10 +1935,6 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 ## 官方资料
 
 - [MDN：WebSocket](https://developer.mozilla.org/docs/Web/API/WebSocket)
-
-## 自检：把知识变成判断
-
-同一文档的连接由谁协调？实例迁移或休眠时，未持久化更新与重连客户端如何恢复？
 
 ## 总结
 
@@ -1875,10 +2120,6 @@ export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; 
 
 - [JSON Schema：官方规范入口](https://json-schema.org/specification)
 
-## 自检：把知识变成判断
-
-如果字段协议新增一种组件类型，旧表单如何迁移？渲染器遇到未知类型时应怎样降级？
-
 ## 总结
 
 * **模型抽象**：将表单行为完全收敛至标准的 JSON Schema。
@@ -2003,10 +2244,6 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 ## 官方资料
 
 - [TanStack Query：概览](https://tanstack.com/query/latest/docs/framework/react/overview)
-
-## 自检：把知识变成判断
-
-任意一条数据能否明确说出唯一所有者：查询缓存、MobX 还是临时事件？权限是否在服务端复核？
 
 ## 总结
 
@@ -2167,10 +2404,6 @@ const buttonVariants = cva(
 
 - [W3C：Design Tokens Format Module](https://www.designtokens.org/tr/drafts/format/)
 
-## 自检：把知识变成判断
-
-新增一个颜色或交互模式时，你能否判断它应属于令牌、基础组件、组合模式还是业务页面？
-
 ## 总结
 
 * **下层稳固**：通过 Design Tokens 与 Radix UI 确保全平台样式规范与无障碍基线统一。
@@ -2329,10 +2562,6 @@ export function createCollaborativeDoc(docId: string, token: string) {
 
 - [Yjs：Provider 与持久化生态](https://docs.yjs.dev/ecosystem/connection-provider)
 
-## 自检：把知识变成判断
-
-断网编辑、重连、权限撤销和持久化失败四个场景是否都有明确状态与恢复策略？
-
 ## 总结
 
 * **架构核心**：通过 **Yjs CRDT + IndexedDB + WebSocket** 实现真正的离线优先与毫秒级协同。
@@ -2463,10 +2692,6 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 ## 官方资料
 
 - [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
-
-## 自检：把知识变成判断
-
-看到 `MISS`、`HIT` 与 `BYPASS` 时，你能否沿着缓存规则、缓存键和源站响应头逐层定位原因？
 
 ## 总结
 
@@ -2612,10 +2837,6 @@ export default nextConfig;
 ## 官方资料
 
 - [web.dev：Core Web Vitals](https://web.dev/articles/vitals)
-
-## 自检：把知识变成判断
-
-每项优化是否对应一个事前基线、目标指标和相同条件下的复测结果？
 
 ## 总结
 
@@ -2856,10 +3077,6 @@ export async function POST(req: Request) {
 
 - [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
 
-## 自检：把知识变成判断
-
-如果攻击者复用旧 Token，你的服务端是否会在执行业务之前拒绝它？前端验证失败时是否阻止提交？
-
 ## 总结
 
 * **前端**：通过 `@marsidev/react-turnstile` 组件在加载完成后获取一次性令牌。
@@ -3047,10 +3264,6 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 
 - [MDN：Blob URL 与 `URL.createObjectURL()`](https://developer.mozilla.org/docs/Web/API/URL/createObjectURL_static)
 
-## 自检：把知识变成判断
-
-如果浏览器拒绝在新窗口打开 Data URL，你能否说明限制发生在哪一层，并写出“转换、打开、释放”的完整顺序？
-
 ## 总结
 
 * **根本原因**：现代浏览器出于防钓鱼、防伪造源和防 XSS 的安全策略，禁止将顶级窗口导航至 `data:` URL。
@@ -3202,10 +3415,6 @@ export default defineConfig({
 
 - [Vite：性能指南](https://vite.dev/guide/performance)
 
-## 自检：把知识变成判断
-
-拆包后首屏实际传输字节、请求数量和缓存复用是否改善，而不只是单个 chunk 看起来变小？
-
 ## 总结
 
 * **避免全量导入**：图表库、图标库和工具库必须执行严格的按需 Tree-Shaking。
@@ -3315,10 +3524,6 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 ## 官方资料
 
 - [React：Profiler API](https://react.dev/reference/react/Profiler)
-
-## 自检：把知识变成判断
-
-你能否用构建分析证明 ExcelJS 未进入首屏包，并用 Profiler 证明输入只重渲染目标字段？
 
 ## 总结
 
@@ -3453,10 +3658,6 @@ server {
 ## 官方资料
 
 - [MDN：HTTP 重定向](https://developer.mozilla.org/docs/Web/HTTP/Guides/Redirections)
-
-## 自检：把知识变成判断
-
-对一个永久 POST 迁移与临时 GET 跳转，你能否分别选出状态码并验证方法、Location 和跳转链？
 
 ## 总结选型口诀
 
@@ -3640,10 +3841,6 @@ async function handleUploadFilesParallel(files: File[]) {
 
 - [MDN：`for...of`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for...of)
 
-## 自检：把知识变成判断
-
-面对批量上传，你能否明确顺序要求、并发上限和单个失败是否终止整体，再选择循环方案？
-
 ## 总结
 
 1. **绝对不要**在 `Array.prototype.forEach` 回调中使用 `async/await`，因为它永远不会等待异步操作。
@@ -3808,10 +4005,6 @@ export default defineConfig({
 
 - [web.dev：性能测量](https://web.dev/articles/vitals)
 
-## 自检：把知识变成判断
-
-你能否为路由 404、首包过大和长任务各写出一个可观测证据，而不是用同一个 Lighthouse 分数概括？
-
 ## 总结
 
 * **SPA 路由配置**：在 Vercel / Nginx 端通过重写规则保障 HTML5 History 模式的子路由刷新稳定。
@@ -3963,10 +4156,6 @@ CMD ["nginx", "-g", "daemon off;"]
 ## 官方资料
 
 - [Nextra：Getting Started](https://nextra.site/docs)
-
-## 自检：把知识变成判断
-
-新文章能否在生产构建后同时出现在静态 HTML、全文索引、站点地图和 canonical 校验中？
 
 ## 总结
 
@@ -4125,10 +4314,6 @@ const mutation = useMutation({
 ## 官方资料
 
 - [TanStack Query：Important Defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults)
-
-## 自检：把知识变成判断
-
-相同 Query Key 是否代表相同数据？乐观更新失败时是否能恢复快照并重新验证服务端状态？
 
 ## 总结
 
@@ -4339,10 +4524,6 @@ server.listen();
 
 - [Tiptap：Collaboration](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
 
-## 自检：把知识变成判断
-
-正文更新与 Awareness 是否分开？断线重连后文档能收敛，离线用户光标又能及时消失吗？
-
 ## 总结
 
 * **Tiptap + ProseMirror** 提供了极其灵活的富文本 DOM 渲染与 Schema 扩展机制；
@@ -4498,10 +4679,6 @@ packages/
 ## 官方资料
 
 - [tsup：官方仓库](https://github.com/egoist/tsup)
-
-## 自检：把知识变成判断
-
-在 ESM 与 CJS 测试项目中，代码和类型是否都能通过 `exports` 声明的路径正确加载？
 
 ## 总结
 
@@ -4708,10 +4885,6 @@ export function CreatePostForm() {
 ## 官方资料
 
 - [Hono：RPC](https://hono.dev/docs/guides/rpc)
-
-## 自检：把知识变成判断
-
-绕过类型客户端直接发送非法查询参数时，服务端是否仍会返回可预测的校验错误？
 
 ## 总结
 
@@ -4920,10 +5093,6 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 - [Google AI：图像理解](https://ai.google.dev/gemini-api/docs/image-understanding)
 
-## 自检：把知识变成判断
-
-服务端是否同时限制 MIME、体积和权限？模型返回非预期结构时是否会被校验层拒绝？
-
 ## 总结
 
 * **全格式支持**：结合 `inlineData` 与 Base64，可无缝对接 URL 抓取与文件直传。
@@ -5082,10 +5251,6 @@ Next.js 构建生成静态 HTML (out/)
 
 - [Unified：官方文档](https://unifiedjs.com/learn/)
 
-## 自检：把知识变成判断
-
-一个插件接收的是 MDAST 还是 HAST？不可信 HTML 在哪一步被过滤？最终索引取自什么产物？
-
 ## 总结
 
 1. **底层原理**：Markdown 渲染本质是 `Text -> mdast -> hast -> React/HTML` 的 AST 编译与转换流水线。
@@ -5175,10 +5340,6 @@ Canvas 图形库生态矩阵:
 ## 官方资料
 
 - [MDN：Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
-
-## 自检：把知识变成判断
-
-不看库名，只给出“10 万粒子”“可编辑海报”“矢量布尔运算”三个需求时，你能否分别列出最重要的验证指标？
 
 ## 结论与选型建议
 
@@ -5358,10 +5519,6 @@ export function FlowEditor() {
 
 - [React Flow：Custom Edges](https://reactflow.dev/learn/customization/custom-edges)
 
-## 自检：把知识变成判断
-
-给定四个端口方向与两点坐标，你能否在不依赖 React 的纯函数中生成并测试路径？
-
 ## 总结
 
 * **数学基础**：贝塞尔曲线通过控制点偏移量赋予连线符合直觉的流体美感。
@@ -5531,10 +5688,6 @@ module.exports = {
 
 - [Git：Hooks](https://git-scm.com/docs/githooks)
 
-## 自检：把知识变成判断
-
-跳过本地 Git Hook 后，远端 CI 是否仍会阻止格式、类型或提交规范不合格的改动？
-
 ## 总结
 
 * **极速响应**：基于 Rust 的 **Biome** 将格式化与代码分析耗时从秒级压缩至毫秒级（通常不到 50ms），开发者毫无“卡顿感”。
@@ -5667,10 +5820,6 @@ Yjs 链表结构 (Struct / Item):
 ## 官方资料
 
 - [Yjs：官方文档](https://docs.yjs.dev/)
-
-## 自检：把知识变成判断
-
-两个客户端离线后在同一位置插入不同字符，你能否解释所选算法如何标识、排序并最终收敛？
 
 ## 总结
 
@@ -5912,10 +6061,6 @@ export function GeminiChat() {
 
 - [Google AI：Gemini API 文档](https://ai.google.dev/gemini-api/docs)
 
-## 自检：把知识变成判断
-
-浏览器网络面板里是否看不到模型密钥？流中断和用户取消时，服务端能否停止后续工作？
-
 ## 总结
 
 * **安全边界**：始终通过后端或边缘网关代理请求，杜绝 API Key 在前端暴露。
@@ -6070,10 +6215,6 @@ app.get('/api/posts', async (c) => {
 
 - [Hono：Getting Started](https://hono.dev/docs/getting-started/basic)
 
-## 自检：把知识变成判断
-
-列出应用使用的 Node.js API、数据库驱动与长连接需求后，它们是否都被目标边缘运行时支持？
-
 ## 总结
 
 * **适用场景**：边缘函数极其适合用于轻量级 API 代理、鉴权中心、地理位置路由、Webhook 接收器和高性能元数据服务。
@@ -6224,10 +6365,6 @@ packages:
 
 - [pnpm：Workspaces](https://pnpm.io/workspaces)
 
-## 自检：把知识变成判断
-
-修改公共包时，任务图能否只重建受影响消费者，同时保证缓存键包含真实输入？
-
 ## 总结
 
 * **依赖隔离与空间节省**：pnpm workspace 彻底解决了幽灵依赖与磁盘空间浪费。
@@ -6367,10 +6504,6 @@ export function ProfileFormPage() {
 
 - [Zod：官方文档](https://zod.dev/)
 
-## 自检：把知识变成判断
-
-哪些信息属于 Zod 校验，哪些属于 `fieldConfig` 展示配置？你能否举出一个无法仅靠类型推导的字段？
-
 ## 总结
 
 * **中后台降本增效利器**：对于标准的数据录入、配置页、后台 CRUD 模块，基于 Zod 的 AutoForm 能够消除 90% 的模板代码。
@@ -6500,10 +6633,6 @@ docker run -d -p 3000:8080 \
 ## 官方资料
 
 - [Ollama：官方文档](https://docs.ollama.com/)
-
-## 自检：把知识变成判断
-
-在下载模型前，你能否估算权重与上下文的内存预算，并说明服务是否只监听可信网络接口？
 
 ## 总结
 

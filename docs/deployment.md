@@ -19,6 +19,7 @@ GitHub master
 
 - `DEPLOY_SSH_KEY`：仅用于 `blog-deploy` 强制命令的私钥。
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH Ed25519 主机公钥对应的 `known_hosts` 行。
+- `BAIDU_PUSH_TOKEN`：百度搜索资源平台“普通收录”API 的推送 token；泄露后必须在百度平台重新生成。
 - `DEPLOY_HOST`、`DEPLOY_PORT` 和 `DEPLOY_USER`（`blog-deploy`）：Actions variables。
 
 不需要 GHCR token、Packages token 或 Docker registry 凭据。
@@ -51,6 +52,7 @@ gate 不提供 shell、SFTP 或任意命令执行。
 - 推送 `master`：验证通过后在 Actions Runner 构建 `blog:sha-<commit>`，打包 `image.tar`、`compose.yaml`、宿主 Nginx 和部署脚本，再传输给服务器。
 - 手动触发：基于所选 Git ref 重建并发布该 ref，对历史版本回滚时选择对应的提交或引用。
 - 服务器验证发布包、`docker load` 镜像、同步受管配置、执行 `docker compose up -d --remove-orphans web`，并检查 `http://127.0.0.1:18080/healthz`。
+- 公网验证通过后读取线上 `sitemap.xml`，过滤并去重同站 URL，再通过普通收录 API 提交百度；没有配置 `BAIDU_PUSH_TOKEN` 时明确跳过。
 
 Compose 使用 `pull_policy: never`，因此不会拉取远端镜像。容器 Nginx 配置随 Docker 镜像版本管理；宿主 Nginx 与部署脚本随每次发布包同步。
 
@@ -79,11 +81,18 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://bl
 
 最终 `200` 响应应包含带 `rel=preload; as=style` 的 `Link`。随后可重复请求，或使用 Chrome DevTools、WebPageTest 观察 `103 Early Hints`。Cloudflare 在主响应头更快到达、客户端不兼容或 Early Hints 缓存尚未命中时可能不发出 `103`，因此不能把“每次请求都出现 103”作为稳定健康检查。
 
+## 百度普通收录推送
+
+生产发布及公网验证成功后，`scripts/submit-baidu-urls.mjs` 会读取线上 `https://blog.ljhboard.cn/sitemap.xml`，只提交属于正式站点的去重 URL。token 仅通过 GitHub Actions Secret 注入，不写入仓库或命令参数，也不会出现在脚本日志中。
+
+成功日志只显示百度接受数量和剩余配额。HTTP 错误、非 JSON 响应、`not_same_site` 或 `not_valid` URL 会让步骤失败；百度接收 URL 只代表缩短发现时间，不保证最终收录和展现。
+
 ## 本地验证
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm test:early-hints
+pnpm test:baidu-submit
 pnpm typecheck
 pnpm build
 docker compose config

@@ -111,10 +111,6 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 - [React：Profiler API](https://react.dev/reference/react/Profiler)
 
-## 自检：把知识变成判断
-
-你能否用构建分析证明 ExcelJS 未进入首屏包，并用 Profiler 证明输入只重渲染目标字段？
-
 ## 总结
 
 * **剥离非首屏重型依赖**：利用动态 `import()` 隔离 ExcelJS、图表等次要能力。

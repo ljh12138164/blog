@@ -16,12 +16,14 @@ The existing uncommitted root-layout changes add explicit preconnect hints for t
 - Document the required Cloudflare dashboard setting and production verification procedure.
 - Preserve and include the existing `app/layout.tsx`, `next-env.d.ts`, and generated-artifact working-tree changes as requested.
 - Preserve the user's intentional deletions of `CONTEXT.md`, `MISSION.md`, `NOTES.md`, `RESOURCES.md`, and `skills-lock.json` in the same pull request, as explicitly confirmed during final review.
+- Rewrite the existing Early Hints article as a reproducible implementation guide and include the confirmed production `103` response screenshot.
+- Include the complete production map generator in the article and remove question-style self-check sections from all posts, as requested.
+- Submit the deployed sitemap URLs to Baidu's ordinary inclusion API after public deployment verification, using an Actions Secret for the token.
 
 ## Out of scope
 
 - Enabling the Cloudflare dashboard setting through credentials or infrastructure automation.
 - Deploying to production as part of this pull request task.
-- Rewriting the existing Early Hints article.
 - Preloading analytics, advertising, or low-priority Next.js scripts.
 - Adding a Cloudflare Worker or changing the host Nginx proxy boundary.
 
@@ -48,6 +50,7 @@ Remote fetch failed twice because GitHub was unreachable. On 2026-08-28 the user
 - The Node.js generator parses exported `<link>` elements without depending on attribute order, converts stylesheets to `rel=preload; as=style`, retains explicit preconnects, and excludes scripts, DNS prefetches, and generated error pages.
 - `out/index.html` maps to `/`; other exported `.html` files map to extensionless request URIs. The generated Nginx configuration first derives a query-free path from `$request_uri`, then maps that stable public path to `$early_hints_link`. This avoids losing the mapping when `try_files` internally rewrites `$uri` to an `.html` file.
 - The postbuild step writes `.next/early-hints-map.conf`. The Docker runtime copies that exact build artifact into `conf.d` alongside the matching static export.
+- After public deployment verification, the Baidu submission script reads the live sitemap, keeps unique same-site URLs, and posts them as newline-delimited text. A missing secret skips submission without exposing credentials.
 - Container Nginx adds the mapped `Link` header only in HTML-serving locations. Empty map values omit the header for assets, health checks, and unmapped error responses.
 - CI runs the focused generator tests, requires the generated map, and verifies the final public deployment response contains a stylesheet preload Link header.
 - Pull-request CI builds and starts the runtime image, verifies HTML routes with query strings, checks the extracted stylesheet asset and health endpoint remain free of page-level Link headers, and production verification isolates the final HTTP response block from any preceding cached `103` block.
@@ -63,11 +66,15 @@ Completed locally:
 - `docker compose config`: passed.
 - `nginx -t` against `nginx:1.29-alpine` with the generated map, runtime configuration, and static export mounted read-only: passed.
 - Runtime response checks passed for `/` and `/posts/cloudflare-http3-early-hints`, including query strings: both returned the expected stylesheet preload and explicit preconnect `Link` header. A static CSS asset and `/healthz` omitted the page-level header.
+- Production observation confirmed an `HTTP/2 103` block followed by the final `HTTP/2 200`; the implementation article includes that captured response.
+- `pnpm test:baidu-submit`: passed, covering sitemap same-site filtering and deduplication, newline-delimited submission, successful response parsing, and rejected URLs without contacting Baidu.
+- The generated article references the hashed screenshot asset, workflow YAML parses successfully, and running the submission script without `BAIDU_PUSH_TOKEN` skips safely.
 
-Still required before commit:
+Final fresh verification:
 
 ```bash
 pnpm test:early-hints
+pnpm test:baidu-submit
 pnpm typecheck
 pnpm build
 git diff --check

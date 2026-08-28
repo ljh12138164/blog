@@ -326,23 +326,6 @@ const {
 
 最值得坚持的一条原则是：**让模型决定意图，让代码决定权限。** 模型可以判断“下一步应该发送邮件”，但收件人格式由 schema 校验，是否允许发送由权限系统和用户审批决定，真正的发送由应用执行并返回可审计结果。这样构建出来的 Agent 不只是会调用更多工具，而是在清楚的边界内，把一个目标可靠地推进到完成。
 
-## 自检：你是否掌握了执行边界
-
-<details>
-  <summary>模型生成了合法的 deletePath 参数，是否应该立刻执行？</summary>
-  <p><strong>不应该只凭参数合法就执行。</strong>Schema 只能证明结构正确；应用还要检查路径范围、用户权限、可恢复性与审批策略。</p>
-</details>
-
-<details>
-  <summary>设置最多 10 步，是否已经限制了全部成本？</summary>
-  <p><strong>没有。</strong>还应限制总时间、Token、费用与高成本工具调用次数，并允许外部取消。</p>
-</details>
-
-<details>
-  <summary>MCP server 提供了工具，谁决定当前用户能否调用？</summary>
-  <p><strong>Host 应用。</strong>它负责选择暴露哪些工具、使用什么凭证、何时审批，并保存审计记录。</p>
-</details>
-
 ## 延伸阅读
 
 - [AI SDK：Agents overview](https://ai-sdk.dev/docs/agents/overview)

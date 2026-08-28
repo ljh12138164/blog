@@ -183,10 +183,6 @@ async function handleUploadFilesParallel(files: File[]) {
 
 - [MDN：`for...of`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for...of)
 
-## 自检：把知识变成判断
-
-面对批量上传，你能否明确顺序要求、并发上限和单个失败是否终止整体，再选择循环方案？
-
 ## 总结
 
 1. **绝对不要**在 `Array.prototype.forEach` 回调中使用 `async/await`，因为它永远不会等待异步操作。
