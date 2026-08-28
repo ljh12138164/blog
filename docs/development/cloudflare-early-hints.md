@@ -4,12 +4,12 @@
 
 The blog is exported as static HTML, served by container Nginx, proxied through the repository-managed host Nginx, and published behind Cloudflare. Cloudflare only generates cached `103 Early Hints` for eligible responses that contain `Link` response headers with `preload` or `preconnect` relations. HTML `<link>` elements alone do not establish that origin response contract.
 
-The existing uncommitted root-layout changes add explicit preconnect hints for the third-party origins already used by the site. The user confirmed that these changes and the current generated-file changes belong in this development task.
+The original implementation included explicit preconnect hints for third-party origins already used by the site. A later SEO audit reported excessive preconnects, so the current root layout retains only DNS-prefetch for those deferred scripts while the generator keeps its explicit-preconnect capability for future intentional use.
 
 ## Scope
 
 - Generate deterministic, route-specific Nginx `Link` header mappings from the static HTML export.
-- Preload exported page stylesheets and retain explicit preconnect hints.
+- Preload exported page stylesheets and retain explicitly authored preconnect hints when present.
 - Exclude script preloads, DNS prefetch hints, error pages, and inferred resources.
 - Serve the generated `Link` headers from the container Nginx without changing cache or security headers.
 - Package the generated mapping in the Docker image and verify it in CI.
@@ -18,7 +18,6 @@ The existing uncommitted root-layout changes add explicit preconnect hints for t
 - Preserve the user's intentional deletions of `CONTEXT.md`, `MISSION.md`, `NOTES.md`, `RESOURCES.md`, and `skills-lock.json` in the same pull request, as explicitly confirmed during final review.
 - Rewrite the existing Early Hints article as a reproducible implementation guide and include the confirmed production `103` response screenshot.
 - Include the complete production map generator in the article and remove question-style self-check sections from all posts, as requested.
-- Submit the deployed sitemap URLs to Baidu's ordinary inclusion API after public deployment verification, using an Actions Secret for the token.
 
 ## Out of scope
 
@@ -30,7 +29,7 @@ The existing uncommitted root-layout changes add explicit preconnect hints for t
 ## Acceptance criteria
 
 - Root and extensionless exported routes map to their current build's stylesheet preload hints.
-- Explicit preconnect hints are preserved, deduplicated, and emitted with applicable `crossorigin` semantics.
+- Explicit preconnect hints, if authored, are preserved, deduplicated, and emitted with applicable `crossorigin` semantics; the current export intentionally authors none.
 - Script preload and DNS-prefetch hints are absent from the generated mapping.
 - The generated mapping is deterministic and safe to include in Nginx configuration.
 - Container Nginx returns a `Link` header for mapped HTML routes and omits it for unmapped assets.
@@ -47,10 +46,9 @@ Remote fetch failed twice because GitHub was unreachable. On 2026-08-28 the user
 
 ## Implementation
 
-- The Node.js generator parses exported `<link>` elements without depending on attribute order, converts stylesheets to `rel=preload; as=style`, retains explicit preconnects, and excludes scripts, DNS prefetches, and generated error pages.
+- The Node.js generator parses exported `<link>` elements without depending on attribute order, converts stylesheets to `rel=preload; as=style`, retains intentionally authored preconnects, and excludes scripts, DNS prefetches, and generated error pages. The current root layout contains no preconnects after the later audit correction.
 - `out/index.html` maps to `/`; other exported `.html` files map to extensionless request URIs. The generated Nginx configuration first derives a query-free path from `$request_uri`, then maps that stable public path to `$early_hints_link`. This avoids losing the mapping when `try_files` internally rewrites `$uri` to an `.html` file.
 - The postbuild step writes `.next/early-hints-map.conf`. The Docker runtime copies that exact build artifact into `conf.d` alongside the matching static export.
-- After public deployment verification, the Baidu submission script reads the live sitemap, keeps unique same-site URLs, and posts them as newline-delimited text. A missing secret skips submission without exposing credentials.
 - Container Nginx adds the mapped `Link` header only in HTML-serving locations. Empty map values omit the header for assets, health checks, and unmapped error responses.
 - CI runs the focused generator tests, requires the generated map, and verifies the final public deployment response contains a stylesheet preload Link header.
 - Pull-request CI builds and starts the runtime image, verifies HTML routes with query strings, checks the extracted stylesheet asset and health endpoint remain free of page-level Link headers, and production verification isolates the final HTTP response block from any preceding cached `103` block.
@@ -67,14 +65,14 @@ Completed locally:
 - `nginx -t` against `nginx:1.29-alpine` with the generated map, runtime configuration, and static export mounted read-only: passed.
 - Runtime response checks passed for `/` and `/posts/cloudflare-http3-early-hints`, including query strings: both returned the expected stylesheet preload and explicit preconnect `Link` header. A static CSS asset and `/healthz` omitted the page-level header.
 - Production observation confirmed an `HTTP/2 103` block followed by the final `HTTP/2 200`; the implementation article includes that captured response.
-- `pnpm test:baidu-submit`: passed, covering sitemap same-site filtering and deduplication, newline-delimited submission, successful response parsing, and rejected URLs without contacting Baidu.
-- The generated article references the hashed screenshot asset, workflow YAML parses successfully, and running the submission script without `BAIDU_PUSH_TOKEN` skips safely.
+- The generated article references the hashed screenshot asset, and workflow YAML parses successfully.
+- The follow-up `pnpm test:resource-hints` verifies the current static export contains four DNS-prefetch hints, no preconnect hints, and still emits stylesheet preload Early Hints.
 
 Final fresh verification:
 
 ```bash
 pnpm test:early-hints
-pnpm test:baidu-submit
+pnpm test:resource-hints
 pnpm typecheck
 pnpm build
 git diff --check

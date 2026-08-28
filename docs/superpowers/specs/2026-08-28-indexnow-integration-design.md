@@ -57,7 +57,7 @@ The following metadata titles replace the reported overlong titles in the top-le
 - `pnpm typecheck` passes.
 - `pnpm build` exports the key file, sitemap, robots file, Pagefind index, and existing Early Hints map.
 - CI verifies the exported key file exists and matches the tracked public key file.
-- The resource-hint regression test proves the root layout contains no explicit `preconnect`, retains the four `dns-prefetch` origins, and leaves stylesheet Early Hints covered by the existing generator test.
+- The resource-hint regression test proves the exported root HTML contains no explicit `preconnect`, retains the four `dns-prefetch` origins, and the generated Nginx map still contains stylesheet Early Hints.
 - A fresh static build proves the five final document titles use the shortened metadata values.
 - `git diff --check` reports no whitespace errors.
 

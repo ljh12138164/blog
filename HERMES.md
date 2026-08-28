@@ -2,24 +2,24 @@
 
 ## 当前目标
 
-完善 Cloudflare 103 Early Hints 实战文章：加入完整映射生成脚本，并移除 `app/posts` 全部文章中的自检问答段落；生产部署继续自动提交百度普通收录。
+在 `feat/indexnow-integration` 中以 IndexNow 替换百度普通收录推送：托管公开根密钥，部署验证后提交线上 sitemap，并完成测试、文档、评审与 PR。
 
 ## 状态
 
-已完成。103 文章包含真实成功截图与完整生成器源码，35 篇文章的自检问答段落已移除，全站静态输出验证通过。
-
+实现、仓库级验证与双轴评审均完成；尚未推送或创建 PR。
 
 ## 验证
 
-- 已确认 `app/posts` 不再包含自检标题或问答提示。
-- 已逐行确认文章中的生成器代码与 `scripts/generate-early-hints.mjs` 一致。
-- `pnpm test:early-hints`：4 项通过。
-- `pnpm test:baidu-submit`：3 项通过。
-- `pnpm typecheck`：通过。
-- `pnpm build`：通过，导出 42 页；Pagefind 索引 38 页；sitemap 与 SEO 校验通过。
-
+- 已确认分支基于最新 `origin/master`，且未创建 worktree。
+- 已确认生产 `sitemap.xml` 对普通客户端和 Googlebot UA 均返回 HTTP/2 200 与 `text/xml`。
+- Google Indexing API 因仅支持招聘和直播活动结构化数据而排除。
+- IndexNow RED→GREEN：4 项协议测试通过，提交为 `f853212`。
+- 资源提示 RED→GREEN：静态产物不再包含 preconnect，保留 4 个 DNS-prefetch；Early Hints 的 4 项测试通过，提交为 `658590a`。
+- 5 篇文章最终构建标题含站点后缀为 35–53 字符。
+- 首次 Docker 构建复现缺少 `.dockerignore` 导致 Windows 依赖覆盖 Linux 依赖；添加构建上下文边界后，同命令成功生成 `blog:local`，上下文从 1.15 GB 降至 36 KB。
+- 完整验证通过：9 项测试、Biome、typecheck、42 页静态构建、Pagefind 38 页、workflow YAML、关键产物、Compose 与 Docker 镜像。
+- 双轴评审无阻塞项；无接受的后续工作，因此不创建路线图。
 
 ## 下一步
 
-在百度搜索资源平台废止旧 token，将新值配置为 GitHub Actions Secret `BAIDU_PUSH_TOKEN`；合并后观察生产部署与推送结果。
-
+提交文档与 `.dockerignore`，运行最终完成门验证，然后推送分支并创建 PR。

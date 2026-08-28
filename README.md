@@ -13,11 +13,12 @@ pnpm dev
 
 ```bash
 pnpm test:early-hints
-pnpm test:baidu-submit
+pnpm test:indexnow-submit
 pnpm build
+pnpm test:resource-hints
 ```
 
-`pnpm test:early-hints` 验证静态页面到 Nginx `Link` 响应头映射的生成规则；`pnpm test:baidu-submit` 使用本地 HTTP 服务验证 sitemap 过滤与百度推送协议，不会访问真实接口。`pnpm build` 生成 `out/` 静态站点；`postbuild` 随后生成 `out/_pagefind` 搜索索引、`sitemap.xml`、`robots.txt` 和 `.next/early-hints-map.conf`。
+`pnpm test:early-hints` 验证静态页面到 Nginx `Link` 响应头映射的生成规则；`pnpm test:indexnow-submit` 使用本地 HTTP 服务验证 sitemap 过滤与 IndexNow JSON 协议，不访问真实接口。`pnpm build` 生成 `out/` 静态站点及 SEO 产物，随后 `pnpm test:resource-hints` 验证实际导出页面只保留 DNS-prefetch，CSS 继续通过 Early Hints preload。
 
 ## 代码检查与提交钩子
 
@@ -39,7 +40,7 @@ pnpm check:write
 
 ## 自动部署
 
-Pull Request 会验证站点并构建、启动临时 Docker 镜像，检查 HTML 的 Early Hints `Link` 响应头以及静态资源和健康检查的隔离。推送到 `master` 后，GitHub Actions 会构建不可变 `blog:sha-<commit>` Docker 镜像，并将镜像和仓库中的 Compose、Nginx、部署配置通过受限 SSH 发送到服务器。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。公网验证通过后，流水线使用 GitHub Secret 中的 token 将线上 sitemap URL 提交至百度普通收录接口。
+Pull Request 会验证站点并构建、启动临时 Docker 镜像，检查 HTML 的 Early Hints `Link` 响应头以及静态资源和健康检查的隔离。推送到 `master` 后，GitHub Actions 会构建不可变 `blog:sha-<commit>` Docker 镜像，并将镜像和仓库中的 Compose、Nginx、部署配置通过受限 SSH 发送到服务器。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。公网验证和 IndexNow 根密钥验证通过后，流水线读取线上 sitemap 并通知 IndexNow。
 
 完整的首次服务器引导、变量、回滚和排障说明见 [部署文档](docs/deployment.md)。
 

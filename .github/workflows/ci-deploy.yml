@@ -25,9 +25,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:early-hints
-      - run: pnpm test:baidu-submit
+      - run: pnpm test:indexnow-submit
       - run: pnpm typecheck
       - run: pnpm build
+      - run: pnpm test:resource-hints
       - name: Verify static artifacts
         shell: bash
         run: |
@@ -36,6 +37,7 @@ jobs:
           test -f out/sitemap.xml
           test -f out/robots.txt
           test -f .next/early-hints-map.conf
+          cmp public/0fa033ea117044e3a4f36a35f8e87c0f.txt out/0fa033ea117044e3a4f36a35f8e87c0f.txt
       - name: Build and verify runtime image
         shell: bash
         run: |
@@ -152,7 +154,8 @@ jobs:
           page=$(mktemp)
           headers=$(mktemp)
           final_headers=$(mktemp)
-          trap 'rm -f "$page" "$headers" "$final_headers"' EXIT
+          indexnow_key=$(mktemp)
+          trap 'rm -f "$page" "$headers" "$final_headers" "$indexnow_key"' EXIT
           curl --fail --silent --show-error \
             --header "Cache-Control: no-cache" \
             --dump-header "$headers" \
@@ -178,7 +181,13 @@ jobs:
             --retry-delay 5 \
             --retry-all-errors \
             "https://blog.ljhboard.cn/posts/react-query-api-optimization"
-      - name: Submit deployed URLs to Baidu
-        env:
-          BAIDU_PUSH_TOKEN: ${{ secrets.BAIDU_PUSH_TOKEN }}
-        run: node scripts/submit-baidu-urls.mjs
+          curl --fail --silent --show-error --location \
+            --header "Cache-Control: no-cache" \
+            --output "$indexnow_key" \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            "https://blog.ljhboard.cn/0fa033ea117044e3a4f36a35f8e87c0f.txt"
+          cmp public/0fa033ea117044e3a4f36a35f8e87c0f.txt "$indexnow_key"
+      - name: Submit deployed URLs to IndexNow
+        run: node scripts/submit-indexnow-urls.mjs

@@ -35,7 +35,7 @@
 - Produces: `extractSiteUrls(sitemap, site): string[]` and `submitIndexNowUrls({ urls, site, key, endpoint? }): Promise<number>`.
 - CLI consumes: `site.config.json`, the live `/sitemap.xml`, and the tracked public key constant.
 
-- [ ] **Step 1: Write failing protocol tests**
+- [x] **Step 1: Write failing protocol tests**
 
 Create tests that import the not-yet-created module and specify same-origin filtering and XML decoding, an exact JSON POST payload, `2xx` acceptance, empty and over-10,000 rejection, and HTTP failure reporting. The payload assertion must be:
 
@@ -48,17 +48,17 @@ Create tests that import the not-yet-created module and specify same-origin filt
 }
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run: `node --test scripts/submit-indexnow-urls.test.mjs`
 
 Expected: FAIL because `scripts/submit-indexnow-urls.mjs` does not exist.
 
-- [ ] **Step 3: Implement the minimal module and CLI**
+- [x] **Step 3: Implement the minimal module and CLI**
 
 Implement the two exported functions with built-in APIs. `extractSiteUrls` decodes XML entities, validates URL origin and base path, removes fragments and duplicates, and returns insertion order. `submitIndexNowUrls` validates count, posts UTF-8 JSON, accepts only `response.ok`, and returns `urls.length`. The CLI reads `site.config.json`, fetches the live sitemap, and logs only the accepted count.
 
-- [ ] **Step 4: Add the public key and package command**
+- [x] **Step 4: Add the public key and package command**
 
 Create the root key file containing exactly `0fa033ea117044e3a4f36a35f8e87c0f` plus a final newline. Replace `test:baidu-submit` with:
 
@@ -66,13 +66,13 @@ Create the root key file containing exactly `0fa033ea117044e3a4f36a35f8e87c0f` p
 "test:indexnow-submit": "node --test scripts/submit-indexnow-urls.test.mjs"
 ```
 
-- [ ] **Step 5: Run the focused test and verify GREEN**
+- [x] **Step 5: Run the focused test and verify GREEN**
 
 Run: `pnpm test:indexnow-submit`
 
 Expected: all IndexNow tests pass without network access beyond the local test server.
 
-- [ ] **Step 6: Commit the protocol slice**
+- [x] **Step 6: Commit the protocol slice**
 
 Stage only the Task 1 files and commit with `feat: 接入 IndexNow 提交协议`.
 
@@ -89,45 +89,47 @@ Stage only the Task 1 files and commit with `feat: 接入 IndexNow 提交协议`
 - Modify: `app/posts/canvas-library-research/page.mdx`
 
 **Interfaces:**
-- The test consumes the root-layout source and enforces the repository's explicit hint contract.
+- The test consumes `out/index.html` and `.next/early-hints-map.conf`, enforcing the user-visible static-output contract rather than component source text.
 - Article metadata continues to expose Next.js `Metadata` with matching `title`, `openGraph.title`, and `twitter.title`.
 
-- [ ] **Step 1: Write the failing resource-hint test**
+- [x] **Step 1: Write the failing resource-hint test**
 
-Read `app/layout.tsx` and assert that it contains no `rel="preconnect"`, still contains exactly four `rel="dns-prefetch"`, and retains all four approved external origins.
+Read the existing `out/index.html` and `.next/early-hints-map.conf`. Assert that the root HTML contains no `rel="preconnect"`, contains exactly four `rel="dns-prefetch"` tags with the approved external origins, and the Nginx map contains `rel=preload; as=style` but no `rel=preconnect`.
 
-- [ ] **Step 2: Run the resource-hint test and verify RED**
+- [x] **Step 2: Run the resource-hint test and verify RED**
 
 Run: `node --test scripts/resource-hints.test.mjs`
 
-Expected: FAIL because the layout currently contains four `preconnect` links.
+Expected: FAIL against the current static output because the exported root page and Nginx map contain four `preconnect` hints.
 
-- [ ] **Step 3: Remove the four preconnect elements**
+- [x] **Step 3: Remove the four preconnect elements**
 
 Delete only the Cloudflare Insights, Google Tag Manager, Google Analytics, and Google Ads `preconnect` elements. Leave the four `dns-prefetch` elements and scripts unchanged.
 
-- [ ] **Step 4: Update the five metadata title triplets**
+- [x] **Step 4: Update the five metadata title triplets**
 
 Replace each article's top-level, Open Graph, and Twitter title with the exact values in the spec. Do not change descriptions, dates, bodies, canonical URLs, or archive labels.
 
-- [ ] **Step 5: Add and run the focused resource command**
+- [x] **Step 5: Build and run the focused resource command**
 
 Add `"test:resource-hints": "node --test scripts/resource-hints.test.mjs"`, then run:
 
 ```bash
+pnpm build
 pnpm test:resource-hints
 pnpm test:early-hints
 ```
 
 Expected: both commands pass; stylesheet preload behavior remains covered.
 
-- [ ] **Step 6: Commit the resource and SEO slice**
+- [x] **Step 6: Commit the resource and SEO slice**
 
 Stage only the Task 2 files and commit with `fix: 精简资源提示和文章标题`.
 
 ### Task 3: Workflow, documentation, and full verification
 
 **Files:**
+- Create: `.dockerignore`
 - Modify: `.github/workflows/ci-deploy.yml`
 - Modify: `README.md`
 - Modify: `docs/deployment.md`
@@ -140,15 +142,15 @@ Stage only the Task 2 files and commit with `fix: 精简资源提示和文章标
 - CI consumes the two focused package scripts and the exported key file.
 - Production CI calls `node scripts/submit-indexnow-urls.mjs` after public verification.
 
-- [ ] **Step 1: Update CI verification and production notification**
+- [x] **Step 1: Update CI verification and production notification**
 
-Run both focused tests before typecheck. In static artifact verification, compare the exported and tracked key files using `cmp`. After public deployment verification, invoke the IndexNow CLI with no secret environment variables.
+Run the IndexNow test before typecheck and the resource-hint test after the build. In static artifact verification, compare the exported and tracked key files using `cmp`. After public deployment verification, invoke the IndexNow CLI with no secret environment variables.
 
-- [ ] **Step 2: Align developer and deployment documentation**
+- [x] **Step 2: Align developer and deployment documentation**
 
 Replace Baidu commands and secret instructions with IndexNow behavior, public-key ownership, failure semantics, Webmaster Tools verification, and the new resource-hint test. Record final decisions and verification evidence in the development document and HERMES.
 
-- [ ] **Step 3: Run full verification**
+- [x] **Step 3: Run full verification**
 
 Run:
 
@@ -165,7 +167,9 @@ git diff --check
 
 Also assert the required files exist and inspect the five built `<title>` values and generated Early Hints map for zero `rel=preconnect` values.
 
-- [ ] **Step 4: Review and close findings**
+The initial local Docker build exposed a pre-existing missing build-context boundary: Windows `node_modules` overwrote the Linux dependencies after `COPY . .`. Add `.dockerignore` for Git metadata, local dependencies, generated outputs, worktrees, environment files, and local secrets, then rerun the same Docker build as the regression signal.
+
+- [x] **Step 4: Review and close findings**
 
 Review the full diff against repository standards and the development document. Resolve all blocking findings, classify non-blocking findings, and create a roadmap only when an evidence-backed accepted follow-up exists.
 
