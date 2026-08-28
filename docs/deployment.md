@@ -82,7 +82,7 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://bl
 
 ## IndexNow
 
-`public/0fa033ea117044e3a4f36a35f8e87c0f.txt` 是协议要求的公开所有权证明，随静态站点发布到根目录，不是 GitHub Secret。生产流水线先验证公网密钥内容，再由 `scripts/submit-indexnow-urls.mjs` 读取线上 sitemap，过滤并去重正式站点 URL，最后向 `https://api.indexnow.org/indexnow` 发送一个 JSON 批次。
+`public/1da648d59c024d869f2523943dce4c6b.txt` 是协议要求的公开所有权证明，随静态站点发布到根目录，不是 GitHub Secret。生产流水线先验证公网密钥内容，再由 `scripts/submit-indexnow-urls.mjs` 读取线上 sitemap，过滤并去重正式站点 URL，最后向 `https://api.indexnow.org/indexnow` 发送一个 JSON 批次。
 
 HTTP 非成功响应、空 URL 集合或超过每批 10,000 URL 会使通知步骤失败，但不会回滚已经成功的生产部署。成功只表示 IndexNow 接收通知，不保证抓取、收录或排名；使用 Bing Webmaster Tools 核对收到的 URL。
 

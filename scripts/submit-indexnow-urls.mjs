@@ -3,7 +3,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const DEFAULT_ENDPOINT = 'https://api.indexnow.org/indexnow'
-const INDEXNOW_KEY = '0fa033ea117044e3a4f36a35f8e87c0f'
+const INDEXNOW_KEY = '1da648d59c024d869f2523943dce4c6b'
 const MAX_URLS_PER_REQUEST = 10_000
 
 function decodeXmlText(value) {

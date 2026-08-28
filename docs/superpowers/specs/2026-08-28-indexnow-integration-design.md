@@ -27,7 +27,7 @@ Google's Indexing API is not part of this design. Google restricts that API to p
 
 ## Architecture
 
-The UTF-8 file `public/0fa033ea117044e3a4f36a35f8e87c0f.txt` contains the matching public key so Next.js exports it at the site root. The key is public proof of host ownership, not a secret, and therefore requires no GitHub Actions Secret.
+The UTF-8 file `public/1da648d59c024d869f2523943dce4c6b.txt` contains the matching public key so Next.js exports it at the site root. The key is public proof of host ownership, not a secret, and therefore requires no GitHub Actions Secret.
 
 After the existing public deployment checks pass, `scripts/submit-indexnow-urls.mjs` reads `site.config.json`, fetches the live `/sitemap.xml`, retains only valid URLs under the configured site origin and path, removes duplicates, and submits the resulting list to `https://api.indexnow.org/indexnow`. The JSON payload contains `host`, `key`, `keyLocation`, and `urlList`.
 

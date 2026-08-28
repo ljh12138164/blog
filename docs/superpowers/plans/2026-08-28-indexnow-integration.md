@@ -26,7 +26,7 @@
 **Files:**
 - Create: `scripts/submit-indexnow-urls.test.mjs`
 - Create: `scripts/submit-indexnow-urls.mjs`
-- Create: `public/0fa033ea117044e3a4f36a35f8e87c0f.txt`
+- Create: `public/1da648d59c024d869f2523943dce4c6b.txt`
 - Delete: `scripts/submit-baidu-urls.test.mjs`
 - Delete: `scripts/submit-baidu-urls.mjs`
 - Modify: `package.json`
@@ -60,7 +60,7 @@ Implement the two exported functions with built-in APIs. `extractSiteUrls` decod
 
 - [x] **Step 4: Add the public key and package command**
 
-Create the root key file containing exactly `0fa033ea117044e3a4f36a35f8e87c0f` plus a final newline. Replace `test:baidu-submit` with:
+Create the root key file containing exactly `1da648d59c024d869f2523943dce4c6b` plus a final newline. Replace `test:baidu-submit` with:
 
 ```json
 "test:indexnow-submit": "node --test scripts/submit-indexnow-urls.test.mjs"

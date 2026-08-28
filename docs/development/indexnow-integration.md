@@ -23,7 +23,7 @@ The static blog already publishes `sitemap.xml` and previously notified Baidu af
 
 ## Acceptance criteria
 
-- `https://blog.ljhboard.cn/0fa033ea117044e3a4f36a35f8e87c0f.txt` is produced by the static export and contains exactly the supplied key.
+- `https://blog.ljhboard.cn/1da648d59c024d869f2523943dce4c6b.txt` is produced by the static export and contains exactly the supplied key.
 - Pull-request CI tests URL extraction and IndexNow request behavior without contacting a production endpoint.
 - Production CI submits the live sitemap only after deployment and public checks succeed.
 - Requests contain the correct host, key, key location, and no more than 10,000 unique same-site URLs.
