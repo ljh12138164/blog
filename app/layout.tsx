@@ -69,18 +69,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <Head backgroundColor={{ light: '#f5f4ee', dark: '#f5f4ee' }}>
         <meta name="baidu-site-verification" content="codeva-IiA93WOaG7" />
         <meta name="msvalidate.01" content="DD5A2B7DB351923A5E482555DC0A57C4" />
-        <link
-          rel="preconnect"
-          href="https://static.cloudflareinsights.com"
-          crossOrigin="anonymous"
-        />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link
-          rel="preconnect"
-          href="https://pagead2.googlesyndication.com"
-          crossOrigin="anonymous"
-        />
         <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
