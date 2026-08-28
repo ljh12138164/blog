@@ -17,6 +17,7 @@ The existing uncommitted root-layout changes add explicit preconnect hints for t
 - Preserve and include the existing `app/layout.tsx`, `next-env.d.ts`, and generated-artifact working-tree changes as requested.
 - Preserve the user's intentional deletions of `CONTEXT.md`, `MISSION.md`, `NOTES.md`, `RESOURCES.md`, and `skills-lock.json` in the same pull request, as explicitly confirmed during final review.
 - Rewrite the existing Early Hints article as a reproducible implementation guide and include the confirmed production `103` response screenshot.
+- Include the complete production map generator in the article and remove question-style self-check sections from all posts, as requested.
 - Submit the deployed sitemap URLs to Baidu's ordinary inclusion API after public deployment verification, using an Actions Secret for the token.
 
 ## Out of scope

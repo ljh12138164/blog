@@ -240,10 +240,6 @@ export async function POST(req: Request) {
 
 - [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
 
-## 自检：把知识变成判断
-
-如果攻击者复用旧 Token，你的服务端是否会在执行业务之前拒绝它？前端验证失败时是否阻止提交？
-
 ## 总结
 
 * **前端**：通过 `@marsidev/react-turnstile` 组件在加载完成后获取一次性令牌。

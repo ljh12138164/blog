@@ -188,10 +188,6 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 
 - [MDN：Blob URL 与 `URL.createObjectURL()`](https://developer.mozilla.org/docs/Web/API/URL/createObjectURL_static)
 
-## 自检：把知识变成判断
-
-如果浏览器拒绝在新窗口打开 Data URL，你能否说明限制发生在哪一层，并写出“转换、打开、释放”的完整顺序？
-
 ## 总结
 
 * **根本原因**：现代浏览器出于防钓鱼、防伪造源和防 XSS 的安全策略，禁止将顶级窗口导航至 `data:` URL。

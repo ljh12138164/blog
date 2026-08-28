@@ -146,10 +146,6 @@ export default nextConfig;
 
 - [web.dev：Core Web Vitals](https://web.dev/articles/vitals)
 
-## 自检：把知识变成判断
-
-每项优化是否对应一个事前基线、目标指标和相同条件下的复测结果？
-
 ## 总结
 
 * **避免重型库污染首屏**：对 Canvas、富文本、图表库坚决采用 `dynamic(..., { ssr: false })` 异步隔离。

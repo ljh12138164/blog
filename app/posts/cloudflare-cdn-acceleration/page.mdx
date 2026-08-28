@@ -132,10 +132,6 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 
 - [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
 
-## 自检：把知识变成判断
-
-看到 `MISS`、`HIT` 与 `BYPASS` 时，你能否沿着缓存规则、缓存键和源站响应头逐层定位原因？
-
 ## 总结
 
 * **合理规划缓存分层**：静态资产（带哈希）长效强缓存，HTML 页面使用 `s-maxage` 配合 `stale-while-revalidate`。

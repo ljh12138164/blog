@@ -240,16 +240,167 @@ link: </_next/static/chunks/example.css>; rel=preload; as=style
 | CSS 资源也有页面级 `Link` | `add_header` 放置范围过大 | Nginx location |
 | 预加载 URL 返回 404 | map 与静态 HTML 不是同一次构建 | Docker 构建阶段与镜像内容 |
 
-## 自检：把实现变成自己的判断
+## 完整的 103 映射生成脚本
 
-先不要回看上文，尝试回答：
+前文展示的是关键判断，下面是项目实际运行的完整 `scripts/generate-early-hints.mjs`。它只依赖 Node.js 标准库，可以直接放进其他 Next.js 静态导出项目：
 
-1. 为什么这个静态博客不能只配置 Nginx 1.29 的 `early_hints` 指令？
-2. 为什么映射必须在构建时从 `out` 生成，而不能把 CSS 文件名写死？
-3. 为什么看到 `200 + Link` 只能证明源站准备好了，不能单独证明 103 已生效？
-4. 如果根路径成功、带查询参数的文章页失败，你会先检查 `$uri` 还是 `$request_uri`？为什么？
+```js
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
-能够用自己的话解释这四点，就已经掌握了这套实现最容易踩坑的部分。
+const LINK_TAG_PATTERN = /<link\b[^>]*>/gi
+const ATTRIBUTE_PATTERN = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
+
+async function findHtmlFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true })
+  const files = []
+
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name)
+
+    if (entry.isDirectory()) {
+      files.push(...(await findHtmlFiles(entryPath)))
+    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      files.push(entryPath)
+    }
+  }
+
+  return files
+}
+
+function parseAttributes(tag) {
+  const attributes = new Map()
+  const source = tag.slice('<link'.length, -1)
+
+  for (const match of source.matchAll(ATTRIBUTE_PATTERN)) {
+    const [, name, doubleQuoted, singleQuoted, unquoted] = match
+    attributes.set(name.toLowerCase(), doubleQuoted ?? singleQuoted ?? unquoted ?? '')
+  }
+
+  return attributes
+}
+
+function extractEarlyHints(html) {
+  const hints = new Set()
+
+  for (const tag of html.match(LINK_TAG_PATTERN) ?? []) {
+    const attributes = parseAttributes(tag)
+    const href = attributes.get('href')
+    const relations = new Set((attributes.get('rel') ?? '').toLowerCase().split(/\s+/))
+
+    if (!href) continue
+
+    if (relations.has('stylesheet')) {
+      hints.add(`<${href}>; rel=preload; as=style`)
+      continue
+    }
+
+    if (relations.has('preconnect')) {
+      const crossOriginValue = attributes.get('crossorigin')?.toLowerCase()
+      const crossOrigin = attributes.has('crossorigin')
+        ? `; crossorigin=${crossOriginValue === 'use-credentials' ? 'use-credentials' : 'anonymous'}`
+        : ''
+      hints.add(`<${href}>; rel=preconnect${crossOrigin}`)
+    }
+  }
+
+  return [...hints]
+}
+
+function routeFromHtmlFile(exportDir, filePath) {
+  const relativePath = path.relative(exportDir, filePath).split(path.sep).join('/')
+
+  if (relativePath === 'index.html') return '/'
+  if (relativePath === '404.html' || relativePath === '_not-found.html') return null
+
+  const withoutExtension = relativePath.slice(0, -'.html'.length)
+  const route = withoutExtension.endsWith('/index')
+    ? withoutExtension.slice(0, -'/index'.length)
+    : withoutExtension
+
+  return `/${route}`
+}
+
+function escapeNginxValue(value) {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('$', '\\$')
+}
+
+export async function generateEarlyHintsMap(exportDir) {
+  const mappings = []
+  const routes = new Set()
+
+  for (const filePath of await findHtmlFiles(exportDir)) {
+    const route = routeFromHtmlFile(exportDir, filePath)
+    if (!route) continue
+
+    if (routes.has(route)) {
+      throw new Error(`Multiple HTML files map to the Early Hints route ${route}`)
+    }
+    if (
+      [...route].some((character) => {
+        const codePoint = character.codePointAt(0)
+        return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f)
+      })
+    ) {
+      throw new Error(`Early Hints route contains unsupported control characters: ${route}`)
+    }
+
+    const hints = extractEarlyHints(await readFile(filePath, 'utf8'))
+    if (hints.length === 0) continue
+
+    routes.add(route)
+    mappings.push([route, hints.join(', ')])
+  }
+
+  mappings.sort(([left], [right]) => left.localeCompare(right, 'en'))
+
+  const lines = [
+    'map $request_uri $early_hints_request_path {',
+    '    ~^([^?]*) $1;',
+    '}',
+    '',
+    'map $early_hints_request_path $early_hints_link {',
+    '    default "";',
+    ''
+  ]
+  for (const [route, hints] of mappings) {
+    lines.push(`    "${escapeNginxValue(route)}" "${escapeNginxValue(hints)}";`)
+  }
+  lines.push('}', '')
+
+  return lines.join('\n')
+}
+
+async function main() {
+  const exportDir = path.resolve(process.argv[2] ?? 'out')
+  const outputPath = path.resolve(process.argv[3] ?? '.next/early-hints-map.conf')
+  const config = await generateEarlyHintsMap(exportDir)
+
+  await mkdir(path.dirname(outputPath), { recursive: true })
+  await writeFile(outputPath, config, 'utf8')
+}
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  await main()
+}
+```
+
+在 `package.json` 的 `postbuild` 末尾执行：
+
+```json
+{
+  "scripts": {
+    "postbuild": "... && node scripts/generate-early-hints.mjs"
+  }
+}
+```
+
+默认输入是 `out`，输出是 `.next/early-hints-map.conf`。如果项目目录不同，也可以显式传参：
+
+```bash
+node scripts/generate-early-hints.mjs ./out ./.next/early-hints-map.conf
+```
 
 ## 官方资料
 
@@ -947,23 +1098,6 @@ const {
 
 最值得坚持的一条原则是：**让模型决定意图，让代码决定权限。** 模型可以判断“下一步应该发送邮件”，但收件人格式由 schema 校验，是否允许发送由权限系统和用户审批决定，真正的发送由应用执行并返回可审计结果。这样构建出来的 Agent 不只是会调用更多工具，而是在清楚的边界内，把一个目标可靠地推进到完成。
 
-## 自检：你是否掌握了执行边界
-
-<details>
-  <summary>模型生成了合法的 deletePath 参数，是否应该立刻执行？</summary>
-  <p><strong>不应该只凭参数合法就执行。</strong>Schema 只能证明结构正确；应用还要检查路径范围、用户权限、可恢复性与审批策略。</p>
-</details>
-
-<details>
-  <summary>设置最多 10 步，是否已经限制了全部成本？</summary>
-  <p><strong>没有。</strong>还应限制总时间、Token、费用与高成本工具调用次数，并允许外部取消。</p>
-</details>
-
-<details>
-  <summary>MCP server 提供了工具，谁决定当前用户能否调用？</summary>
-  <p><strong>Host 应用。</strong>它负责选择暴露哪些工具、使用什么凭证、何时审批，并保存审计记录。</p>
-</details>
-
 ## 延伸阅读
 
 - [AI SDK：Agents overview](https://ai-sdk.dev/docs/agents/overview)
@@ -1198,10 +1332,6 @@ OpenAI 的[Prompt Caching 指南](https://developers.openai.com/api/docs/guides/
 - 稳定内容在前，动态内容在后。
 - 在生产 usage 中记录输入、输出和缓存 Token。
 - 模型或请求结构变化后，重新校准预算。
-
-## 自检：预算是否完整
-
-你能否列出一次真实请求中的系统指令、历史消息、工具定义、检索材料、当前输入和预留输出，并解释超出预算时先删哪一项？
 
 ## 最后记住
 
@@ -1445,10 +1575,6 @@ flowchart LR
   <p>任务：为未参会的项目成员整理会议结论。成功标准：保留决策、责任人和截止日期；未明确的信息标记“待确认”。输出：结论、行动项、风险。测试：正常会议、缺少责任人、讨论很多但没有形成决策。</p>
 </details>
 
-## 自检：提示词是否可验证
-
-换一份未参与编写的输入后，你能否只根据成功标准判断输出合格与否？如果仍需要“凭感觉”，应先补充约束或示例，再继续改写提示词。
-
 ## 最后记住
 
 高质量提示词的核心不是文采，而是可验证性：
@@ -1625,10 +1751,6 @@ function Child() {
 ## 官方资料
 
 - [React：`useEffect`](https://react.dev/reference/react/useEffect)
-
-## 自检：把知识变成判断
-
-遇到重复订阅或闪烁时，你能否判断副作用应放在 render、layout effect 还是 effect，并解释原因？
 
 ## 总结速查表
 
@@ -1814,10 +1936,6 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 
 - [MDN：WebSocket](https://developer.mozilla.org/docs/Web/API/WebSocket)
 
-## 自检：把知识变成判断
-
-同一文档的连接由谁协调？实例迁移或休眠时，未持久化更新与重连客户端如何恢复？
-
 ## 总结
 
 * 利用 **Deno Deploy** 的原生 Web 标准与 WebSocket 支持，可以极简部署无服务器长连接服务。
@@ -2002,10 +2120,6 @@ export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; 
 
 - [JSON Schema：官方规范入口](https://json-schema.org/specification)
 
-## 自检：把知识变成判断
-
-如果字段协议新增一种组件类型，旧表单如何迁移？渲染器遇到未知类型时应怎样降级？
-
 ## 总结
 
 * **模型抽象**：将表单行为完全收敛至标准的 JSON Schema。
@@ -2130,10 +2244,6 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 ## 官方资料
 
 - [TanStack Query：概览](https://tanstack.com/query/latest/docs/framework/react/overview)
-
-## 自检：把知识变成判断
-
-任意一条数据能否明确说出唯一所有者：查询缓存、MobX 还是临时事件？权限是否在服务端复核？
 
 ## 总结
 
@@ -2294,10 +2404,6 @@ const buttonVariants = cva(
 
 - [W3C：Design Tokens Format Module](https://www.designtokens.org/tr/drafts/format/)
 
-## 自检：把知识变成判断
-
-新增一个颜色或交互模式时，你能否判断它应属于令牌、基础组件、组合模式还是业务页面？
-
 ## 总结
 
 * **下层稳固**：通过 Design Tokens 与 Radix UI 确保全平台样式规范与无障碍基线统一。
@@ -2456,10 +2562,6 @@ export function createCollaborativeDoc(docId: string, token: string) {
 
 - [Yjs：Provider 与持久化生态](https://docs.yjs.dev/ecosystem/connection-provider)
 
-## 自检：把知识变成判断
-
-断网编辑、重连、权限撤销和持久化失败四个场景是否都有明确状态与恢复策略？
-
 ## 总结
 
 * **架构核心**：通过 **Yjs CRDT + IndexedDB + WebSocket** 实现真正的离线优先与毫秒级协同。
@@ -2590,10 +2692,6 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 ## 官方资料
 
 - [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
-
-## 自检：把知识变成判断
-
-看到 `MISS`、`HIT` 与 `BYPASS` 时，你能否沿着缓存规则、缓存键和源站响应头逐层定位原因？
 
 ## 总结
 
@@ -2739,10 +2837,6 @@ export default nextConfig;
 ## 官方资料
 
 - [web.dev：Core Web Vitals](https://web.dev/articles/vitals)
-
-## 自检：把知识变成判断
-
-每项优化是否对应一个事前基线、目标指标和相同条件下的复测结果？
 
 ## 总结
 
@@ -2983,10 +3077,6 @@ export async function POST(req: Request) {
 
 - [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
 
-## 自检：把知识变成判断
-
-如果攻击者复用旧 Token，你的服务端是否会在执行业务之前拒绝它？前端验证失败时是否阻止提交？
-
 ## 总结
 
 * **前端**：通过 `@marsidev/react-turnstile` 组件在加载完成后获取一次性令牌。
@@ -3174,10 +3264,6 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 
 - [MDN：Blob URL 与 `URL.createObjectURL()`](https://developer.mozilla.org/docs/Web/API/URL/createObjectURL_static)
 
-## 自检：把知识变成判断
-
-如果浏览器拒绝在新窗口打开 Data URL，你能否说明限制发生在哪一层，并写出“转换、打开、释放”的完整顺序？
-
 ## 总结
 
 * **根本原因**：现代浏览器出于防钓鱼、防伪造源和防 XSS 的安全策略，禁止将顶级窗口导航至 `data:` URL。
@@ -3329,10 +3415,6 @@ export default defineConfig({
 
 - [Vite：性能指南](https://vite.dev/guide/performance)
 
-## 自检：把知识变成判断
-
-拆包后首屏实际传输字节、请求数量和缓存复用是否改善，而不只是单个 chunk 看起来变小？
-
 ## 总结
 
 * **避免全量导入**：图表库、图标库和工具库必须执行严格的按需 Tree-Shaking。
@@ -3442,10 +3524,6 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 ## 官方资料
 
 - [React：Profiler API](https://react.dev/reference/react/Profiler)
-
-## 自检：把知识变成判断
-
-你能否用构建分析证明 ExcelJS 未进入首屏包，并用 Profiler 证明输入只重渲染目标字段？
 
 ## 总结
 
@@ -3580,10 +3658,6 @@ server {
 ## 官方资料
 
 - [MDN：HTTP 重定向](https://developer.mozilla.org/docs/Web/HTTP/Guides/Redirections)
-
-## 自检：把知识变成判断
-
-对一个永久 POST 迁移与临时 GET 跳转，你能否分别选出状态码并验证方法、Location 和跳转链？
 
 ## 总结选型口诀
 
@@ -3767,10 +3841,6 @@ async function handleUploadFilesParallel(files: File[]) {
 
 - [MDN：`for...of`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/for...of)
 
-## 自检：把知识变成判断
-
-面对批量上传，你能否明确顺序要求、并发上限和单个失败是否终止整体，再选择循环方案？
-
 ## 总结
 
 1. **绝对不要**在 `Array.prototype.forEach` 回调中使用 `async/await`，因为它永远不会等待异步操作。
@@ -3935,10 +4005,6 @@ export default defineConfig({
 
 - [web.dev：性能测量](https://web.dev/articles/vitals)
 
-## 自检：把知识变成判断
-
-你能否为路由 404、首包过大和长任务各写出一个可观测证据，而不是用同一个 Lighthouse 分数概括？
-
 ## 总结
 
 * **SPA 路由配置**：在 Vercel / Nginx 端通过重写规则保障 HTML5 History 模式的子路由刷新稳定。
@@ -4090,10 +4156,6 @@ CMD ["nginx", "-g", "daemon off;"]
 ## 官方资料
 
 - [Nextra：Getting Started](https://nextra.site/docs)
-
-## 自检：把知识变成判断
-
-新文章能否在生产构建后同时出现在静态 HTML、全文索引、站点地图和 canonical 校验中？
 
 ## 总结
 
@@ -4252,10 +4314,6 @@ const mutation = useMutation({
 ## 官方资料
 
 - [TanStack Query：Important Defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults)
-
-## 自检：把知识变成判断
-
-相同 Query Key 是否代表相同数据？乐观更新失败时是否能恢复快照并重新验证服务端状态？
 
 ## 总结
 
@@ -4466,10 +4524,6 @@ server.listen();
 
 - [Tiptap：Collaboration](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
 
-## 自检：把知识变成判断
-
-正文更新与 Awareness 是否分开？断线重连后文档能收敛，离线用户光标又能及时消失吗？
-
 ## 总结
 
 * **Tiptap + ProseMirror** 提供了极其灵活的富文本 DOM 渲染与 Schema 扩展机制；
@@ -4625,10 +4679,6 @@ packages/
 ## 官方资料
 
 - [tsup：官方仓库](https://github.com/egoist/tsup)
-
-## 自检：把知识变成判断
-
-在 ESM 与 CJS 测试项目中，代码和类型是否都能通过 `exports` 声明的路径正确加载？
 
 ## 总结
 
@@ -4835,10 +4885,6 @@ export function CreatePostForm() {
 ## 官方资料
 
 - [Hono：RPC](https://hono.dev/docs/guides/rpc)
-
-## 自检：把知识变成判断
-
-绕过类型客户端直接发送非法查询参数时，服务端是否仍会返回可预测的校验错误？
 
 ## 总结
 
@@ -5047,10 +5093,6 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 - [Google AI：图像理解](https://ai.google.dev/gemini-api/docs/image-understanding)
 
-## 自检：把知识变成判断
-
-服务端是否同时限制 MIME、体积和权限？模型返回非预期结构时是否会被校验层拒绝？
-
 ## 总结
 
 * **全格式支持**：结合 `inlineData` 与 Base64，可无缝对接 URL 抓取与文件直传。
@@ -5209,10 +5251,6 @@ Next.js 构建生成静态 HTML (out/)
 
 - [Unified：官方文档](https://unifiedjs.com/learn/)
 
-## 自检：把知识变成判断
-
-一个插件接收的是 MDAST 还是 HAST？不可信 HTML 在哪一步被过滤？最终索引取自什么产物？
-
 ## 总结
 
 1. **底层原理**：Markdown 渲染本质是 `Text -> mdast -> hast -> React/HTML` 的 AST 编译与转换流水线。
@@ -5302,10 +5340,6 @@ Canvas 图形库生态矩阵:
 ## 官方资料
 
 - [MDN：Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
-
-## 自检：把知识变成判断
-
-不看库名，只给出“10 万粒子”“可编辑海报”“矢量布尔运算”三个需求时，你能否分别列出最重要的验证指标？
 
 ## 结论与选型建议
 
@@ -5485,10 +5519,6 @@ export function FlowEditor() {
 
 - [React Flow：Custom Edges](https://reactflow.dev/learn/customization/custom-edges)
 
-## 自检：把知识变成判断
-
-给定四个端口方向与两点坐标，你能否在不依赖 React 的纯函数中生成并测试路径？
-
 ## 总结
 
 * **数学基础**：贝塞尔曲线通过控制点偏移量赋予连线符合直觉的流体美感。
@@ -5658,10 +5688,6 @@ module.exports = {
 
 - [Git：Hooks](https://git-scm.com/docs/githooks)
 
-## 自检：把知识变成判断
-
-跳过本地 Git Hook 后，远端 CI 是否仍会阻止格式、类型或提交规范不合格的改动？
-
 ## 总结
 
 * **极速响应**：基于 Rust 的 **Biome** 将格式化与代码分析耗时从秒级压缩至毫秒级（通常不到 50ms），开发者毫无“卡顿感”。
@@ -5794,10 +5820,6 @@ Yjs 链表结构 (Struct / Item):
 ## 官方资料
 
 - [Yjs：官方文档](https://docs.yjs.dev/)
-
-## 自检：把知识变成判断
-
-两个客户端离线后在同一位置插入不同字符，你能否解释所选算法如何标识、排序并最终收敛？
 
 ## 总结
 
@@ -6039,10 +6061,6 @@ export function GeminiChat() {
 
 - [Google AI：Gemini API 文档](https://ai.google.dev/gemini-api/docs)
 
-## 自检：把知识变成判断
-
-浏览器网络面板里是否看不到模型密钥？流中断和用户取消时，服务端能否停止后续工作？
-
 ## 总结
 
 * **安全边界**：始终通过后端或边缘网关代理请求，杜绝 API Key 在前端暴露。
@@ -6197,10 +6215,6 @@ app.get('/api/posts', async (c) => {
 
 - [Hono：Getting Started](https://hono.dev/docs/getting-started/basic)
 
-## 自检：把知识变成判断
-
-列出应用使用的 Node.js API、数据库驱动与长连接需求后，它们是否都被目标边缘运行时支持？
-
 ## 总结
 
 * **适用场景**：边缘函数极其适合用于轻量级 API 代理、鉴权中心、地理位置路由、Webhook 接收器和高性能元数据服务。
@@ -6351,10 +6365,6 @@ packages:
 
 - [pnpm：Workspaces](https://pnpm.io/workspaces)
 
-## 自检：把知识变成判断
-
-修改公共包时，任务图能否只重建受影响消费者，同时保证缓存键包含真实输入？
-
 ## 总结
 
 * **依赖隔离与空间节省**：pnpm workspace 彻底解决了幽灵依赖与磁盘空间浪费。
@@ -6494,10 +6504,6 @@ export function ProfileFormPage() {
 
 - [Zod：官方文档](https://zod.dev/)
 
-## 自检：把知识变成判断
-
-哪些信息属于 Zod 校验，哪些属于 `fieldConfig` 展示配置？你能否举出一个无法仅靠类型推导的字段？
-
 ## 总结
 
 * **中后台降本增效利器**：对于标准的数据录入、配置页、后台 CRUD 模块，基于 Zod 的 AutoForm 能够消除 90% 的模板代码。
@@ -6627,10 +6633,6 @@ docker run -d -p 3000:8080 \
 ## 官方资料
 
 - [Ollama：官方文档](https://docs.ollama.com/)
-
-## 自检：把知识变成判断
-
-在下载模型前，你能否估算权重与上下文的内存预算，并说明服务是否只监听可信网络接口？
 
 ## 总结
 
