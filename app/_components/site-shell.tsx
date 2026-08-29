@@ -21,7 +21,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <Image
                 className="size-full object-cover"
                 src="/favicon.webp"
-                alt="图片"
+                alt="图标"
                 width={30}
                 height={30}
               />

@@ -35,7 +35,13 @@ function parseMetadata(content) {
 
 function cleanMarkdownBody(content) {
   // 移除开头的 metadata 导出块
-  return content.replace(/export\s+const\s+metadata\s*=\s*\{[\s\S]*?\n\}\s*/, '').trim()
+  return content
+    .replace(/export\s+const\s+metadata\s*=\s*\{[\s\S]*?\n\}\s*/, '')
+    .replace(
+      /\{\/\* screenshot-placeholder:start \*\/\}[\s\S]*?\{\/\* screenshot-placeholder:end \*\/\}\s*/g,
+      ''
+    )
+    .trim()
 }
 
 export function generateLlms() {
@@ -114,6 +120,8 @@ export function generateLlms() {
     llmsFullTxt += `${post.body}\n\n`
     llmsFullTxt += `--------------------------------------------------------------------------------\n\n`
   }
+
+  llmsFullTxt = `${llmsFullTxt.trimEnd()}\n`
 
   // 输出到 public 目录 (供开发环境访问) 与 out 目录 (供静态打包导出)
   const publicDir = path.join(rootDir, 'public')

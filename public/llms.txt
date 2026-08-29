@@ -6,6 +6,10 @@
 
 ## 全站技术专题与文章索引
 
+### 搜索与内容工程
+
+- [从 SEO 到 GEO：静态技术博客的可发现、可引用与 IndexNow 实践](https://blog.ljhboard.cn/posts/seo-geo-indexnow): 结合本站的 Next.js、Nextra、JSON-LD、sitemap、llms.txt 与 IndexNow 发布链路，说明如何同时优化传统搜索收录和生成式搜索引用。 (发布日期: 2026-08-29)
+
 ### Cloudflare 优化
 
 - [从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现](https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints): 以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。 (发布日期: 2026-08-28)
@@ -104,5 +108,5 @@
 
 ## 附加资源与全量数据
 
-- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 36 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
+- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 37 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
 - [全站 XML 站点地图 (sitemap.xml)](https://blog.ljhboard.cn/sitemap.xml): 搜索引擎爬虫索引入口。

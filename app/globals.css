@@ -58,6 +58,11 @@
   font-weight: 600;
 }
 
+.article-content a[target="_blank"] > svg:last-child {
+  display: inline;
+  vertical-align: baseline;
+}
+
 .search-dialog {
   padding-top: max(12vh, env(safe-area-inset-top));
   padding-right: max(1rem, env(safe-area-inset-right));
