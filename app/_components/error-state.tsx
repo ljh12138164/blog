@@ -33,7 +33,7 @@ export function ErrorState({
       <div className="border-y border-line py-12 max-md:py-10">
         <div className="flex items-baseline gap-5 max-sm:flex-col max-sm:gap-2">
           <span
-            className="font-mono text-[clamp(52px,10vw,84px)] leading-none font-bold text-accent tabular-nums"
+            className="font-mono text-7xl leading-none font-bold text-accent tabular-nums max-md:text-6xl"
             aria-hidden="true"
           >
             {status}
@@ -41,7 +41,7 @@ export function ErrorState({
           <p className="m-0 font-mono text-[11px] text-muted uppercase">{eyebrow}</p>
         </div>
         <h1
-          className="mt-8 mb-0 max-w-[640px] text-balance text-[clamp(34px,6vw,52px)] leading-[1.15] font-extrabold"
+          className="mt-8 mb-0 max-w-[640px] text-balance text-5xl leading-[1.15] font-extrabold max-md:text-4xl"
           id={titleId}
         >
           {title}
