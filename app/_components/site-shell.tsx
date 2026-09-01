@@ -56,7 +56,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-line pt-4 max-md:flex-col max-md:items-start">
-          <p className="m-0">
+          <p className="m-0 tabular-nums">
             © {new Date().getFullYear()} {site.name} · Powered by Nextra
           </p>
           <a

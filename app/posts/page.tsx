@@ -43,7 +43,7 @@ export default async function PostsPage() {
           <nav className="flex flex-wrap gap-1" aria-label="按年份跳转">
             {years.map((year) => (
               <a
-                className="inline-flex min-h-11 items-center px-2 font-mono text-xs text-muted no-underline hover:text-accent"
+                className="inline-flex min-h-11 items-center px-2 font-mono text-xs text-muted no-underline hover:text-accent tabular-nums"
                 href={`#year-${year}`}
                 key={year}
               >
@@ -87,7 +87,7 @@ export default async function PostsPage() {
                       <div className="min-w-0">
                         <h3 className="m-0 text-balance text-xl leading-[1.45] font-bold">
                           <Link
-                            className="no-underline hover:text-accent"
+                            className="inline-flex min-h-11 items-center no-underline hover:text-accent"
                             href={`/posts/${post.slug}`}
                           >
                             {post.title}
@@ -96,7 +96,7 @@ export default async function PostsPage() {
                         <p className="mt-2 mb-3 max-w-[620px] text-pretty text-sm leading-6 text-muted">
                           {post.description}
                         </p>
-                        <p className="m-0 font-mono text-[10px] text-muted uppercase">
+                        <p className="m-0 font-mono text-[10px] text-muted uppercase tabular-nums">
                           READ {post.readingTime}
                         </p>
                       </div>

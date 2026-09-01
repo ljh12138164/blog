@@ -2,8 +2,8 @@
 
 ## 状态
 
-进行中：`feat/personal-tech-notebook-ui` 已完成个人技术手账 UI 实现和本地验证。明暗主题、共享壳层、首页、文章索引与文章阅读系统已提交分阶段改动；生产构建与代表页面视觉检查通过。
+进行中：`feat/personal-tech-notebook-ui` 已完成个人技术手账 UI 实现、本地验证和首轮双轴评审。首轮 Standards/Spec blocking finding 已全部修复，并补充无 JavaScript 深色回退、静态搜索双主题及 404 双主题证据。
 
 ## 下一步
 
-对完整分支执行 Standards/Spec 双轴评审，修复所有 blocking finding，更新 roadmap 分类，然后推送分支并创建 GitHub PR。
+完成 Standards/Spec 复审；若无 blocking finding，推送分支、创建 GitHub PR 并检查 CI。

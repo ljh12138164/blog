@@ -42,7 +42,7 @@ export default function HomePage() {
           工程，也保留那些最后没有采用的方案。
         </p>
         <aside className="mt-7 border-l-2 border-accent pl-4" aria-label="现场注记">
-          <p className="m-0 font-mono text-[11px] font-bold text-accent">现场注记 / 001</p>
+          <p className="m-0 font-mono text-[11px] font-bold text-accent">NOTE / 001</p>
           <p className="mt-2 mb-0 text-pretty text-sm leading-6 text-muted">
             先把问题发生时的上下文写清楚，再讨论所谓的最佳实践。
           </p>
@@ -58,13 +58,16 @@ export default function HomePage() {
             </time>
           </div>
           <h2 className="m-0 text-balance text-4xl leading-[1.3] font-bold max-md:text-[28px]">
-            <Link className="no-underline hover:text-accent" href={`/posts/${featuredPost.slug}`}>
+            <Link
+              className="inline-flex min-h-11 items-center no-underline hover:text-accent"
+              href={`/posts/${featuredPost.slug}`}
+            >
               {featuredPost.title}
             </Link>
           </h2>
           <p className="mt-4 mb-0 text-pretty leading-7 text-muted">{featuredPost.description}</p>
           <div className="mt-5 flex items-center justify-between gap-5 text-xs text-muted">
-            <span className="font-mono">
+            <span className="font-mono tabular-nums">
               {featuredPost.category} · {featuredPost.readingTime}
             </span>
             <Link
@@ -82,7 +85,7 @@ export default function HomePage() {
               <span className="font-mono text-[11px] font-bold text-accent">PINNED NOTES</span>
               <h2 className="mt-2 mb-0 text-balance text-2xl font-bold">最近反复翻看的三页</h2>
             </div>
-            <span className="shrink-0 font-mono text-[11px] text-muted">
+            <span className="shrink-0 font-mono text-[11px] text-muted tabular-nums">
               03 / {archivePostCount}
             </span>
           </div>
@@ -103,7 +106,10 @@ export default function HomePage() {
                     {post.category}
                   </p>
                   <h3 className="mt-2 mb-2 text-balance text-xl leading-[1.45] font-bold">
-                    <Link className="no-underline hover:text-accent" href={`/posts/${post.slug}`}>
+                    <Link
+                      className="inline-flex min-h-11 items-center no-underline hover:text-accent"
+                      href={`/posts/${post.slug}`}
+                    >
                       {post.title}
                     </Link>
                   </h3>
@@ -137,7 +143,7 @@ export default function HomePage() {
                   {group.posts.map((post) => (
                     <li key={post.href}>
                       <Link
-                        className="text-pretty text-muted no-underline hover:text-accent"
+                        className="inline-flex min-h-11 items-center text-pretty text-muted no-underline hover:text-accent"
                         href={post.href}
                       >
                         {post.title}

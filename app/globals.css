@@ -37,6 +37,21 @@
     --color-code-accent: #7cebd9;
   }
 
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme]) {
+      color-scheme: dark;
+      --color-ink: #e7eaeb;
+      --color-muted: #9ca5a9;
+      --color-line: #30373a;
+      --color-paper: #15191b;
+      --color-code: #202629;
+      --color-code-header: #272e31;
+      --color-accent: #5eead4;
+      --color-accent-soft: #173c38;
+      --color-code-accent: #7cebd9;
+    }
+  }
+
   body {
     margin: 0;
     background: var(--color-paper);
@@ -56,6 +71,11 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+
+  a:active,
+  button:active {
+    opacity: 0.72;
   }
 }
 
@@ -95,8 +115,18 @@ html[data-theme="dark"] .code-block code span {
 }
 
 .article-content img {
-  outline: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+  outline: 1px solid rgb(0 0 0 / 10%);
   outline-offset: -1px;
+}
+
+html[data-theme="dark"] .article-content img {
+  outline-color: rgb(255 255 255 / 10%);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .article-content img {
+    outline-color: rgb(255 255 255 / 10%);
+  }
 }
 
 .search-dialog {

@@ -114,10 +114,9 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
             <p className="text-pretty text-[17px] leading-8 text-muted">{meta.description}</p>
           )}
           {meta.date && (
-            <p className="mt-6 mb-0 font-mono text-[11px] text-muted uppercase">
+            <p className="mt-6 mb-0 font-mono text-[11px] text-muted uppercase tabular-nums">
               <time dateTime={meta.date}>{meta.date}</time>
               {meta.readingTime && <> · {meta.readingTime}</>}
-              <span> · 持续修订</span>
             </p>
           )}
         </header>

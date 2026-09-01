@@ -62,6 +62,9 @@
 - 代表文章 `/posts/type-safe-routing`：桌面正文 680px、目录 180px；深色 H1/H2 为 `rgb(231, 234, 235)`；390px H1 为 36px、目录隐藏、页面无横向溢出。
 - 代表文章代码块：390px 可视宽 347px、内容宽 432px，仅代码容器横向滚动。
 - 搜索初始状态完成浏览器检查；生产构建生成的 Pagefind 索引成功。运行时 500 页面没有人为触发，视觉检查限于共享 `ErrorState` 的 404 变体与源码一致性。
+- 静态搜索矩阵：深色桌面搜索 `Next.js` 返回 6 条结果，弹窗背景为 `rgb(21, 25, 27)`；浅色 390px 搜索无匹配词时显示“没有找到相关内容”，弹窗背景为 `rgb(253, 253, 252)`，页面无横向溢出。
+- 404 双主题：浅色渲染 `not-found` 状态与两个恢复动作；切换深色后背景为 `rgb(21, 25, 27)`，标题为 `rgb(231, 234, 235)`。
+- 无 JavaScript 初始化：浏览器禁用脚本并模拟系统深色后，根节点没有 `data-theme`，CSS `prefers-color-scheme` 回退仍生成深色背景和浅色文字。
 - 构建保留两个既有非阻断警告：`baseline-browser-mapping` 数据较旧，以及用户目录存在额外 lockfile 导致 Next.js workspace root 推断提示。
 
 ## Risks
@@ -71,3 +74,12 @@
 - 视觉收敛可能过度接近参考站；现场注记与本站信息结构必须保留。
 - 文章中的宽表格、长代码和外链可能在 390px 下暴露既有溢出。
 - 运行时 500 状态依赖真实异常触发，本次未为了截图向生产组件添加测试后门。
+
+## Review
+
+首次双轴评审：Standards 4 个 hard finding、1 个 judgment call；Spec 3 个实质 finding、1 个 low finding。
+
+- Blocking，已修复：无 JavaScript 深色回退；无数据支持的“持续修订”状态；数字缺少等宽排版；内容链接命中区不足；交互缺少按下态；图片边线使用有色墨色；现场注记未采用 `NOTE / n`；搜索和错误状态双主题证据不足。
+- Rejected：主题按钮使用 `useEffect` 同步根节点状态。根节点由 hydration 前脚本设置，服务端 render 无法读取；挂载后同步是避免 hydration 不一致的最小边界，不属于可由纯 render 逻辑安全替代的状态。
+- Verification constraint：运行时 500 与 404 共用 `ErrorState`，但其 retry 分支没有为了视觉检查而注入测试后门。
+- Accepted follow-up：无。没有创建空 roadmap。
