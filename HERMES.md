@@ -2,8 +2,8 @@
 
 ## 状态
 
-进行中：修复文章外链文字与箭头图标在窄宽度下断行的问题。
+进行中：在 `feat/personal-tech-notebook-ui` 分支设计个人技术手账 UI 重构。用户已选择“方案 C：AstroPaper × 现场注记”，当前仅提交设计方案，尚未开始 UI 实现。
 
 ## 下一步
 
-用浏览器复现外链内部换行，添加最小样式修复并完成 typecheck、build 与静态产物验证。
+等待用户评审 `docs/superpowers/specs/2026-09-01-personal-tech-notebook-ui-design.md`。批准后使用 writing-plans 编写实施计划，再按 develop-with-pr 工作流实现、验证、评审并创建 PR。
