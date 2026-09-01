@@ -2,8 +2,8 @@
 
 ## 状态
 
-进行中：在 `feat/personal-tech-notebook-ui` 分支设计个人技术手账 UI 重构。用户已选择“方案 C：AstroPaper × 现场注记”，当前仅提交设计方案，尚未开始 UI 实现。
+已完成：`feat/personal-tech-notebook-ui` 已完成个人技术手账 UI 实现、完整本地验证和双轴复审；Standards 与 Spec 均无剩余 finding。静态搜索已覆盖桌面/390px、浅色/深色四种组合，并验证 Pagefind 资源失败时的错误态。
 
 ## 下一步
 
-等待用户评审 `docs/superpowers/specs/2026-09-01-personal-tech-notebook-ui-design.md`。批准后使用 writing-plans 编写实施计划，再按 develop-with-pr 工作流实现、验证、评审并创建 PR。
+Pull Request：<https://github.com/ljh12138164/blog/pull/15>。分支已推送，等待 PR 的 `verify` 检查完成后即可进入人工审阅与合并。

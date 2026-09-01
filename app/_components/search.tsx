@@ -84,11 +84,15 @@ export function Search() {
   return (
     <>
       <button
-        className="min-h-11 cursor-pointer rounded-lg border border-line bg-transparent px-[11px] text-muted hover:border-muted hover:text-ink"
+        className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted hover:bg-code hover:text-ink"
         type="button"
         onClick={openSearch}
+        aria-label="搜索文章"
+        title="搜索文章（⌘ K）"
       >
-        搜索 <kbd className="ml-3 text-[11px] max-sm:hidden">⌘ K</kbd>
+        <span className="font-mono text-lg" aria-hidden="true">
+          ⌕
+        </span>
       </button>
       <dialog
         className="search-dialog m-0 h-dvh max-h-none w-full max-w-none bg-transparent"
@@ -98,13 +102,13 @@ export function Search() {
           if (event.target === event.currentTarget) closeSearch()
         }}
       >
-        <section className="mx-auto max-h-[72dvh] w-full max-w-[620px] overflow-auto rounded-2xl border border-line bg-paper shadow-xl">
-          <div className="flex items-center gap-3 border-b border-line px-[18px] py-4">
-            <span className="text-lg text-muted" aria-hidden="true">
+        <section className="mx-auto max-h-[72dvh] w-full max-w-[600px] overflow-auto rounded-lg border border-line bg-paper">
+          <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+            <span className="font-mono text-lg text-muted" aria-hidden="true">
               ⌕
             </span>
             <input
-              className="min-w-0 flex-1 border-0 bg-transparent text-[17px] text-ink outline-none placeholder:text-muted/70"
+              className="min-h-11 min-w-0 flex-1 border-0 bg-transparent text-base text-ink outline-none placeholder:text-muted/70"
               ref={inputRef}
               type="search"
               value={query}
@@ -113,21 +117,21 @@ export function Search() {
               aria-label="搜索全部文章"
             />
             <button
-              className="min-h-10 cursor-pointer border-0 bg-transparent px-2 text-muted hover:text-ink"
+              className="min-h-11 cursor-pointer border-0 bg-transparent px-2 text-sm text-muted hover:text-ink"
               type="button"
               onClick={closeSearch}
             >
               关闭
             </button>
           </div>
-          <p className="m-0 px-[18px] py-3 text-xs text-muted" aria-live="polite">
+          <p className="m-0 px-4 py-3 font-mono text-[11px] text-muted" aria-live="polite">
             {status}
           </p>
-          <ul className="m-0 list-none px-2.5 pb-3">
+          <ul className="m-0 list-none px-2 pb-3">
             {results.map((result) => (
               <li key={result.url}>
                 <a
-                  className="grid min-h-11 gap-[7px] rounded-lg p-[13px] no-underline hover:bg-code"
+                  className="grid min-h-11 gap-1 rounded-md px-3 py-3 no-underline hover:bg-code"
                   href={normalizeResultUrl(result.url)}
                   onClick={closeSearch}
                 >

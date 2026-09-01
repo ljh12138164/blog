@@ -23,11 +23,11 @@ export function CodeBlock({ children, 'data-language': language, ...props }: Cod
   }
 
   return (
-    <figure className="code-block my-8 overflow-hidden rounded-[10px] bg-code">
-      <figcaption className="flex min-h-11 items-center justify-between bg-code-header px-4 font-sans text-xs text-muted">
+    <figure className="code-block my-8 max-w-full overflow-hidden rounded-md bg-code">
+      <figcaption className="flex min-h-11 items-center justify-between border-b border-line bg-code-header px-4 font-mono text-[11px] text-muted">
         <span>{language?.toUpperCase() ?? 'CODE'}</span>
         <button
-          className="min-h-10 cursor-pointer border-0 bg-transparent px-2 font-semibold text-muted hover:text-ink"
+          className="min-h-11 cursor-pointer border-0 bg-transparent px-2 font-sans text-xs font-semibold text-muted hover:text-ink"
           type="button"
           onClick={copyCode}
           aria-live="polite"
@@ -39,7 +39,7 @@ export function CodeBlock({ children, 'data-language': language, ...props }: Cod
         {...props}
         ref={codeRef}
         data-language={language}
-        className="m-0 max-w-full overflow-x-auto bg-transparent p-[22px] font-mono text-sm leading-[1.7] text-ink"
+        className="m-0 max-w-full overflow-x-auto bg-transparent p-5 font-mono text-sm leading-[1.7] text-ink"
       >
         {children}
       </pre>

@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
+import { themeInitScript } from '@/lib/theme'
 import { SiteShell } from './_components/site-shell'
 import './globals.css'
 
@@ -32,8 +33,11 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#f5f4ee'
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fdfdfc' },
+    { media: '(prefers-color-scheme: dark)', color: '#15191b' }
+  ]
 }
 
 const websiteAndPersonJsonLd = {
@@ -65,8 +69,9 @@ const websiteAndPersonJsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="zh-CN">
-      <Head backgroundColor={{ light: '#f5f4ee', dark: '#f5f4ee' }}>
+    <html lang="zh-CN" suppressHydrationWarning>
+      <Head backgroundColor={{ light: '#fdfdfc', dark: '#15191b' }}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <meta name="baidu-site-verification" content="codeva-IiA93WOaG7" />
         <meta name="msvalidate.01" content="DD5A2B7DB351923A5E482555DC0A57C4" />
         <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />

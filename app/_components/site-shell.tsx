@@ -1,52 +1,44 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
 import { Search } from './search'
+import { ThemeToggle } from './theme-toggle'
 
 export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-ink/10 bg-paper/95">
+      <header className="sticky top-0 z-20 border-b border-line bg-paper/95">
         <nav
-          className="mx-auto flex h-[76px] w-[min(1120px,calc(100%_-_40px))] items-center justify-between max-md:w-[min(680px,calc(100%_-_28px))]"
+          className="mx-auto flex h-[68px] w-[min(720px,calc(100%_-_40px))] items-center justify-between max-md:w-[calc(100%_-_28px)]"
           aria-label="主导航"
         >
           <Link
-            className="flex min-w-0 items-center gap-2.5 font-serif text-xl font-bold no-underline"
+            className="min-w-0 truncate text-lg font-extrabold no-underline"
             href="/"
             aria-label="ljh的技术博客首页"
           >
-            <span className="size-[30px] shrink-0 overflow-hidden rounded-full" aria-hidden="true">
-              <Image
-                className="size-full object-cover"
-                src="/favicon.webp"
-                alt="图标"
-                width={30}
-                height={30}
-              />
-            </span>
-            <span className="truncate">ljh的技术博客</span>
+            ljh<span className="text-accent">.</span>notes
           </Link>
-          <div className="flex items-center gap-7 text-sm">
+          <div className="flex items-center gap-1 text-sm max-sm:gap-0">
             <Link className="no-underline transition-colors hover:text-accent" href="/posts">
-              文章
+              <span className="inline-flex min-h-11 items-center px-3">文章</span>
             </Link>
             <Link
-              className="no-underline transition-colors hover:text-accent max-md:hidden"
+              className="no-underline transition-colors hover:text-accent max-sm:hidden"
               href="/about"
             >
-              关于
+              <span className="inline-flex min-h-11 items-center px-3">关于</span>
             </Link>
             <Search />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
       <main>{children}</main>
-      <footer className="mx-auto flex w-[min(1120px,calc(100%_-_40px))] flex-col gap-4 border-t border-ink py-[42px] text-[13px] text-muted max-md:w-[min(680px,calc(100%_-_28px))]">
+      <footer className="mx-auto flex w-[min(720px,calc(100%_-_40px))] flex-col gap-4 border-t border-line py-10 text-xs text-muted max-md:w-[calc(100%_-_28px)]">
         <div className="flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
-          <p className="m-0">持续学习，不断进步。</p>
-          <div className="flex flex-wrap items-center gap-5 text-[13px]">
+          <p className="m-0 font-mono">持续修订，写给下一次遇到同样问题的自己。</p>
+          <div className="flex flex-wrap items-center gap-5">
             <Link className="no-underline transition-colors hover:text-accent" href="/about">
               关于博主
             </Link>
@@ -63,8 +55,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </a>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t border-line/60 pt-4 text-xs max-md:flex-col max-md:items-start">
-          <p className="m-0">
+        <div className="flex items-center justify-between gap-4 border-t border-line pt-4 max-md:flex-col max-md:items-start">
+          <p className="m-0 tabular-nums">
             © {new Date().getFullYear()} {site.name} · Powered by Nextra
           </p>
           <a
