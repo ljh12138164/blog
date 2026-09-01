@@ -95,7 +95,7 @@ export default function HomePage() {
                 className="grid grid-cols-[92px_minmax(0,1fr)] gap-5 border-b border-line py-6 max-sm:grid-cols-1 max-sm:gap-2"
                 key={post.slug}
               >
-                <div className="font-mono text-[11px] leading-5 text-muted">
+                <div className="font-mono text-[11px] leading-5 text-muted tabular-nums">
                   <time className="tabular-nums" dateTime={post.date}>
                     {post.date}
                   </time>
@@ -126,7 +126,10 @@ export default function HomePage() {
               <span className="font-mono text-[11px] font-bold text-accent">TOPIC INDEX</span>
               <h2 className="mt-2 mb-0 text-balance text-2xl font-bold">按问题领域归档</h2>
             </div>
-            <Link className="shrink-0 text-xs text-accent no-underline" href="/posts">
+            <Link
+              className="inline-flex min-h-11 shrink-0 items-center text-xs text-accent no-underline"
+              href="/posts"
+            >
               全部文章 →
             </Link>
           </div>
