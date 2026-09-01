@@ -85,7 +85,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
     : null
 
   return (
-    <div className="mx-auto grid w-[min(1120px,calc(100%_-_40px))] grid-cols-[minmax(0,760px)_220px] justify-between gap-[72px] py-[90px] pb-[120px] max-md:block max-md:w-[min(680px,calc(100%_-_28px))] max-md:pt-16">
+    <div className="mx-auto grid w-[min(920px,calc(100%_-_40px))] grid-cols-[minmax(0,680px)_180px] justify-between gap-[60px] pt-16 pb-28 max-lg:block max-lg:w-[min(680px,calc(100%_-_40px))] max-md:w-[calc(100%_-_28px)] max-md:pt-12">
       {articleJsonLd && (
         <script
           type="application/ld+json"
@@ -93,30 +93,31 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         />
       )}
       <article
-        className="article-content prose prose-lg min-w-0 max-w-none prose-headings:text-balance prose-headings:font-serif prose-headings:text-ink prose-p:text-pretty prose-p:leading-[1.85] prose-p:text-[#303b36] prose-li:leading-[1.8] prose-li:text-[#303b36] prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[32px] prose-h2:leading-[1.35] prose-h3:mt-[38px] prose-h3:text-[23px] prose-blockquote:my-[34px] prose-blockquote:border-l-[3px] prose-blockquote:border-accent prose-blockquote:bg-accent/[.06] prose-blockquote:px-6 prose-blockquote:py-3"
+        className="article-content prose prose-lg min-w-0 max-w-[680px] text-ink prose-headings:text-balance prose-headings:font-bold prose-headings:text-ink prose-p:text-pretty prose-p:leading-[1.85] prose-p:text-ink/90 prose-a:text-accent prose-strong:text-ink prose-li:leading-[1.8] prose-li:text-ink/90 prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[30px] prose-h2:leading-[1.35] prose-h3:mt-10 prose-h3:text-[22px] prose-blockquote:my-8 prose-blockquote:border-l-2 prose-blockquote:border-accent prose-blockquote:bg-accent-soft prose-blockquote:px-5 prose-blockquote:py-2 prose-blockquote:text-muted prose-img:rounded-md"
         data-pagefind-body
       >
-        <header className="not-prose mb-[46px] border-b border-line pb-[46px]">
+        <header className="not-prose mb-12 border-b border-line pb-10">
           {meta.category && (
-            <span className="text-xs font-extrabold tracking-[.18em] text-accent">
+            <span className="font-mono text-[11px] font-bold text-accent uppercase">
               {meta.category}
             </span>
           )}
           {meta.title && (
             <h1
-              className="my-[18px] mb-5 text-balance font-serif text-[clamp(42px,6vw,68px)] leading-[1.12] font-medium max-md:text-[38px]"
+              className="mt-4 mb-5 text-balance text-5xl leading-[1.16] font-extrabold text-ink max-md:text-[36px]"
               data-pagefind-meta="title"
             >
               {meta.title}
             </h1>
           )}
           {meta.description && (
-            <p className="text-pretty text-lg leading-[1.8] text-muted">{meta.description}</p>
+            <p className="text-pretty text-[17px] leading-8 text-muted">{meta.description}</p>
           )}
           {meta.date && (
-            <p className="mb-3 text-xs tracking-[.06em] text-muted uppercase">
+            <p className="mt-6 mb-0 font-mono text-[11px] text-muted uppercase">
               <time dateTime={meta.date}>{meta.date}</time>
               {meta.readingTime && <> · {meta.readingTime}</>}
+              <span> · 持续修订</span>
             </p>
           )}
         </header>
@@ -124,11 +125,11 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
       </article>
       {toc && toc.length > 0 && (
         <aside
-          className="sticky top-28 self-start border-l border-line pl-5 text-[13px] max-md:hidden"
+          className="sticky top-24 self-start border-l border-line pl-5 text-xs max-lg:hidden"
           aria-label="文章目录"
           data-pagefind-ignore
         >
-          <strong>本页目录</strong>
+          <strong className="font-mono text-[11px] text-ink">本页目录</strong>
           <ol className="list-none p-0">
             {toc.map((item) => (
               <li key={item.id} className={`my-3 ${item.depth === 3 ? 'pl-3' : ''}`}>

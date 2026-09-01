@@ -82,6 +82,23 @@ html[data-theme="dark"] .code-block code span {
   vertical-align: baseline;
 }
 
+.article-content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-color: var(--color-line);
+}
+
+.article-content th,
+.article-content td {
+  border-color: var(--color-line);
+}
+
+.article-content img {
+  outline: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+  outline-offset: -1px;
+}
+
 .search-dialog {
   padding-top: max(12vh, env(safe-area-inset-top));
   padding-right: max(1rem, env(safe-area-inset-right));
@@ -90,7 +107,7 @@ html[data-theme="dark"] .code-block code span {
 }
 
 .search-dialog::backdrop {
-  background: rgb(24 32 29 / 42%);
+  background: color-mix(in srgb, var(--color-ink) 36%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
