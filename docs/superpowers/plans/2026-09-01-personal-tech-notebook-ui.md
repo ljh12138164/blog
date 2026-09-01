@@ -123,30 +123,24 @@ git commit -m "feat: add persistent light and dark themes"
 - Consumes: `<ThemeToggle />` and the semantic tokens from Task 1.
 - Produces: one shared 720px navigation/content axis and theme-aware shared states.
 
-- [ ] **Step 1: Write a failing static contract test**
-
-Extend `lib/theme.test.ts` to read `site-shell.tsx` and assert that it includes `ThemeToggle`, a `max-w-[720px]` shell class, and an accessible navigation label. Assert search retains `<dialog>`, `aria-live="polite"`, and a labelled search input.
-
-- [ ] **Step 2: Run the focused test and confirm RED**
-
-Run: `pnpm test:theme`
-
-Expected: FAIL because the current shell has no `ThemeToggle` and uses a 1120px axis.
-
-- [ ] **Step 3: Restyle the shared surfaces**
+- [ ] **Step 1: Restyle the shared surfaces**
 
 Remove the avatar-led editorial brand treatment. Render a compact `ljh.notes` wordmark, text navigation, search and theme controls on the shared axis. Restyle the dialog with the semantic tokens and reduce radius/shadow. Restyle errors as compact field notes instead of split broadsheet panels, retaining retry, article and home actions.
 
-- [ ] **Step 4: Run focused verification and confirm GREEN**
+- [ ] **Step 2: Run focused verification**
 
-Run: `pnpm test:theme && pnpm exec biome check app/_components/site-shell.tsx app/_components/search.tsx app/_components/error-state.tsx`
+Run: `pnpm typecheck && pnpm exec biome check app/_components/site-shell.tsx app/_components/search.tsx app/_components/error-state.tsx`
 
 Expected: all commands exit successfully.
 
-- [ ] **Step 5: Commit shared surfaces**
+- [ ] **Step 3: Verify real DOM and interactions**
+
+Run the local site and use the browser to confirm the shared 720px axis, labelled navigation, theme button, native search dialog, labelled input, live status, keyboard focus, empty result and error copy at desktop and 390px. Treat browser evidence—not source text—as the UI contract.
+
+- [ ] **Step 4: Commit shared surfaces**
 
 ```bash
-git add lib/theme.test.ts app/_components/site-shell.tsx app/_components/search.tsx app/_components/error-state.tsx
+git add app/_components/site-shell.tsx app/_components/search.tsx app/_components/error-state.tsx
 git commit -m "feat: reshape shared blog surfaces"
 ```
 
@@ -160,34 +154,28 @@ git commit -m "feat: reshape shared blog surfaces"
 - Consumes: `recentPosts`, `archiveGroups`, `archivePostCount`, `getAllPosts`, `groupPostsByYear`, and shared semantic tokens.
 - Produces: compact notebook-style discovery and archive views; no new data interfaces.
 
-- [ ] **Step 1: Add failing page-structure contracts**
-
-Extend `lib/theme.test.ts` to assert that the homepage contains the copy `现场注记`, uses the shared `max-w-[720px]` axis, and no longer declares `font-serif`. Assert the post index no longer contains the decorative timeline dot class and still links every rendered post through `/posts/${post.slug}`.
-
-- [ ] **Step 2: Run the focused test and confirm RED**
-
-Run: `pnpm test:theme`
-
-Expected: FAIL against the current two-column hero, serif headings, and timeline marker.
-
-- [ ] **Step 3: Implement the compact homepage**
+- [ ] **Step 1: Implement the compact homepage**
 
 Use the confirmed content order: author thesis, featured latest note, three starter notes, compact topic archive and about link. Replace `THINK · BUILD · REFLECT`, numbered cards and broadsheet columns with real field-note copy, dates, categories and one teal accent.
 
-- [ ] **Step 4: Implement the compact post index**
+- [ ] **Step 2: Implement the compact post index**
 
 Keep year grouping and empty state. Replace the timeline with flat year sections and date/title/summary rows; keep year jump navigation and 44px link targets.
 
-- [ ] **Step 5: Run focused verification and confirm GREEN**
+- [ ] **Step 3: Run focused verification**
 
-Run: `pnpm test:theme && pnpm exec biome check app/page.tsx app/posts/page.tsx`
+Run: `pnpm typecheck && pnpm exec biome check app/page.tsx app/posts/page.tsx`
 
 Expected: all commands exit successfully.
 
-- [ ] **Step 6: Commit discovery pages**
+- [ ] **Step 4: Verify rendered discovery pages**
+
+Use the browser at desktop and 390px in both themes. Confirm real article links resolve, the homepage hierarchy remains legible when squinting, the index year jumps work, and neither page has document-level horizontal overflow.
+
+- [ ] **Step 5: Commit discovery pages**
 
 ```bash
-git add lib/theme.test.ts app/page.tsx app/posts/page.tsx
+git add app/page.tsx app/posts/page.tsx
 git commit -m "feat: redesign blog discovery pages"
 ```
 
@@ -204,33 +192,23 @@ git commit -m "feat: redesign blog discovery pages"
 - Consumes: Nextra headings, existing article metadata, semantic tokens and the shared 720px axis.
 - Produces: a 680px prose column, desktop TOC, theme-aware code/quote/table/link styling and final verification evidence.
 
-- [ ] **Step 1: Add failing article contracts**
-
-Extend `lib/theme.test.ts` to assert that `article.tsx` uses `max-w-[680px]`, contains no `font-serif`, retains `data-pagefind-body`, and renders the desktop table of contents. Assert `globals.css` has a dark-theme selector and both `--shiki-light` and `--shiki-dark` token references.
-
-- [ ] **Step 2: Run the focused test and confirm RED**
-
-Run: `pnpm test:theme`
-
-Expected: FAIL against the current 760px serif article and light-only Shiki rule.
-
-- [ ] **Step 3: Implement the reading system**
+- [ ] **Step 1: Implement the reading system**
 
 Move the article to the shared axis with a 680px prose column, compact metadata, sans-serif headings and a restrained desktop TOC. Make inline code, code blocks, quotes, tables, images and external links use semantic theme styling. Constrain wide tables and code to their own horizontal scrollers so 390px pages do not overflow.
 
-- [ ] **Step 4: Run focused verification and confirm GREEN**
+- [ ] **Step 2: Run focused verification**
 
 Run: `pnpm test:theme && pnpm exec biome check app/_components/article.tsx app/_components/code-block.tsx app/globals.css`
 
 Expected: all commands exit successfully.
 
-- [ ] **Step 5: Run repository verification**
+- [ ] **Step 3: Run repository verification**
 
 Run: `pnpm check && pnpm typecheck && pnpm build`
 
 Expected: lint and typecheck exit successfully; Next builds all static pages; Pagefind, sitemap and SEO verification complete.
 
-- [ ] **Step 6: Verify required static outputs**
+- [ ] **Step 4: Verify required static outputs**
 
 Run in PowerShell:
 
@@ -241,11 +219,11 @@ Run in PowerShell:
 
 Expected: command exits without an exception.
 
-- [ ] **Step 7: Perform visual and interaction QA**
+- [ ] **Step 5: Perform visual and interaction QA**
 
 Inspect `/`, `/posts`, one representative long article, search, `/not-found-check`, and the runtime error surface where feasible at desktop and 390px in light and dark modes. Verify theme persistence, system fallback, no visible theme flash, focus, search states, code contrast, table/code local scrolling and `scrollWidth === clientWidth` at 390px.
 
-- [ ] **Step 8: Record evidence and commit**
+- [ ] **Step 6: Record evidence and commit**
 
 Update the development document with exact command results, tested routes, viewports, theme states and any remaining unverified surface. Update `HERMES.md` with the next review action.
 
@@ -254,6 +232,6 @@ git add lib/theme.test.ts app/_components/article.tsx app/_components/code-block
 git commit -m "feat: complete notebook reading experience"
 ```
 
-- [ ] **Step 9: Review before PR**
+- [ ] **Step 7: Review before PR**
 
 Review the full diff against repository standards and the accepted design. Resolve every blocking finding, rerun affected checks, update verification evidence, then create the roadmap only for evidence-backed non-blocking follow-ups.
