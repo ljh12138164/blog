@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "test:early-hints": "node --test scripts/generate-early-hints.test.mjs",
-    "test:indexnow-submit": "node --test scripts/submit-indexnow-urls.test.mjs",
-    "test:resource-hints": "node --test scripts/resource-hints.test.mjs",
-    "test:theme": "node --experimental-strip-types --test lib/theme.test.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run lib scripts/generate-early-hints.test.mjs scripts/submit-indexnow-urls.test.mjs",
+    "test:early-hints": "vitest run scripts/generate-early-hints.test.mjs",
+    "test:indexnow-submit": "vitest run scripts/submit-indexnow-urls.test.mjs",
+    "test:resource-hints": "vitest run scripts/resource-hints.test.mjs",
+    "test:theme": "vitest run lib/theme.test.ts",
     "update:skill": "git submodule update --remote utils",
     "postbuild": "node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs && node scripts/verify-seo.mjs && node scripts/generate-early-hints.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
@@ -39,6 +41,7 @@
     "simple-git-hooks": "^2.13.1",
     "tailwindcss": "4.3.3",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
     "wrangler": "^4.125.0"
   },
   "simple-git-hooks": {
