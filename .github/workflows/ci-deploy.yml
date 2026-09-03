@@ -26,6 +26,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:early-hints
       - run: pnpm test:indexnow-submit
+      - run: pnpm test:theme
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:resource-hints

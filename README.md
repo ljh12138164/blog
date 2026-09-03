@@ -14,11 +14,12 @@ pnpm dev
 ```bash
 pnpm test:early-hints
 pnpm test:indexnow-submit
+pnpm test:theme
 pnpm build
 pnpm test:resource-hints
 ```
 
-`pnpm test:early-hints` 验证静态页面到 Nginx `Link` 响应头映射的生成规则；`pnpm test:indexnow-submit` 使用本地 HTTP 服务验证 sitemap 过滤与 IndexNow JSON 协议，不访问真实接口。`pnpm build` 生成 `out/` 静态站点及 SEO 产物，随后 `pnpm test:resource-hints` 验证实际导出页面只保留 DNS-prefetch，CSS 继续通过 Early Hints preload。
+测试基于 Vitest 运行，亦可直接使用 `pnpm test:unit` 执行全部构建前单元测试，或使用 `pnpm test` 执行全部测试。`pnpm test:theme` 验证明暗主题解析与偏好回退；`pnpm test:early-hints` 验证静态页面到 Nginx `Link` 响应头映射的生成规则；`pnpm test:indexnow-submit` 使用本地 HTTP 服务验证 sitemap 过滤与 IndexNow JSON 协议，不访问真实接口。`pnpm build` 生成 `out/` 静态站点及 SEO 产物，随后 `pnpm test:resource-hints` 验证实际导出页面只保留 DNS-prefetch，CSS 继续通过 Early Hints preload。
 
 ## 代码检查与提交钩子
 

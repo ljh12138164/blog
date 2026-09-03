@@ -1,8 +1,8 @@
-import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import test from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -16,17 +16,28 @@ function href(tag) {
   return tag.match(/\bhref=["']([^"']+)["']/i)?.[1]
 }
 
-test('exports only DNS-prefetch hints for deferred third-party scripts', async () => {
-  const rootHtml = await readFile(path.join(rootDir, 'out/index.html'), 'utf8')
-  const earlyHintsMap = await readFile(path.join(rootDir, '.next/early-hints-map.conf'), 'utf8')
+describe('resourceHints', () => {
+  it('exports only DNS-prefetch hints for deferred third-party scripts', async () => {
+    const rootHtmlPath = path.join(rootDir, 'out/index.html')
+    const earlyHintsMapPath = path.join(rootDir, '.next/early-hints-map.conf')
 
-  assert.deepEqual(linkTags(rootHtml, 'preconnect'), [])
-  assert.deepEqual(linkTags(rootHtml, 'dns-prefetch').map(href).sort(), [
-    'https://pagead2.googlesyndication.com',
-    'https://static.cloudflareinsights.com',
-    'https://www.google-analytics.com',
-    'https://www.googletagmanager.com'
-  ])
-  assert.match(earlyHintsMap, /rel=preload; as=style/)
-  assert.doesNotMatch(earlyHintsMap, /rel=preconnect/)
+    if (!existsSync(rootHtmlPath) || !existsSync(earlyHintsMapPath)) {
+      throw new Error(
+        'Required build artifacts (out/index.html and .next/early-hints-map.conf) were not found. Run `pnpm build` before running resource-hints tests.'
+      )
+    }
+
+    const rootHtml = await readFile(rootHtmlPath, 'utf8')
+    const earlyHintsMap = await readFile(earlyHintsMapPath, 'utf8')
+
+    expect(linkTags(rootHtml, 'preconnect')).toEqual([])
+    expect(linkTags(rootHtml, 'dns-prefetch').map(href).sort()).toEqual([
+      'https://pagead2.googlesyndication.com',
+      'https://static.cloudflareinsights.com',
+      'https://www.google-analytics.com',
+      'https://www.googletagmanager.com'
+    ])
+    expect(earlyHintsMap).toMatch(/rel=preload; as=style/)
+    expect(earlyHintsMap).not.toMatch(/rel=preconnect/)
+  })
 })

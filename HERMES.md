@@ -2,8 +2,12 @@
 
 ## 状态
 
-已完成：`feat/personal-tech-notebook-ui` 已完成个人技术手账 UI 实现、完整本地验证和双轴复审；Standards 与 Spec 均无剩余 finding。静态搜索已覆盖桌面/390px、浅色/深色四种组合，并验证 Pagefind 资源失败时的错误态。
+进行中：已检出特性分支 `feat/vitest-migration`，完成可行性与瓶颈评估，已建立开发文档 `docs/development/vitest-migration.md`。正在引入 `vitest` 并重写所有测试用例。
 
 ## 下一步
 
-Pull Request：<https://github.com/ljh12138164/blog/pull/15>。分支已推送，等待 PR 的 `verify` 检查完成后即可进入人工审阅与合并。
+1. 安装 `vitest` 并创建 `vitest.config.ts`。
+2. 重写 `lib/theme.test.ts`、`scripts/generate-early-hints.test.mjs`、`scripts/submit-indexnow-urls.test.mjs` 和 `scripts/resource-hints.test.mjs`。
+3. 更新 `package.json` 脚本与 `.github/workflows/ci-deploy.yml`。
+4. 执行完整验证（测试、类型检查、构建及 CI 流程检查）。
+5. 提交代码并根据 develop-with-pr 规范发起 Pull Request。
