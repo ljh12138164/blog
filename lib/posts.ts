@@ -1,5 +1,13 @@
 export const recentPosts = [
   {
+    slug: 'local-english-chinese-translation',
+    title: '给 Next.js 网站加上本地翻译',
+    description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。',
+    date: '2026-09-12',
+    category: 'AI 工程',
+    readingTime: '6 分钟'
+  },
+  {
     slug: 'cloudflare-http3-early-hints',
     title: '从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现',
     description:

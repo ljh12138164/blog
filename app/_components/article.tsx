@@ -85,7 +85,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
     : null
 
   return (
-    <div className="mx-auto grid w-[min(920px,calc(100%_-_40px))] grid-cols-[minmax(0,680px)_180px] justify-between gap-[60px] pt-16 pb-28 max-lg:block max-lg:w-[min(680px,calc(100%_-_40px))] max-md:w-[calc(100%_-_28px)] max-md:pt-12">
+    <div className="relative mx-auto w-[min(720px,calc(100%_-_40px))] pt-16 pb-28 max-md:w-[calc(100%_-_28px)] max-md:pt-12">
       {articleJsonLd && (
         <script
           type="application/ld+json"
@@ -93,7 +93,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         />
       )}
       <article
-        className="article-content prose prose-lg min-w-0 max-w-[680px] text-ink prose-headings:text-balance prose-headings:font-bold prose-headings:text-ink prose-p:text-pretty prose-p:leading-[1.85] prose-p:text-ink/90 prose-a:text-accent prose-strong:text-ink prose-li:leading-[1.8] prose-li:text-ink/90 prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[30px] prose-h2:leading-[1.35] prose-h3:mt-10 prose-h3:text-[22px] prose-blockquote:my-8 prose-blockquote:border-l-2 prose-blockquote:border-accent prose-blockquote:bg-accent-soft prose-blockquote:px-5 prose-blockquote:py-2 prose-blockquote:text-muted prose-img:rounded-md"
+        className="article-content prose prose-lg min-w-0 max-w-none text-ink prose-headings:text-balance prose-headings:font-bold prose-headings:text-ink prose-p:text-pretty prose-p:leading-[1.85] prose-p:text-ink/90 prose-a:text-accent prose-strong:text-ink prose-li:leading-[1.8] prose-li:text-ink/90 prose-h2:mt-16 prose-h2:mb-4 prose-h2:text-[30px] prose-h2:leading-[1.35] prose-h3:mt-10 prose-h3:text-[22px] prose-blockquote:my-8 prose-blockquote:border-l-2 prose-blockquote:border-accent prose-blockquote:bg-accent-soft prose-blockquote:px-5 prose-blockquote:py-2 prose-blockquote:text-muted prose-img:rounded-md"
         data-pagefind-body
       >
         <header className="not-prose mb-12 border-b border-line pb-10">
@@ -123,25 +123,27 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         {children}
       </article>
       {toc && toc.length > 0 && (
-        <aside
-          className="sticky top-24 self-start border-l border-line pl-5 text-xs max-lg:hidden"
-          aria-label="文章目录"
-          data-pagefind-ignore
-        >
-          <strong className="font-mono text-[11px] text-ink">本页目录</strong>
-          <ol className="list-none p-0">
-            {toc.map((item) => (
-              <li key={item.id} className={`my-3 ${item.depth === 3 ? 'pl-3' : ''}`}>
-                <a
-                  className="text-muted no-underline transition-colors hover:text-accent"
-                  href={`#${item.id}`}
-                >
-                  {item.value}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </aside>
+        <div className="absolute top-16 bottom-28 left-[calc(100%+40px)] w-[180px] max-xl:hidden">
+          <aside
+            className="sticky top-24 self-start border-l border-line pl-5 text-xs max-lg:hidden"
+            aria-label="文章目录"
+            data-pagefind-ignore
+          >
+            <strong className="font-mono text-[11px] text-ink">本页目录</strong>
+            <ol className="list-none p-0">
+              {toc.map((item) => (
+                <li key={item.id} className={`my-3 ${item.depth === 3 ? 'pl-3' : ''}`}>
+                  <a
+                    className="text-muted no-underline transition-colors hover:text-accent"
+                    href={`#${item.id}`}
+                  >
+                    {item.value}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </aside>
+        </div>
       )}
     </div>
   )

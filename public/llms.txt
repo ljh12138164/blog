@@ -6,6 +6,14 @@
 
 ## 全站技术专题与文章索引
 
+### AI 工程
+
+- [给 Next.js 网站加上本地翻译](https://blog.ljhboard.cn/posts/local-english-chinese-translation): 使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。 (发布日期: 2026-09-12)
+- [Agent 不是更长的 Prompt：从工具调用到受控执行循环](https://blog.ljhboard.cn/posts/agent-fundamentals): 从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。 (发布日期: 2026-08-19)
+- [基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战](https://blog.ljhboard.cn/posts/gemini-image-recognition): 全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。 (发布日期: 2025-01-25)
+- [Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出](https://blog.ljhboard.cn/posts/gemini-api): 全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。 (发布日期: 2025-01-12)
+- [DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成](https://blog.ljhboard.cn/posts/deepseek-local-deployment): 全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。 (发布日期: 2024-08-16)
+
 ### 搜索与内容工程
 
 - [从 SEO 到 GEO：静态技术博客的可发现、可引用与 IndexNow 实践](https://blog.ljhboard.cn/posts/seo-geo-indexnow): 结合本站的 Next.js、Nextra、JSON-LD、sitemap、llms.txt 与 IndexNow 发布链路，说明如何同时优化传统搜索收录和生成式搜索引用。 (发布日期: 2026-08-29)
@@ -14,13 +22,6 @@
 
 - [从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现](https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints): 以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。 (发布日期: 2026-08-28)
 - [Cloudflare 的优选 IP 优化](https://blog.ljhboard.cn/posts/cloudflare-custom-hostname-fast-ip): 用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。 (发布日期: 2026-08-25)
-
-### AI 工程
-
-- [Agent 不是更长的 Prompt：从工具调用到受控执行循环](https://blog.ljhboard.cn/posts/agent-fundamentals): 从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。 (发布日期: 2026-08-19)
-- [基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战](https://blog.ljhboard.cn/posts/gemini-image-recognition): 全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。 (发布日期: 2025-01-25)
-- [Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出](https://blog.ljhboard.cn/posts/gemini-api): 全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。 (发布日期: 2025-01-12)
-- [DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成](https://blog.ljhboard.cn/posts/deepseek-local-deployment): 全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。 (发布日期: 2024-08-16)
 
 ### AI 基础
 
@@ -108,5 +109,5 @@
 
 ## 附加资源与全量数据
 
-- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 37 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
+- [全站完整文章纯文本合集 (llms-full.txt)](https://blog.ljhboard.cn/llms-full.txt): 包含全站所有 38 篇技术博文的完整 Markdown 原文，专为大模型上下文（Context Window）批量处理设计。
 - [全站 XML 站点地图 (sitemap.xml)](https://blog.ljhboard.cn/sitemap.xml): 搜索引擎爬虫索引入口。
