@@ -97,6 +97,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           src={`https://www.googletagmanager.com/gtag/js?id=${site.googleAnalyticsId}`}
           strategy="afterInteractive"
         />
+        <Script
+          id="umami-analytics"
+          defer
+          src="/stats/script.js"
+          data-website-id="e61fca0c-3e46-4f5c-aeda-ae30990ef482"
+          strategy="afterInteractive"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndPersonJsonLd) }}
