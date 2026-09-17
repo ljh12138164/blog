@@ -53,6 +53,30 @@ export function SiteShell({ children }: { children: ReactNode }) {
             >
               GitHub
             </a>
+            <a
+              className="no-underline transition-colors hover:text-accent"
+              href="https://news.ljhboard.cn/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              今日热点
+            </a>
+            <a
+              className="no-underline transition-colors hover:text-accent"
+              href="https://token.ljhboard.cn/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Token Paper
+            </a>
+            <a
+              className="no-underline transition-colors hover:text-accent"
+              href="https://tools.ljhboard.cn/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              LJH Tools
+            </a>
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-line pt-4 max-md:flex-col max-md:items-start">
