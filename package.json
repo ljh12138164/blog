@@ -10,7 +10,7 @@
     "test:unit": "vitest run lib scripts/generate-early-hints.test.mjs scripts/submit-indexnow-urls.test.mjs deploy/legacy-redirects.test.ts",
     "test:early-hints": "vitest run scripts/generate-early-hints.test.mjs",
     "test:indexnow-submit": "vitest run scripts/submit-indexnow-urls.test.mjs",
-    "test:redirects": "vitest run deploy/legacy-redirects.test.ts",
+    "test:redirects": "vitest run scripts/legacy-redirects.test.ts",
     "test:resource-hints": "vitest run scripts/resource-hints.test.mjs",
     "test:theme": "vitest run lib/theme.test.ts",
     "update:skill": "git submodule update --remote utils",
