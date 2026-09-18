@@ -27,6 +27,7 @@ jobs:
       - run: pnpm test:early-hints
       - run: pnpm test:indexnow-submit
       - run: pnpm test:theme
+      - run: pnpm test:redirects
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:resource-hints
@@ -71,6 +72,13 @@ jobs:
             --output /dev/null \
             "http://127.0.0.1:18081/posts/cloudflare-http3-early-hints?verify=1"
           grep -Eiq '^link: .*rel=preload; as=style' "$temporary/article.headers"
+
+          curl --silent --show-error \
+            --dump-header "$temporary/redirect.headers" \
+            --output /dev/null \
+            "http://127.0.0.1:18081/%E5%B7%A5%E7%A8%8B%E5%8C%96%E7%A0%94%E7%A9%B6/%E5%8D%95%E4%BB%93%E5%BA%93%E7%AE%A1%E7%90%86?test=1"
+          grep -Eiq '^HTTP/[^ ]+ 301' "$temporary/redirect.headers"
+          grep -Eiq '^location: /posts/monorepo-management\?test=1' "$temporary/redirect.headers"
 
           stylesheet=$(sed -nE 's/^Link: <([^>]+\.css)>;.*/\1/ip' "$temporary/root.headers" | head -n 1)
           test -n "$stylesheet"
