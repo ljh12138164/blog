@@ -59,7 +59,11 @@ jobs:
             fi
             sleep 1
           done
-          test "$ready" -eq 1
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::Container failed to become healthy. Container logs:"
+            docker logs "$container" || true
+            exit 1
+          fi
 
           curl --fail --silent --show-error \
             --dump-header "$temporary/root.headers" \

@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "test": "vitest run",
-    "test:unit": "vitest run lib scripts/generate-early-hints.test.mjs scripts/submit-indexnow-urls.test.mjs deploy/legacy-redirects.test.ts",
+    "test:unit": "vitest run lib scripts/generate-early-hints.test.mjs scripts/submit-indexnow-urls.test.mjs scripts/legacy-redirects.test.ts",
     "test:early-hints": "vitest run scripts/generate-early-hints.test.mjs",
     "test:indexnow-submit": "vitest run scripts/submit-indexnow-urls.test.mjs",
     "test:redirects": "vitest run scripts/legacy-redirects.test.ts",
