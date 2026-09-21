@@ -5,8 +5,8 @@ export const metadata = {
   category: 'AI 工程',
   readingTime: '6 分钟',
   alternates: { canonical: '/posts/local-english-chinese-translation' },
-  openGraph: { type: 'article', title: '给 Next.js 网站加上本地翻译', description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。', url: '/posts/local-english-chinese-translation' },
-  twitter: { card: 'summary', title: '给 Next.js 网站加上本地翻译', description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。' }
+  openGraph: { type: 'article', title: '给 Next.js 网站加上本地翻译', description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。', url: '/posts/local-english-chinese-translation', images: ['/og-image.png'] },
+  twitter: { card: 'summary_large_image', title: '给 Next.js 网站加上本地翻译', description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。', images: ['/og-image.png'] }
 }
 
 英文文章页加上一个“翻译为中文”按钮，点击后展示中文，再点击就能切回英文原文。这篇文章就来实现这个功能。
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
 在页面上英文文章试一下：
 
-![image](./image.png)
+![Next.js 页面中英文文章点击翻译按钮后展示中文译文效果演示](./image.png)
 
 启动项目：
 

@@ -5,8 +5,8 @@ export const metadata = {
   category: 'AI 基础',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/token-and-context' },
-  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。', url: '/posts/token-and-context' },
-  twitter: { card: 'summary', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。' }
+  openGraph: { type: 'article', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。', url: '/posts/token-and-context', images: ['/og-image.png'] },
+  twitter: { card: 'summary_large_image', title: 'Token 与 Context：模型究竟看见了什么？', description: '通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。', images: ['/og-image.png'] }
 }
 
 我们把文字发送给模型时，模型并不是直接按“一个汉字”或“一个单词”阅读。文本会先被编码成 Token；系统指令、历史消息、工具定义、文档和回答，也都要在有限的 Context 中共享空间。

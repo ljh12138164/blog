@@ -134,7 +134,7 @@ export async function POST(request: Request) {
 
 在页面上英文文章试一下：
 
-![image](./image.png)
+![Next.js 页面中英文文章点击翻译按钮后展示中文译文效果演示](./image.png)
 
 启动项目：
 
@@ -941,7 +941,7 @@ Fallback Origin: origin-ai.ljhboard.cn（橙云）
 
 进入 Cloudflare 控制台的 **SSL/TLS → 自定义主机名**，将 fallback origin 设置为 `origin-ai.ljhboard.cn`，等状态变为 `Active`。官方文档要求 fallback origin 对应 Cloudflare 中已代理的 A、AAAA 或 CNAME 记录；`Active` 只说明 Cloudflare 已准备把流量发到该记录，仍需自行确认它确实指向正确源站。参见 [Cloudflare for SaaS 初始配置](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/getting-started/)。
 
-![设置 fallback origin](./image2.png)
+![Cloudflare 控制台 SSL/TLS 中设置回退源 Fallback Origin 为 origin-ai](./image2.png)
 
 
 ## 第二步：先用 blog 创建自定义主机名
@@ -955,12 +955,12 @@ Fallback Origin: origin-ai.ljhboard.cn（橙云）
 - Validation method：HTTP
 - Origin：默认 fallback origin
 
-![设置 fallback origin](./image1.png)
+![Cloudflare for SaaS 添加自定义主机名 blog.ljhboard.cn 配置弹窗](./image1.png)
 
 
 创建后要关注两个独立状态：主机名状态和证书状态。Cloudflare 官方要求两者都为 `Active`，并且 DNS 已指向 SaaS target，才应视为可承载生产 HTTPS 流量。
 
-![设置 fallback origin](./image3.png)
+![自定义主机名状态与证书验证状态均为 Active 示意图](./image3.png)
 
 ## 第三步：创建优选入口 DNS
 
@@ -980,7 +980,7 @@ curl -I --connect-timeout 10 https://blog.ljhboard.cn/
 
 只有证书可信、HTTP 状态正确、页面没有串站，而且响应确实经过 Cloudflare，才继续配置自动更新。`blog` 成功后，可用相同方式添加 `ai.ljhboard.cn` 自定义主机名，再把 `ai` 改为灰云 CNAME 指向 `cdn.ljhboard.cn`。
 
-![设置 fallback origin](./image4.png)
+![DNS 控制台中配置 cdn 灰云 A 记录与 blog 灰云 CNAME 记录](./image4.png)
 
 ## 第四步：在服务器安装 CloudflareSpeedTest
 
@@ -1015,15 +1015,15 @@ head -n 2 result.csv
 创建 Cloudflare API Token 时，只授予 `ljhboard.cn` 这个 zone：
 
 - Zone → DNS → Edit
-![设置 fallback origin](./image5.png)
+![Cloudflare API 令牌配置 Zone DNS Edit 权限](./image5.png)
 
 - Zone → Zone → Read
-![设置 fallback origin](./image6.png)
+![Cloudflare API 令牌配置 Zone Zone Read 权限](./image6.png)
 
 不要使用 Global API Key。接下来准备三个**全部必填**的值：
 
 zoneId: `ljhboard.cn` 概览页右侧的 Zone ID
-![设置 fallback origin](./image7.png)
+![在 Cloudflare 域名概览页右侧获取 Zone ID 标识](./image7.png)
 
 
 | 变量 | 从哪里获得 |
@@ -1045,7 +1045,7 @@ curl -fsS -G -H "Authorization: Bearer ${TOKEN}" --data-urlencode 'type=A' --dat
 
 unset TOKEN
 ```
-![设置 fallback origin](./image8.png)
+![终端中通过 curl 调用 Cloudflare API 成功查询 DNS Record ID](./image8.png)
 
 输出应是一串 32 位十六进制字符。若输出 `null`，先检查 `cdn.ljhboard.cn` 是否确实是一条 A 记录，以及 Token 和 Zone ID 是否匹配。
 
@@ -1211,7 +1211,7 @@ set -a; . /opt/cloudflare-speed-test/cloudflare-fastip.env; set +a; /opt/cloudfl
 
 不建议每分钟测速，也不要让计划任务每次下载 `latest` 版本。优选 IP 变化没有快到值得高频扫描，而未经校验的自动升级会让故障原因更难定位。
 
-![设置 fallback origin](./image9.png)
+![宝塔面板计划任务添加定期执行优选 IP 测速脚本界面](./image9.png)
 
 
 ## 验证与回滚：把成功标准写在切换之前

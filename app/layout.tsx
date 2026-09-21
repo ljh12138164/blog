@@ -14,21 +14,57 @@ export const metadata: Metadata = {
     template: `%s · ${site.name}`
   },
   description: site.description,
+  keywords: [
+    '前端架构',
+    'Web 性能优化',
+    '实时协同',
+    'CRDT',
+    'OT',
+    '全栈开发',
+    '边缘计算',
+    'Cloudflare',
+    'AI 大模型',
+    'LLM',
+    'AI Agent',
+    '技术博客'
+  ],
   alternates: { canonical: '/' },
   authors: [{ name: site.author.name, url: site.author.url }],
   creator: site.author.name,
+  publisher: site.name,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1
+    }
+  },
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
     siteName: site.name,
     title: site.title,
     description: site.description,
-    url: '/'
+    url: '/',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: site.title
+      }
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: site.title,
-    description: site.description
+    description: site.description,
+    images: ['/og-image.png'],
+    creator: site.author.name
   }
 }
 
@@ -40,7 +76,7 @@ export const viewport: Viewport = {
   ]
 }
 
-const websiteAndPersonJsonLd = {
+const websiteAndOrganizationJsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
@@ -51,8 +87,31 @@ const websiteAndPersonJsonLd = {
       description: site.description,
       inLanguage: 'zh-CN',
       publisher: {
-        '@id': `${site.url}/#author`
+        '@id': `${site.url}/#organization`
+      },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${site.url}/posts?q={search_term_string}`
+        },
+        'query-input': 'required name=search_term_string'
       }
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${site.url}/#organization`,
+      name: site.name,
+      url: site.url,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${site.url}/favicon.webp`,
+        caption: site.name
+      },
+      founder: {
+        '@id': `${site.url}/#author`
+      },
+      sameAs: site.author.sameAs
     },
     {
       '@type': 'Person',
@@ -62,7 +121,10 @@ const websiteAndPersonJsonLd = {
       url: site.author.url,
       jobTitle: site.author.jobTitle,
       sameAs: site.author.sameAs,
-      description: '热爱技术的前端架构师与全栈开发者，专注前端架构、协同架构与 AI 工程化实践。'
+      description: '热爱技术的前端架构师与全栈开发者，专注前端架构、协同架构与 AI 工程化实践。',
+      worksFor: {
+        '@id': `${site.url}/#organization`
+      }
     }
   ]
 }
@@ -106,7 +168,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndPersonJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndOrganizationJsonLd) }}
         />
       </Head>
       <body>

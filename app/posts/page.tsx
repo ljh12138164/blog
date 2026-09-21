@@ -9,14 +9,24 @@ export const metadata: Metadata = {
   alternates: { canonical: '/posts' },
   openGraph: {
     type: 'website',
-    title: '文章索引',
+    locale: 'zh_CN',
+    title: `文章索引 · ${site.name}`,
     description: `浏览 ${site.name} 的全部技术文章。`,
-    url: '/posts'
+    url: '/posts',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: `文章索引 · ${site.name}`
+      }
+    ]
   },
   twitter: {
-    card: 'summary',
-    title: '文章索引',
-    description: `浏览 ${site.name} 的全部技术文章。`
+    card: 'summary_large_image',
+    title: `文章索引 · ${site.name}`,
+    description: `浏览 ${site.name} 的全部技术文章。`,
+    images: ['/og-image.png']
   }
 }
 

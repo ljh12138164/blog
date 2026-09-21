@@ -1,7 +1,20 @@
 export const metadata = {
   title: '关于这个博客',
-  description: '关于这个个人博客。',
-  alternates: { canonical: '/about' }
+  description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+  alternates: { canonical: '/about' },
+  openGraph: {
+    type: 'profile',
+    title: '关于这个博客 · ljh的技术博客',
+    description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+    url: '/about',
+    images: ['/og-image.png']
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '关于这个博客 · ljh的技术博客',
+    description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+    images: ['/og-image.png']
+  }
 }
 
 这是我的个人博客，用来存放那些不想只留在聊天记录和备忘录里的东西。

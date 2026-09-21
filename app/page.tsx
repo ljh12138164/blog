@@ -20,7 +20,29 @@ export const metadata: Metadata = {
     'AI Agent',
     '技术博客'
   ],
-  alternates: { canonical: '/' }
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    siteName: site.name,
+    title: site.title,
+    description: site.description,
+    url: '/',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: site.title
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: site.title,
+    description: site.description,
+    images: ['/og-image.png']
+  }
 }
 
 const [featuredPost, ...starterPosts] = recentPosts

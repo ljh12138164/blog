@@ -34,9 +34,14 @@ pnpm check:write
 
 正式站点域名统一配置在 `site.config.json`。该值用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引；不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于正式域名的 canonical。
 
+- **社交分享卡片**：全站默认与文章均配置 1200x630 标准 Open Graph / Twitter 预览图（`og-image.png`），支持 Twitter Summary Large Image 卡片。
+- **结构化数据**：首页提供 `WebSite`（含 Sitelinks Searchbox）、`Organization` 与 `Person` 实体；文章页提供 `TechArticle` / `BlogPosting` 与分级 `BreadcrumbList`。
+- **爬虫与地图分级**：`next-sitemap` 按页面重要度分配权重梯度（首页 1.0、索引页 0.9、文章 0.8、关于 0.6、隐私 0.3），并在 `robots.txt` 中显式允许主流 AI 搜索爬虫（GPTBot、ClaudeBot、PerplexityBot 等）。
+- **AI 检索与 GEO**：`llms.txt` 与 `llms-full.txt` 遵循大模型权威出处与引用标准，提供作者资历与全量 Markdown 正文索引。
+
 新增文章时，需要同时：
 
-1. 在 `app/posts/<slug>/page.mdx` 新建文章。
+1. 在 `app/posts/<slug>/page.mdx` 新建文章，并导出完整元数据（包含 title、description、date、category、readingTime、alternates、openGraph、twitter）。
 2. 在 `lib/posts.ts` 添加文章摘要，供首页文章列表读取。
 
 ## 自动部署

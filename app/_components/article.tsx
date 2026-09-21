@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
@@ -31,10 +32,11 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         '@context': 'https://schema.org',
         '@graph': [
           {
-            '@type': 'TechArticle',
+            '@type': ['TechArticle', 'BlogPosting'],
             '@id': `${articleUrl}#article`,
             headline: meta.title,
             description: meta.description || undefined,
+            image: [`${site.url}/og-image.png`],
             datePublished: meta.date ? new Date(meta.date).toISOString() : undefined,
             dateModified: meta.date ? new Date(meta.date).toISOString() : undefined,
             inLanguage: 'zh-CN',
@@ -45,13 +47,19 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
             author: {
               '@type': 'Person',
               name: site.author.name,
+              alternateName: site.author.englishName,
               url: site.author.url,
+              jobTitle: site.author.jobTitle,
               sameAs: site.author.sameAs
             },
             publisher: {
-              '@type': 'Person',
-              name: site.author.name,
-              url: site.url
+              '@type': 'Organization',
+              name: site.name,
+              url: site.url,
+              logo: {
+                '@type': 'ImageObject',
+                url: `${site.url}/favicon.webp`
+              }
             },
             articleSection: meta.category || undefined,
             keywords: [meta.category, '前端架构', '全栈开发', '技术博客'].filter(Boolean)
@@ -69,8 +77,8 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: meta.category || '文章归档',
-                item: `${site.url}/#articles`
+                name: '文章索引',
+                item: `${site.url}/posts`
               },
               {
                 '@type': 'ListItem',
@@ -97,11 +105,19 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         data-pagefind-body
       >
         <header className="not-prose mb-12 border-b border-line pb-10">
-          {meta.category && (
-            <span className="font-mono text-[11px] font-bold text-accent uppercase">
-              {meta.category}
-            </span>
-          )}
+          <div className="flex items-center justify-between gap-4">
+            {meta.category && (
+              <span className="font-mono text-[11px] font-bold text-accent uppercase">
+                {meta.category}
+              </span>
+            )}
+            <Link
+              href="/posts"
+              className="font-mono text-[11px] text-muted hover:text-accent no-underline transition-colors"
+            >
+              ← 返回文章列表
+            </Link>
+          </div>
           {meta.title && (
             <h1
               className="mt-4 mb-5 text-balance text-5xl leading-[1.16] font-extrabold text-ink max-md:text-[36px]"
@@ -113,14 +129,78 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           {meta.description && (
             <p className="text-pretty text-[17px] leading-8 text-muted">{meta.description}</p>
           )}
-          {meta.date && (
-            <p className="mt-6 mb-0 font-mono text-[11px] text-muted uppercase tabular-nums">
-              <time dateTime={meta.date}>{meta.date}</time>
-              {meta.readingTime && <> · {meta.readingTime}</>}
-            </p>
-          )}
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-line/60 pt-5 text-xs text-muted">
+            <div className="flex items-center gap-3">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/15 font-mono text-xs font-bold text-accent">
+                {site.author.englishName.slice(0, 2).toUpperCase()}
+              </span>
+              <div>
+                <Link
+                  href="/about"
+                  className="font-medium text-ink hover:text-accent no-underline transition-colors"
+                  title="查看作者简介"
+                >
+                  {site.author.name}
+                </Link>
+                <span className="mx-2 text-line">·</span>
+                <span className="text-muted">{site.author.jobTitle}</span>
+              </div>
+            </div>
+            {meta.date && (
+              <p className="m-0 font-mono text-[11px] text-muted uppercase tabular-nums">
+                <time dateTime={meta.date}>{meta.date}</time>
+                {meta.readingTime && <> · {meta.readingTime}</>}
+              </p>
+            )}
+          </div>
         </header>
         {children}
+        <footer
+          className="not-prose mt-16 rounded-xl border border-line bg-surface/50 p-6 backdrop-blur-xs max-md:p-5"
+          data-pagefind-ignore
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/15 font-mono text-sm font-bold text-accent">
+              {site.author.englishName.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="m-0 text-base font-bold text-ink">
+                  <Link href="/about" className="hover:text-accent no-underline transition-colors">
+                    {site.author.name} ({site.author.englishName})
+                  </Link>
+                </h3>
+                <Link
+                  href="/about"
+                  className="font-mono text-xs font-medium text-accent hover:underline"
+                >
+                  关于作者 →
+                </Link>
+              </div>
+              <p className="mt-1 mb-3 text-sm leading-6 text-muted">
+                专注前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优与 AI Agent
+                工程化实践。坚持写自己真正实践过的思考与取舍。
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-muted">
+                <a
+                  href={site.author.github}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-muted hover:text-accent no-underline transition-colors"
+                >
+                  GitHub @{site.author.englishName}
+                </a>
+                <span className="text-line">/</span>
+                <Link
+                  href="/posts"
+                  className="text-muted hover:text-accent no-underline transition-colors"
+                >
+                  全部手记归档
+                </Link>
+              </div>
+            </div>
+          </div>
+        </footer>
       </article>
       {toc && toc.length > 0 && (
         <div className="absolute top-16 bottom-28 left-[calc(100%+40px)] w-[180px] max-xl:hidden">
