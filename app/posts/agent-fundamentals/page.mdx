@@ -5,8 +5,8 @@ export const metadata = {
   category: 'AI 工程',
   readingTime: '12 分钟',
   alternates: { canonical: '/posts/agent-fundamentals' },
-  openGraph: { type: 'article', title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环', description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。', url: '/posts/agent-fundamentals' },
-  twitter: { card: 'summary', title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环', description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。' }
+  openGraph: { type: 'article', title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环', description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。', url: '/posts/agent-fundamentals', images: ['/og-image.png'] },
+  twitter: { card: 'summary_large_image', title: 'Agent 不是更长的 Prompt：从工具调用到受控执行循环', description: '从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。', images: ['/og-image.png'] }
 }
 
 普通聊天模型只能生成内容。你让它“创建一个 `todo.md` 文件”，它最多返回一段 Markdown；文件是否真的出现在磁盘上，模型既不知道，也做不到。

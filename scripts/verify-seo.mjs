@@ -46,16 +46,24 @@ for (const htmlPath of collectHtmlFiles(outDir)) {
   }
 }
 
-for (const outputName of ['sitemap.xml', 'robots.txt', 'llms.txt']) {
+for (const outputName of [
+  'sitemap.xml',
+  'robots.txt',
+  'llms.txt',
+  'llms-full.txt',
+  'og-image.png'
+]) {
   const outputPath = path.join(outDir, outputName)
   if (!fs.existsSync(outputPath)) {
     errors.push(`out/${outputName}: missing`)
     continue
   }
 
-  const output = fs.readFileSync(outputPath, 'utf8')
-  if (/https?:\/\/(?:\d{1,3}\.){3}\d{1,3}/i.test(output)) {
-    errors.push(`out/${outputName}: contains an IP-based public URL`)
+  if (outputName.endsWith('.txt') || outputName.endsWith('.xml')) {
+    const output = fs.readFileSync(outputPath, 'utf8')
+    if (/https?:\/\/(?:\d{1,3}\.){3}\d{1,3}/i.test(output)) {
+      errors.push(`out/${outputName}: contains an IP-based public URL`)
+    }
   }
 }
 
