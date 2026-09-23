@@ -1,6 +1,6 @@
 export const metadata = {
   title: '可视化动态表单设计器架构实践：拖拽编排、JSON Schema 驱动与组件渲染器',
-  description: '全面解析低代码/零代码表单设计器架构：涵盖拖拽画布（Drag & Drop）、JSON Schema 字段协议定义、右侧属性联动配置与动态渲染引擎实现。',
+  description: '把表单设计器拆分为物料区、画布排版与属性联动，以 JSON Schema 为契约驱动运行态渲染器。',
   date: '2025-02-14',
   category: '前端工程化',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '可视化动态表单设计器架构实践：拖拽编排、JSON Schema 驱动与组件渲染器',
-    description: '全面解析低代码/零代码表单设计器架构：涵盖拖拽画布（Drag & Drop）、JSON Schema 字段协议定义、右侧属性联动配置与动态渲染引擎实现。',
+    description: '把表单设计器拆分为物料区、画布排版与属性联动，以 JSON Schema 为契约驱动运行态渲染器。',
     url: '/posts/custom-form-designer', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '可视化动态表单设计器架构实践：拖拽编排、JSON Schema 驱动与组件渲染器',
-    description: '全面解析低代码/零代码表单设计器架构：涵盖拖拽画布（Drag & Drop）、JSON Schema 字段协议定义、右侧属性联动配置与动态渲染引擎实现。', images: ['/og-image.png'] },
+    description: '把表单设计器拆分为物料区、画布排版与属性联动，以 JSON Schema 为契约驱动运行态渲染器。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,9 +33,7 @@ flowchart LR
 
 设计器真正的产品不是三栏 UI，而是中间那份稳定协议。UI 可以替换，Schema 一旦被表单实例和历史数据依赖，就必须可迁移。
 
-在企业级中后台开发中，大量的业务需求集中在问卷调查、活动报名、流程审批和动态数据录入。如果每个表单都由前端工程师手写代码，不仅效率低下，且一旦字段增减就必须走发布流程。
-
-**可视化自定义表单设计器** 通过“左侧物料拖拽 -> 中间画布排版 -> 右侧属性联动 -> 生成 JSON Schema -> 动态引擎渲染”的链路，将表单生产周期缩短到分钟级。
+做中后台业务时，调查问卷、活动配置或审批流表单这类需求经常变动。如果每个新增字段都要改 JSX 重新打包发布，维护成本会越来越高。表单设计器的核心不是把界面做得多花哨，而是设计一套清晰的 JSON Schema，让“编辑画布”负责产出协议，“运行时渲染器”只认协议来画界面。
 
 ---
 
@@ -104,22 +102,15 @@ export interface FormSchema {
 
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import type { FormSchema, FormFieldSchema } from '@/types/form-schema';
+import { FormSchema, FormFieldSchema } from '@/types/form-schema';
 
-// 1. 组件注册表映射
-const COMPONENT_MAP: Record<string, React.FC<any>> = {
+// 基础物料注册表
+const ComponentRegistry: Record<string, React.FC<any>> = {
   input: ({ field, schema }) => (
     <input
       {...field}
       placeholder={schema.placeholder}
-      className="w-full px-3 py-2 border rounded-md"
-    />
-  ),
-  textarea: ({ field, schema }) => (
-    <textarea
-      {...field}
-      placeholder={schema.placeholder}
-      className="w-full px-3 py-2 border rounded-md min-h-[80px]"
+      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
     />
   ),
   select: ({ field, schema }) => (
@@ -132,17 +123,25 @@ const COMPONENT_MAP: Record<string, React.FC<any>> = {
       ))}
     </select>
   ),
+  textarea: ({ field, schema }) => (
+    <textarea {...field} placeholder={schema.placeholder} rows={3} className="w-full px-3 py-2 border rounded-md" />
+  ),
 };
 
-export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; onSubmit: (data: any) => void }) {
-  const { control, handleSubmit, formState: { errors } } = useForm();
+export function FormRenderer({ schema, onSubmit }: { schema: FormSchema; onSubmit: (data: any) => void }) {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-lg">
-      <h2 className="text-xl font-bold mb-4">{schema.title}</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-lg p-6 bg-white border rounded-xl shadow-sm">
+      <h3 className="text-lg font-bold pb-2 border-b">{schema.title}</h3>
 
-      {schema.fields.map((fieldSchema) => {
-        const Component = COMPONENT_MAP[fieldSchema.type] || COMPONENT_MAP.input;
+      {schema.fields.map((fieldSchema: FormFieldSchema) => {
+        const Component = ComponentRegistry[fieldSchema.type];
+        if (!Component) return null;
 
         return (
           <div key={fieldSchema.id} className="space-y-1">
@@ -184,7 +183,7 @@ export function DynamicFormRenderer({ schema, onSubmit }: { schema: FormSchema; 
 
 - [JSON Schema：官方规范入口](https://json-schema.org/specification)
 
-## 总结
+## 边界与架构建议
 
-* **模型抽象**：将表单行为完全收敛至标准的 JSON Schema。
-* **动静解耦**：设计态负责低代码组装，运行态轻量无依赖运行，实现真正的数据驱动 UI。
+- **协议版本化**：生产环境中的表单 Schema 一定要带上版本号（如 `version: 1`）。表单一旦上线并收集了用户提交数据，旧字段协议就不能随意删除，必须保证历史数据在运行态下依然能正确回显。
+- **切断设计态与表单值状态**：编辑画布时的“选中间距、高亮框、拖拽占位”属于设计器专属 UI 状态；真正存入数据库的只有干净的字段配置列表与校验规则。两者的状态机必须物理切断，不能混在同一个 store 里。

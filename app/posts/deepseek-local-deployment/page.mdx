@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
-  description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。',
+  description: '从显存与 KV Cache 预算算起，对比 Ollama 与 LM Studio 的本地运行方式，并接入 OpenAI 兼容接口与 WebUI。',
   date: '2024-08-16',
   category: 'AI 工程',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
-    description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。',
+    description: '从显存与 KV Cache 预算算起，对比 Ollama 与 LM Studio 的本地运行方式，并接入 OpenAI 兼容接口与 WebUI。',
     url: '/posts/deepseek-local-deployment', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成',
-    description: '全面剖析开源大模型本地离线运行方案：涵盖量化级别（GGUF Q4/Q8）、显存（VRAM）预算计算、Ollama / LM Studio 极速部署与 OpenAI 兼容 API 接入。', images: ['/og-image.png'] },
+    description: '从显存与 KV Cache 预算算起，对比 Ollama 与 LM Studio 的本地运行方式，并接入 OpenAI 兼容接口与 WebUI。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -24,9 +24,7 @@ export const metadata = {
 
 本地部署不是“下载一个模型就结束”。你需要同时决定模型权重、运行时、硬件预算和访问方式。先用小模型打通下载、推理与 API，再逐步提高参数规模，最容易定位资源不足问题。
 
-随着 **DeepSeek-R1 / V3** 等顶尖开源模型的发布，在本地消费级显卡或私有服务器上部署大模型，已成为保障数据隐私、实现零外网依赖与低成本推理的主流选择。
-
-本文系统梳理模型量化原理、显存预算公式，并提供基于 **Ollama** 和 **LM Studio** 的本地运行与 OpenAI 兼容 API 接入全流程。
+想在自己的显卡或本地服务器上跑 DeepSeek，最先卡住的往往不是写代码，而是显存到底够不够。量化选几比特、KV Cache 留多少、显存溢出到内存后速度会掉成什么样，这些在拉取大文件前就需要算清楚。
 
 ---
 
@@ -48,13 +46,13 @@ export const metadata = {
 
 > [!TIP]
 > **什么是 Q4_K_M 量化？**
-> 采用 4-bit 混合精度量化可以在体积压缩近 **70%** 的同时，保留原本 FP16 模型 **99% 以上的基准性能**，是本地消费级硬件推理的最佳甜点位。
+> 采用 Q4_K_M 这类 4-bit 混合量化，模型文件体积比 FP16 缩小大半，而在日常代码和推理测试中，输出质量损失几乎不可感知。如果显存预算紧张，4-bit 是最实用的起手配置。
 
 ---
 
 ## 方案一：使用 Ollama 命令行与系统级服务
 
-Ollama 是目前最流行的本地大模型管理工具，支持全自动下载、GPU 加速识别与后台守护运行。
+如果需要命令行启动、自动化脚本或系统服务后台守护，Ollama 是最顺手的工具。它会自动检测 CUDA 或 Metal 加速。
 
 ### 1. 安装与启动模型
 
@@ -100,18 +98,17 @@ main();
 
 ## 方案二：使用 LM Studio 可视化桌面端
 
-对于更习惯图形化调优（如直观观察 GPU 显存占用、调整 Temperature、Top_P、上下文窗口大小）的开发者：
+LM Studio 适合需要可视化调参的场景。界面里能直接看到每层权重卸载到 GPU 显存后的占用、实时推理速度（Token/s），也能直接滑块调节 Temperature 和上下文长度：
 
-1. 下载并安装 **LM Studio**；
-2. 在内置模型市场搜索 `DeepSeek-R1-Distill` 或直接搜索 HuggingFace 上的 GGUF 文件；
-3. 在 **GPU Offload** 设置中将所有层（All Layers）全部卸载至 GPU 显存以获得数十 Token/s 的推理速度；
-4. 点击 **Start Server** 即可启动本地 API 代理。
+1. 安装 LM Studio 并搜索下载 `DeepSeek-R1-Distill` 的 GGUF 权重；
+2. 在 **GPU Offload** 设置中将层数全部卸载至 GPU 显存，让计算留在显卡中；
+3. 点击 **Start Server** 即可启动本地 API 代理端口。
 
 ---
 
-## 生产级 WebUI 与知识库（RAG）集成
+## 搭配 WebUI 与知识库（RAG）
 
-配合 **Open WebUI**，可以在局域网内搭建全功能的企业级 ChatGPT 替代方案：
+如果想给局域网内提供类似 ChatGPT 的 Web 界面，可以直接串接 Open WebUI：
 
 ```bash
 # 通过 Docker 快速拉起具备知识库检索与多用户管理的 Open WebUI
@@ -122,7 +119,7 @@ docker run -d -p 3000:8080 \
   ghcr.io/open-webui/open-webui:main
 ```
 
-浏览器访问 `http://localhost:3000`，即可享受沉浸式对话、文档嵌入解析（RAG）与代码高亮。
+启动后在浏览器打开 `http://localhost:3000`，填入刚才部署的本地模型接口地址即可使用。
 
 ---
 
@@ -130,8 +127,9 @@ docker run -d -p 3000:8080 \
 
 - [Ollama：官方文档](https://docs.ollama.com/)
 
-## 总结
+## 落地选型建议
 
-* **极简易用**：Ollama 提供了极致的命令行体验与标准 OpenAI 协议兼容；
-* **硬件策略**：按 `参数量 × 0.7` 快速估算 4-bit 显存需求，12G~24G 显卡即可流畅运行主流 8B~32B 模型；
-* **数据安全**：彻底告别敏感业务数据外泄，实现 100% 离线、私有可控的 AI 能力。
+本地跑模型的核心权衡始终在显存与速度之间：
+- 个人开发调试或自动化脚本：优先选 Ollama，启停简单，内存守护与 API 接入开箱即用。
+- 需要直观观察显存分层与精细调参：用 LM Studio，排查 GPU Offload 层数瓶颈最方便。
+- 显存不足时：优先降模型参数规模或选 4-bit 量化，尽量避免让权重溢出到系统内存（CPU 交换会导致生成速度从几十 Token/s 直接暴跌到个位数）。

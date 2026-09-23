@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程',
-  description: '全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。',
+  title: '基于 Next.js App Router 与 Nextra 4 构建静态博客',
+  description: '记录基于 Next.js App Router 与 Nextra 4 搭建个人静态博客的工程方案，包括 MDX 组件注入、Pagefind 离线检索、Sitemap 自动化生成与 Docker 多阶段构建。',
   date: '2025-01-28',
   category: '建站与专题',
   readingTime: '9 分钟',
   alternates: { canonical: '/posts/nextra-blog-setup' },
   openGraph: {
     type: 'article',
-    title: '基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程',
-    description: '全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。',
+    title: '基于 Next.js App Router 与 Nextra 4 构建静态博客',
+    description: '记录基于 Next.js App Router 与 Nextra 4 搭建个人静态博客的工程方案，包括 MDX 组件注入、Pagefind 离线检索、Sitemap 自动化生成与 Docker 多阶段构建。',
     url: '/posts/nextra-blog-setup', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '基于 Next.js App Router 与 Nextra 4 构建现代静态技术博客全流程',
-    description: '全面剖析基于 Next.js App Router 与 Nextra 4 搭建个人技术博客的架构方案：涵盖 MDX 自定义组件注入、Pagefind 离线全文检索、Sitemap 自动生成与 Docker 多阶段构建部署。', images: ['/og-image.png'] },
+    title: '基于 Next.js App Router 与 Nextra 4 构建静态博客',
+    description: '记录基于 Next.js App Router 与 Nextra 4 搭建个人静态博客的工程方案，包括 MDX 组件注入、Pagefind 离线检索、Sitemap 自动化生成与 Docker 多阶段构建。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -34,9 +34,9 @@ flowchart LR
 
 建站流程应围绕最终产物设计。开发模式只证明页面能热更新，`pnpm build` 才能同时暴露 MDX 编译、静态路由、索引与部署配置问题。
 
-构建个人技术博客时，开发者追求的是：**极速的书写体验（纯 Markdown / MDX）、精美的默认排版与代码高亮、零运维成本的静态导出，以及毫秒级的站内全文检索**。
+在个人技术博客的技术选型中，静态站点生成（SSG）通常能带来较低的服务器成本与较好的访问体验。
 
-**Nextra 4** 深度融合了 Next.js App Router 架构，允许直接将 `app/posts/<slug>/page.mdx` 映射为标准页面路由。本文完整记录本博客的工程搭建全流程。
+Nextra 4 支持 Next.js App Router，允许直接将 `app/posts/<slug>/page.mdx` 映射为标准页面路由。本文梳理从 MDX 渲染、Pagefind 静态检索到 Docker 容器化打包的完整搭建流程。
 
 ---
 
@@ -151,8 +151,10 @@ CMD ["nginx", "-g", "daemon off;"]
 
 - [Nextra：Getting Started](https://nextra.site/docs)
 
-## 总结
+## 工程经验小结
 
-* **Nextra 4 + App Router** 提供了与 Next.js 生态最契合的 MDX 写作与组件扩展体验。
-* **Pagefind** 带来了零后端成本、亚毫秒级响应的 WebAssembly 全文检索。
-* **Docker 静态容器化** 使得博客发布过程轻量、安全且具备强可重现性。
+纯静态博客架构免除了服务端进程常驻的运维与安全负担。
+
+但在配置 Next.js `output: 'export'` 时，所有依赖服务端的运行时特性（如动态服务端重定向、Cookie 读取、服务端 Header 处理）都无法生效，必须转由构建期脚本或 Nginx/CDN 边缘规则接管。
+
+另外，每次新增文章或修改元数据后，应保证本地能跑通完整构建与 SEO 校验脚本（如 `pnpm build` 与 `verify-seo.mjs`），避免将损坏的路由或缺失的 Frontmatter 推送到生产环境。

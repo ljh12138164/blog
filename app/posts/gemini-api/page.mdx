@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
-  description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。',
+  description: '通过 Hono 边缘代理统一管理 Gemini 密钥与跨域，结合 SSE 流式输出与 responseSchema 结构化约束。',
   date: '2025-01-12',
   category: 'AI 工程',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
-    description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。',
+    description: '通过 Hono 边缘代理统一管理 Gemini 密钥与跨域，结合 SSE 流式输出与 responseSchema 结构化约束。',
     url: '/posts/gemini-api', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出',
-    description: '全面解析 Google Gemini 1.5 / 2.0 Flash 模型的全栈集成方案：涵盖 API Key 申请、Hono 边缘网关代理、流式数据响应与 Function Calling 实战。', images: ['/og-image.png'] },
+    description: '通过 Hono 边缘代理统一管理 Gemini 密钥与跨域，结合 SSE 流式输出与 responseSchema 结构化约束。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -36,9 +36,7 @@ sequenceDiagram
 
 代理层不只是隐藏密钥，它还是统一鉴权、限流、日志和输出契约的边界。不要让浏览器直接持有生产密钥。
 
-Google 推出的 **Gemini 1.5 Flash / 2.0 Flash** 凭借超大上下文窗口（高达 100万~200万 Tokens）、超低延迟与极高的性价比，成为当前全栈开发者构建 AI 应用的首选模型之一。
-
-然而在实际落地中，开发者往往需要处理**跨国网络连通性、API Key 安全保密、前端打字机流式输出（Streaming）与结构化 JSON 约束**等工程难题。本文提供一套基于 Hono 边缘网关的全栈落地指南。
+直接在前端调模型 API 几乎不可行：不仅把生产密钥直接暴露在浏览器的 Network 面板里，还会遇到跨域和连通性问题。更合理的做法是把模型调用收拢在边缘网关或后端接口之后，由服务端保管密钥并向前端回传流式数据。
 
 ---
 
@@ -169,6 +167,7 @@ async function analyzeFeedback(text: string) {
 在 React 组件中使用原生 `ReadableStream` 消费流式接口：
 
 ```tsx
+// components/GeminiChat.tsx
 'use client';
 
 import { useState } from 'react';
@@ -240,8 +239,8 @@ export function GeminiChat() {
 
 - [Google AI：Gemini API 文档](https://ai.google.dev/gemini-api/docs)
 
-## 总结
+## 生产落地注意事项
 
-* **安全边界**：始终通过后端或边缘网关代理请求，杜绝 API Key 在前端暴露。
-* **交互体验**：优先使用 `streamText` 与 `ReadableStream` 实现流式 SSE 响应，将用户感知的首字耗时（TTFT）降低到 300ms 以内。
-* **可靠数据**：配合 `responseSchema` 强制模型输出强类型 JSON，无缝衔接下游业务系统。
+- **密钥隔离**：所有模型请求收拢在服务端或边缘中间层，不要心存侥幸在前端环境变量里注入 `NEXT_PUBLIC_GEMINI_KEY`。
+- **流式异常与取消**：前端消费 `ReadableStream` 时必须绑定 `AbortController`，当用户切换页面或重新提问时及时取消网络连接，避免无谓消耗 Token。
+- **结构化约束**：纯靠提示词要求模型“只输出 JSON”经常会出现 markdown 代码块包裹；直接配置 `responseSchema` 是保证程序下游可靠解析的最好方式。

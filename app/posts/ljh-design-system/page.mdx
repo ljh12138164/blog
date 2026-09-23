@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'LJH-Design 设计系统架构设计：从 Design Tokens、Radix UI 到 AI 辅助生成平台',
-  description: '全面解析现代前端设计系统架构：涵盖原子化 Design Tokens 规范、Headless 无头 UI 原语解耦、深浅主题切换与 AI 辅助界面生成系统的落地实践。',
+  description: '梳理设计系统的分层结构：用 CSS 变量管理 Design Tokens，通过 Radix UI 与 CVA 解耦无头逻辑与视觉样式。',
   date: '2025-02-14',
   category: '架构设计',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'LJH-Design 设计系统架构设计：从 Design Tokens、Radix UI 到 AI 辅助生成平台',
-    description: '全面解析现代前端设计系统架构：涵盖原子化 Design Tokens 规范、Headless 无头 UI 原语解耦、深浅主题切换与 AI 辅助界面生成系统的落地实践。',
+    description: '梳理设计系统的分层结构：用 CSS 变量管理 Design Tokens，通过 Radix UI 与 CVA 解耦无头逻辑与视觉样式。',
     url: '/posts/ljh-design-system', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'LJH-Design 设计系统架构设计：从 Design Tokens、Radix UI 到 AI 辅助生成平台',
-    description: '全面解析现代前端设计系统架构：涵盖原子化 Design Tokens 规范、Headless 无头 UI 原语解耦、深浅主题切换与 AI 辅助界面生成系统的落地实践。', images: ['/og-image.png'] },
+    description: '梳理设计系统的分层结构：用 CSS 变量管理 Design Tokens，通过 Radix UI 与 CVA 解耦无头逻辑与视觉样式。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -32,9 +32,7 @@ flowchart BT
 
 设计系统的价值不是组件数量，而是让相同决策只定义一次。越靠下的层级越稳定、越通用；业务语义越强的内容越应留在产品层。
 
-在多产品线并行的研发体系中，缺乏统一的设计系统会导致各项目 UI 风格割裂、重复造轮子、无障碍（a11y）标准缺失以及重构维护成本高昂。
-
-**LJH-Design** 是一个集成了**设计资产管理、原子组件库与 AI 辅助设计生成**的综合性设计系统平台。本文分享其核心架构分层与工程实现。
+业务线一多，最常见的视觉问题就是“同一个主色有五种不同的十六进制编码，弹窗在不同页面里的圆角和阴影各不相同”。搭设计系统不是为了给团队塞一个沉重的巨石组件库，而是把视觉决策（Design Tokens）和无障碍交互（Headless 原语）拆开，让业务开发既能统一规范，又不失灵活性。这篇文章记录这套设计系统的分层实践。
 
 ---
 
@@ -110,7 +108,7 @@ export default {
 
 ## 核心设计二：Headless 无头交互解耦
 
-传统 UI 组件库（如 Ant Design）常常将 DOM 逻辑与样式紧紧耦合在一起，导致定制非常困难。
+传统 UI 组件库常常将 DOM 逻辑与样式紧紧耦合在一起，导致定制非常困难。
 
 LJH-Design 采用 **Radix UI Primitives + Tailwind CSS (CVA，Class Variance Authority)** 的模式：
 * **Radix UI** 负责复杂的键盘导航、焦点陷阱（Focus Trap）、WAI-ARIA 属性；
@@ -158,7 +156,7 @@ const buttonVariants = cva(
 
 - [W3C：Design Tokens Format Module](https://www.designtokens.org/tr/drafts/format/)
 
-## 总结
+## 实践经验与边界
 
-* **下层稳固**：通过 Design Tokens 与 Radix UI 确保全平台样式规范与无障碍基线统一。
-* **上层高效**：通过 Shadcn / CVA 模式保持极高的样式可定制性，辅以 AI 生成加速业务交付。
+- **Tokens 粒度不要过碎**：初期最容易犯的错误是给每一个组件甚至每一个边框都定义一套独立的变量（如 `--button-primary-hover-border-color`）。更推荐以语义化调色板（`primary`, `background`, `muted`）和比例尺度（`space-4`, `radius-md`）为主，过碎的变量会导致维护成本指数上升。
+- **样式与行为分离**：像下拉菜单、弹窗、Tabs 这一类有复杂键盘焦点和可访问性要求的组件，优先复用 Radix UI 这类成熟原语，自己的精力应集中在业务变体（CVA）和布局组合上。

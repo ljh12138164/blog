@@ -1,6 +1,6 @@
 export const metadata = {
   title: '复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘',
-  description: '全面剖析大体量动态表单的性能治理链路：涵盖 ExcelJS 重型导出模块动态分包、Iconify 边缘预连接优化、Gzip/Brotli 压缩与输入框卡顿调优。',
+  description: '将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。',
   date: '2025-01-31',
   category: '性能调优',
   readingTime: '8 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘',
-    description: '全面剖析大体量动态表单的性能治理链路：涵盖 ExcelJS 重型导出模块动态分包、Iconify 边缘预连接优化、Gzip/Brotli 压缩与输入框卡顿调优。',
+    description: '将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。',
     url: '/posts/custom-form-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘',
-    description: '全面剖析大体量动态表单的性能治理链路：涵盖 ExcelJS 重型导出模块动态分包、Iconify 边缘预连接优化、Gzip/Brotli 压缩与输入框卡顿调优。', images: ['/og-image.png'] },
+    description: '将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -24,11 +24,7 @@ export const metadata = {
 
 优化顺序应当由证据决定：先记录首屏资源、交互延迟和重渲染次数，再分别调整代码分包、连接建立与状态订阅。没有基线的“优化”无法判断是收益还是迁移成本。
 
-在动态表单系统（包含表单设计、问卷收集与数据导出）运行上线后，往往暴露出两个核心性能痛点：
-1. **首屏 Bundle 严重超标**：用于数据导出的 `exceljs`、大型图标库和验证引擎被静态打入首屏，导致初始包体积高达数兆；
-2. **长表单输入卡顿**：当表单包含 50+ 字段时，在某个输入框键入文字会触发整个表单组件树全量 Re-render，导致明显的掉帧与输入延迟。
-
-本文复盘完整的诊断与优化方案。
+动态表单做大了之后，性能瓶颈通常分成两端：一是首屏载入时加载了根本用不上的导出库（比如几百 KB 的 ExcelJS）；二是表单字段一多，用户在某个输入框里敲个字，整张表单几十个输入框全部跟着重新 render。这篇文章记录这两处卡顿的定位与改动。
 
 ---
 
@@ -99,9 +95,9 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 | 评估项 | 优化前 | 优化后 |
 | :--- | :--- | :--- |
-| **首屏 JS 产物体积** | 2.1 MB | **380 KB (Gzip 后 ~95KB)** |
-| **Excel 模块加载时机** | 首屏强制下载 | **用户点击导出时按需拉取** |
-| **100 字段表单打字延迟** | 120 ms (明显卡顿) | **8 ms (丝滑 60 FPS)** |
+| **首屏 JS 产物体积** | 2.1 MB | 380 KB (Gzip 后 ~95KB) |
+| **Excel 模块加载时机** | 首屏强制下载 | 用户点击导出时按需拉取 |
+| **100 字段表单打字延迟** | 120 ms (明显卡顿) | 8 ms (单帧内完成) |
 
 ---
 
@@ -109,8 +105,7 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 - [React：Profiler API](https://react.dev/reference/react/Profiler)
 
-## 总结
+## 调优心得
 
-* **剥离非首屏重型依赖**：利用动态 `import()` 隔离 ExcelJS、图表等次要能力。
-* **提前抢占网络带宽**：通过 `preconnect` / `dns-prefetch` 优化外部图标与字体 API。
-* **控制状态粒度**：避免全局状态泛滥，实现表单组件的局部精准渲染。
+- **分包看触发频次**：导出 Excel 是低频操作，放在点击事件里动态 `import()`，用户几乎感知不到下载等待，却能实打实帮首屏减掉近 1MB 的未压缩 JS。
+- **长表单避免受控全局状态**：表单字段超过 20 个时，尽量不要用单一 `useState` 存所有值。改用 React Hook Form 或非受控模式，能把输入延迟从“肉眼可见卡顿”直接降到单帧以内。

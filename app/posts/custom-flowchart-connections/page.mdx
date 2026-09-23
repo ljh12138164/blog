@@ -1,6 +1,6 @@
 export const metadata = {
   title: '流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染',
-  description: '深入解析流程图与拓扑图中的自定义连线算法：涵盖贝塞尔曲线控制点计算、SVG 动态路径生成、锚点吸附算法与 React Flow Custom Edge 实战。',
+  description: '从起点终点与端口朝向推导贝塞尔控制点，结合 React Flow 的 EdgeLabelRenderer 实现带交互按钮的自定义连线。',
   date: '2025-01-22',
   category: '前端图形学',
   readingTime: '8 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染',
-    description: '深入解析流程图与拓扑图中的自定义连线算法：涵盖贝塞尔曲线控制点计算、SVG 动态路径生成、锚点吸附算法与 React Flow Custom Edge 实战。',
+    description: '从起点终点与端口朝向推导贝塞尔控制点，结合 React Flow 的 EdgeLabelRenderer 实现带交互按钮的自定义连线。',
     url: '/posts/custom-flowchart-connections', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染',
-    description: '深入解析流程图与拓扑图中的自定义连线算法：涵盖贝塞尔曲线控制点计算、SVG 动态路径生成、锚点吸附算法与 React Flow Custom Edge 实战。', images: ['/og-image.png'] },
+    description: '从起点终点与端口朝向推导贝塞尔控制点，结合 React Flow 的 EdgeLabelRenderer 实现带交互按钮的自定义连线。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -32,12 +32,7 @@ flowchart LR
 
 实现时先保证“同一组坐标总能得到同一路径”，再接入拖拽与交互。这样几何错误和 React 状态错误不会混在一起排查。
 
-在可视化流程图编排（如审批流、工作流引擎、思维导图、低代码逻辑编排）中，**节点之间的连线（Edge / Connection）** 不仅需要清晰表达数据流向，还必须支持复杂的交互能力：
-* 动态计算三次贝塞尔曲线（Cubic Bezier）或折线（Smooth Step）；
-* 节点拖拽移动时，连线锚点（Handle）智能吸附并实时重绘；
-* 在连线上嵌入交互按钮（如删除连线、设置条件分支标签）。
-
-本文基于 **React Flow** 深度剖析 SVG 路径计算与 Custom Edge 的实现。
+做流程图或拓扑图时，连线（Edge）往往比节点本身更考验细节：两个节点错位排列时，连线怎么拐弯才自然？节点拖动时连线会不会滞后？更麻烦的是，如果想在连线中间加一个“删除按钮”或“分支条件输入框”，直接在 SVG 里面放 HTML 标签很容易碰到事件穿透和缩放计算问题。这篇文章梳理三次贝塞尔曲线控制点的计算，并用 React Flow 实现带交互的自定义连线。
 
 ---
 
@@ -68,7 +63,7 @@ SVG 路径指令:
 
 ## 核心实现：React Flow 自定义连线组件
 
-通过实现一个带有“删除按钮”和“动态流动光效”的 Custom Edge：
+通过实现一个带有“删除按钮”和“条件标签”的 Custom Edge：
 
 ```tsx
 // components/edges/CustomFlowEdge.tsx
@@ -177,7 +172,7 @@ export function FlowEditor() {
 
 - [React Flow：Custom Edges](https://reactflow.dev/learn/customization/custom-edges)
 
-## 总结
+## 实现要点
 
-* **数学基础**：贝塞尔曲线通过控制点偏移量赋予连线符合直觉的流体美感。
-* **DOM 与 SVG 解耦**：利用 `EdgeLabelRenderer` 将交互式复杂组件（输入框、删除按钮）挂载在 HTML 顶层，彻底解决 SVG 内部事件捕获与层级穿透难题。
+- **SVG 与 HTML 交互隔离**：连线本身用 SVG `<path>` 绘制性能最高，但连线上的按钮或输入框推荐使用 `EdgeLabelRenderer` 渲染为绝对定位的 HTML DOM，这样既能正常接收鼠标点击事件，又不会受 SVG 内部 `foreignObject` 的兼容性限制。
+- **避免在组件体内创建 edgeTypes**：React Flow 要求 `edgeTypes` 对象定义在组件外部或通过 `useMemo` 缓存。如果在父组件内每次 render 都声明一个新字面量，会导致画布上所有连线在每次状态变动时全部被销毁重建。

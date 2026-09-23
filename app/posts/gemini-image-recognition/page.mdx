@@ -1,6 +1,6 @@
 export const metadata = {
   title: '基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战',
-  description: '全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。',
+  description: '将图片转换为模型可消费的 Base64 与 MIME 格式，结合 Zod 校验与 responseSchema 提取发票等结构化数据。',
   date: '2025-01-25',
   category: 'AI 工程',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战',
-    description: '全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。',
+    description: '将图片转换为模型可消费的 Base64 与 MIME 格式，结合 Zod 校验与 responseSchema 提取发票等结构化数据。',
     url: '/posts/gemini-image-recognition', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战',
-    description: '全面剖析 Gemini 1.5 / 2.0 Flash 视觉模型的多模态能力：涵盖图片 URL 抓取、Multipart 文件流式上传、OCR 票据识别与 JSON 结构化提取。', images: ['/og-image.png'] },
+    description: '将图片转换为模型可消费的 Base64 与 MIME 格式，结合 Zod 校验与 responseSchema 提取发票等结构化数据。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -36,13 +36,11 @@ sequenceDiagram
 
 多模态调用的难点通常不在“把图片发过去”，而在输入边界和输出契约。生产接口应限制体积与 MIME 类型，并把模型输出当作不可信数据继续校验。
 
-Gemini 1.5 / 2.0 Flash 具备原生的**原生多模态（Native Multimodal）**架构，不仅能理解文字，还能直接对高分辨率图像、图表、UI 界面截图乃至 PDF 扫描件进行毫秒级的视觉理解与结构化字段提取。
+接入多模态模型时，很多开发者以为把图片 URL 直接发给模型就行。但实际工程中往往会遇到防盗链拦截、超大图片传输过慢、或者模型把图片里明明存在的字段漏掉的问题。处理图像输入的核心，在于在服务端把好大小与格式关，并用强 Schema 锁死输出。
 
-在实际业务中，图像识别需求通常分为两种场景：
-1. **远程图片 URL 解析**（如电商商品图、社交媒体图片链接）；
-2. **本地文件直接上传**（如用户即时上传的身份证、发票、设计稿原图）。
-
-本文提供一套基于 Hono + Zod + Google Generative AI 的生产级视觉 API 实现方案。
+业务中的图像识别主要对应两种场景：
+1. 远程图片 URL 解析（如爬虫抓取的商品图、外部图片链接）；
+2. 本地文件直接上传（如用户在前端选中的发票、小票截图）。
 
 ---
 
@@ -190,15 +188,14 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 ---
 
-## 多模态实战性能与注意事项
+## 性能与边界注意事项
 
-1. **Token 与分辨率优化**：
-   * Gemini 视觉模型会自动将图像切片（Tiles）。对于 1024x1024 标准图像，通常消耗 **258 个 Tokens** 左右；
-   * 在移动端上传前，建议使用 Canvas 进行适当压缩（如长边不超过 2048px），在不损失文字清晰度的前提下削减上传带宽。
-2. **大文件采用 File API**：
-   * 当图片体积大于 20MB（或视频/超长 PDF）时，不建议使用 `inlineData`（Base64 膨胀约 33%），应改用 Google Cloud 提供的 `GoogleAIFileManager` 预先上传获取 URI。
-3. **敏感信息与合规**：
-   * 涉及用户身份证件、人脸识别时，确保传输全程启用 HTTPS/TLS 并在识别完成后立即销毁内存 Buffer。
+1. **Token 与分辨率权衡**：
+   Gemini 视觉模型会将输入图像切片（Tiles）。对于 1024x1024 图像，通常消耗约 258 个 Tokens。在移动端上传前，建议在前端用 Canvas 将超大图片长边等比缩放到 2048px 以内，既能保留文字可读性，又能大幅减少网络上传耗时。
+2. **大文件改用 File API**：
+   当图片体积大于 20MB（或超长 PDF、短视频）时，不宜使用 `inlineData`（Base64 膨胀约 33%），应改用官方提供的 `GoogleAIFileManager` 预先上传并获得 URI。
+3. **敏感凭据清理**：
+   处理发票或证件截图时，确保服务端内存 Buffer 处理完后立即释放，避免在日志中打印 Base64 全文。
 
 ---
 
@@ -206,7 +203,7 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 - [Google AI：图像理解](https://ai.google.dev/gemini-api/docs/image-understanding)
 
-## 总结
+## 工程踩坑小结
 
-* **全格式支持**：结合 `inlineData` 与 Base64，可无缝对接 URL 抓取与文件直传。
-* **从“描述图片”到“结构化提取”**：利用 `responseSchema`，Gemini 能直接充当生产级 OCR + NLP 结构化解析引擎。
+- **Base64 传输限制**：小图片通过 `inlineData` 传 Base64 最轻便，但数据体积膨胀 33%。超过 10MB 的图或多页 PDF，一定要换用官方的文件上传接口（File API），否则容易拖垮服务端的内存与网络带宽。
+- **提取结果双重校验**：即使模型配置了 `responseSchema`，关键数值字段（如发票金额、税号）在下游入库前仍然需要做业务规则校验，防止模型出现数字笔画误读。

@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '基于 Tiptap + Yjs + Hocuspocus 的企业级多人富文本协同架构实战',
-  description: '详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。',
+  title: '基于 Tiptap + Yjs + Hocuspocus 的多人富文本协同架构实践',
+  description: '将 Tiptap、Yjs 与 Hocuspocus 串联起来，梳理富文本节点映射、Awareness 光标广播与 CRDT 快照入库流程。',
   date: '2025-01-26',
   category: '协同架构',
   readingTime: '9 分钟',
   alternates: { canonical: '/posts/tiptap-collaboration' },
   openGraph: {
     type: 'article',
-    title: '基于 Tiptap + Yjs + Hocuspocus 的企业级多人富文本协同架构实战',
-    description: '详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。',
+    title: '基于 Tiptap + Yjs + Hocuspocus 的多人富文本协同架构实践',
+    description: '将 Tiptap、Yjs 与 Hocuspocus 串联起来，梳理富文本节点映射、Awareness 光标广播与 CRDT 快照入库流程。',
     url: '/posts/tiptap-collaboration', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '基于 Tiptap + Yjs + Hocuspocus 的企业级多人富文本协同架构实战',
-    description: '详解现代协同编辑器全栈架构：从 Tiptap ProseMirror 节点与 Y.Doc 映射，到 Hocuspocus WebSocket 状态分发、实时光标感知与 Webhook 增量持久化。', images: ['/og-image.png'] },
+    title: '基于 Tiptap + Yjs + Hocuspocus 的多人富文本协同架构实践',
+    description: '将 Tiptap、Yjs 与 Hocuspocus 串联起来，梳理富文本节点映射、Awareness 光标广播与 CRDT 快照入库流程。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -35,9 +35,7 @@ flowchart LR
 
 正文更新与在线光标是两类数据：Yjs 文档更新需要可靠同步和持久化，Awareness 是短暂状态，用户离线后应自然消失。
 
-在研发类似 Notion、飞书文档的多人实时协作富文本系统时，**Tiptap**（基于 ProseMirror 的 Headless 编辑器框架）配合 **Yjs** 与 **Hocuspocus**，构成了目前生产环境中最成熟、扩展性最强的技术组合。
-
-本文剖析 Tiptap 与 Yjs 的双向绑定机制、Hocuspocus 协同服务端的生命周期钩子，以及高可用数据持久化实践。
+给富文本编辑器加上多人协同，踩坑最多的地方通常不是建立 WebSocket 连接，而是状态边界：撤销重做怎么不误删别人的字、在线光标怎么在断网时清理、以及历史编辑记录堆积导致文档越来越慢怎么压缩。Tiptap 负责界面与 DOM 映射，Yjs 负责底层的 CRDT 冲突合并，Hocuspocus 则充当 WebSocket 协同服务端。
 
 ---
 
@@ -208,8 +206,9 @@ server.listen();
 
 - [Tiptap：Collaboration](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
 
-## 总结
+## 协同链路的核心分工
 
-* **Tiptap + ProseMirror** 提供了极其灵活的富文本 DOM 渲染与 Schema 扩展机制；
-* **Yjs + Hocuspocus** 以零冲突、低延迟的 CRDT 架构接管了复杂的数据分发与落盘；
-* 两者结合是目前构建企业级文档协同系统的标准黄金搭档。
+拆开这套架构，每层只做好一件事：
+- **Tiptap / ProseMirror**：专注文档模型（Schema）与 DOM 事件拦截，屏蔽光标和渲染细节。
+- **Yjs**：用 CRDT 算法把树状文档转成二进制操作日志，在各个客户端之间保证最终一致。
+- **Hocuspocus**：作为无状态网关，只负责广播更新与暂时存储快照，真实文档数据异步落入 PostgreSQL 或 S3。

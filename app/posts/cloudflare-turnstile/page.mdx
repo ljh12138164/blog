@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '告别糟糕的图形验证码：Cloudflare Turnstile 无感人机验证全栈集成实践',
-  description: '全面解析 Cloudflare Turnstile 智能人机验证原理，提供 React / Next.js 前端无缝嵌入与 Node.js / Hono 后端 Token 安全校验方案。',
+  title: 'Cloudflare Turnstile 无感人机验证全栈集成实践',
+  description: '梳理 Turnstile 的客户端挑战与服务端 Siteverify 校验链路，避免把前端 Token 当作可信凭据。',
   date: '2025-02-10',
   category: '全栈与安全',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/cloudflare-turnstile' },
   openGraph: {
     type: 'article',
-    title: '告别糟糕的图形验证码：Cloudflare Turnstile 无感人机验证全栈集成实践',
-    description: '全面解析 Cloudflare Turnstile 智能人机验证原理，提供 React / Next.js 前端无缝嵌入与 Node.js / Hono 后端 Token 安全校验方案。',
+    title: 'Cloudflare Turnstile 无感人机验证全栈集成实践',
+    description: '梳理 Turnstile 的客户端挑战与服务端 Siteverify 校验链路，避免把前端 Token 当作可信凭据。',
     url: '/posts/cloudflare-turnstile', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '告别糟糕的图形验证码：Cloudflare Turnstile 无感人机验证全栈集成实践',
-    description: '全面解析 Cloudflare Turnstile 智能人机验证原理，提供 React / Next.js 前端无缝嵌入与 Node.js / Hono 后端 Token 安全校验方案。', images: ['/og-image.png'] },
+    title: 'Cloudflare Turnstile 无感人机验证全栈集成实践',
+    description: '梳理 Turnstile 的客户端挑战与服务端 Siteverify 校验链路，避免把前端 Token 当作可信凭据。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -37,11 +37,7 @@ sequenceDiagram
 
 安全边界只有一句话：**Token 必须由服务端验证，且业务动作必须发生在验证成功之后。**
 
-在登录、注册、评论或高频 API 调用场景中，为了抵御自动化脚本、撞库和恶意爬虫，引入人机验证（CAPTCHA）是常见的防御手段。
-
-然而，传统的“找出所有斑马线/红绿灯”式的图形验证码体验极差，不仅打断正常用户操作，更直接导致转化率暴跌。**Cloudflare Turnstile** 作为 reCAPTCHA 的现代替代品，绝大多数情况下无需用户任何手动点击即可完成静默验证，并且**完全免费、隐私友好**。
-
-本文详解 Turnstile 的全栈运行模型与前后端接入方案。
+很多登录页或评论区为了防刷脚本，会挂上九宫格选图验证码。用户填完表单还要点几轮红绿灯和斑马线，不仅烦琐，移动端上还经常误触。Cloudflare Turnstile 的思路是把检查放在后台：利用浏览器环境特征和轻量 Proof-of-Work（工作量证明）完成静默判断，正常用户几乎不需要手动点击。
 
 ---
 
@@ -73,7 +69,7 @@ sequenceDiagram
 
 ## 前端集成：在 Next.js / React 中嵌入 Turnstile
 
-推荐使用官方或经过良好维护的 React 封装库 `@marsidev/react-turnstile`：
+使用社区维护的 React 封装库 `@marsidev/react-turnstile`：
 
 ```bash
 pnpm add @marsidev/react-turnstile
@@ -164,7 +160,7 @@ export function LoginForm() {
 
 ## 后端校验：在 Hono / Next.js Route Handler 中验证 Token
 
-在服务端，我们需要向 `https://challenges.cloudflare.com/turnstile/v0/siteverify` 发送验证请求：
+在服务端，向 `https://challenges.cloudflare.com/turnstile/v0/siteverify` 发送验证请求：
 
 ```ts
 // app/api/login/route.ts
@@ -223,14 +219,14 @@ export async function POST(req: Request) {
 
 ---
 
-## 核心优势对比
+## reCAPTCHA 与 Turnstile 差异
 
-| 特性 | Google reCAPTCHA v2 / v3 | Cloudflare Turnstile |
+| 维度 | Google reCAPTCHA v2 / v3 | Cloudflare Turnstile |
 | :--- | :--- | :--- |
-| **用户体验** | 经常弹出繁琐的九宫格点图 | **95%+ 情况下零交互、秒级自动放行** |
-| **隐私保护** | 采集较多用户画像与追踪数据 | **承诺不将验证数据用于广告追踪** |
-| **费用方案** | 超过配额后费用昂贵 | **完全免费且无严苛调用量限制** |
-| **无障碍体验 (a11y)** | 视障用户很难完成图片点选 | 自动设备特征与 PoW 校验，无视障障碍 |
+| **交互模式** | 常见九宫格图片点选 | 绝大多数场景后台无交互放行 |
+| **数据采集** | 依赖 Google 账号生态与用户行为追踪 | 主打无隐私追踪，不用于广告画像 |
+| **调用额度** | 超额后计费门槛较严格 | 免费额度宽松 |
+| **无障碍 (a11y)** | 视障用户依赖音频验证码（识别困难） | 依赖设备环境特征，免除视觉点选 |
 
 ---
 
@@ -238,8 +234,8 @@ export async function POST(req: Request) {
 
 - [Cloudflare：服务端验证](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/)
 
-## 总结
+## 防御与落地细节
 
-* **前端**：通过 `@marsidev/react-turnstile` 组件在加载完成后获取一次性令牌。
-* **后端**：在 Controller / Route Handler 中调用 Cloudflare Siteverify 接口进行服务端强校验。
-* **收益**：在零成本、高隐私的前提下，彻底杜绝机器脚本爆破，同时给予真实用户极致丝滑的无感操作体验。
+- **Token 一次性消费**：每个 Turnstile Token 只能向 Siteverify 验证一次。如果后端校验业务逻辑失败（例如用户密码输错），前端必须重置 Turnstile 组件（调用 `reset()`）重新获取新 Token，否则用户再次点击提交时，后端 Siteverify 会直接返回 `invalid-input-response`。
+- **超时失效（Expire）**：生成的 Token 约有 300 秒有效期。如果用户在填写表单时停留过久，需监听 `onExpire` 触发静默刷新，避免提交瞬间因为凭证过期被拒。
+- **多层防御配合**：验证码只能挡住简易爬虫和初级撞库脚本。如果攻击者通过逆向或无头浏览器伪造指纹，后端依然需要配合 Redis 频次限制（Rate Limit）与 IP 封禁。

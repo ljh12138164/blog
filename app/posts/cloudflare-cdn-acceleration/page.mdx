@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '全球 CDN 边缘加速原理解析与 Cloudflare 缓存层级调优实战',
-  description: '深入解析 CDN Anycast 任播路由、边缘 PoP 节点缓存分层与 Cloudflare Cache Rules 规则配置，让静态资源实现毫秒级全球触达。',
+  title: 'CDN 边缘缓存原理与 Cloudflare Cache Rules 配置实践',
+  description: '梳理 CDN Anycast 路由与边缘分层缓存机制，配合 Cloudflare Cache Rules 配置静态资源与 HTML 缓存，以及 CI/CD 自动清除缓存。',
   date: '2025-02-11',
   category: '网络与运维',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/cloudflare-cdn-acceleration' },
   openGraph: {
     type: 'article',
-    title: '全球 CDN 边缘加速原理解析与 Cloudflare 缓存层级调优实战',
-    description: '深入解析 CDN Anycast 任播路由、边缘 PoP 节点缓存分层与 Cloudflare Cache Rules 规则配置，让静态资源实现毫秒级全球触达。',
+    title: 'CDN 边缘缓存原理与 Cloudflare Cache Rules 配置实践',
+    description: '梳理 CDN Anycast 路由与边缘分层缓存机制，配合 Cloudflare Cache Rules 配置静态资源与 HTML 缓存，以及 CI/CD 自动清除缓存。',
     url: '/posts/cloudflare-cdn-acceleration', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '全球 CDN 边缘加速原理解析与 Cloudflare 缓存层级调优实战',
-    description: '深入解析 CDN Anycast 任播路由、边缘 PoP 节点缓存分层与 Cloudflare Cache Rules 规则配置，让静态资源实现毫秒级全球触达。', images: ['/og-image.png'] },
+    title: 'CDN 边缘缓存原理与 Cloudflare Cache Rules 配置实践',
+    description: '梳理 CDN Anycast 路由与边缘分层缓存机制，配合 Cloudflare Cache Rules 配置静态资源与 HTML 缓存，以及 CI/CD 自动清除缓存。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,9 +33,9 @@ flowchart LR
 
 CDN 优化的核心不是“离用户更近”这一句话，而是让**可复用响应在正确的缓存键下命中，同时让私有或动态响应继续回源**。
 
-在 Web 站点的全球访问优化中，内容分发网络（Content Delivery Network, CDN）是降低网络延迟、削减源站带宽负载和抵御 DDoS 攻击的核心基础设施。
+在 Web 站点的访问优化中，内容分发网络（CDN）常用于降低网络延迟、削减源站带宽负载。将域名接入 Cloudflare 后，请求会先到达就近的边缘 PoP 节点。
 
-将域名接入 **Cloudflare** 后，用户请求不再直接击穿到单点源站服务器，而是被智能调度至分布在全球 300 多个城市的边缘 PoP（Point of Presence）节点。本文解析 CDN 的底层加速机理与 Cloudflare 缓存调优实践。
+本文梳理 CDN 边缘缓存的命中机理，以及如何通过 Cache Rules 与源站缓存头配合避免旧资源残留或非预期缓存。
 
 ---
 
@@ -66,7 +66,7 @@ Cloudflare 边缘 PoP 节点 (Edge Cache)
 
 ## 核心配置实战：Cloudflare Cache Rules 精细化控制
 
-默认情况下，Cloudflare 仅对特定扩展名（`.jpg`、`.css`、`.js` 等）进行简单缓存，并不缓存 HTML 页面。为了让静态博客或现代 SPA 获得极致性能，我们需要配置 **Cache Rules**。
+默认情况下，Cloudflare 仅对特定扩展名（`.jpg`、`.css`、`.js` 等）进行简单缓存，并不缓存 HTML 页面。为了提升静态站点或 SPA 的首屏响应与离线命中率，我们可以按路由维度配置 **Cache Rules**。
 
 ### 1. 静态资源长效缓存规则
 
@@ -92,7 +92,7 @@ Cache-Control: public, max-age=0, s-maxage=86400, stale-while-revalidate=600
 
 * `max-age=0`：要求浏览器每次导航时向边缘节点发起协商请求（确保获取最新内容）。
 * `s-maxage=86400`：指示 Cloudflare 边缘节点将 HTML 缓存 24 小时。
-* `stale-while-revalidate=600`：即使边缘缓存过期，在后台异步向源站刷新内容的同时，先将陈旧缓存（Stale Cache）返回给用户，避免用户感知到任何等待。
+* `stale-while-revalidate=600`：即使边缘缓存过期，在后台异步向源站刷新内容的同时，先将陈旧缓存（Stale Cache）返回给用户，避免用户感知到等待。
 
 ---
 
@@ -102,7 +102,7 @@ Cache-Control: public, max-age=0, s-maxage=86400, stale-while-revalidate=600
 
 | 状态值 | 含义与解析 |
 | :--- | :--- |
-| **`HIT`** | 边缘节点命中有效缓存，直接由离用户最近的 CDN 机房返回（最理想状态）。 |
+| **`HIT`** | 边缘节点命中有效缓存，直接由离用户最近的 CDN 机房返回。 |
 | **`MISS`** | 边缘节点未找到缓存，已向源站拉取并填充至当前边缘节点。 |
 | **`DYNAMIC`** | 资源未配置缓存规则（或被绕过），请求直接穿透至源站。 |
 | **`EXPIRED`** | 缓存已过 TTL 有效期，边缘节点正重新向源站验证。 |
@@ -112,17 +112,17 @@ Cache-Control: public, max-age=0, s-maxage=86400, stale-while-revalidate=600
 
 ## 生产环境自动化缓存清除（Cache Purge）
 
-当博客发布新文章或系统热修复上线时，可以通过 Cloudflare API 精准清除特定 URL 或全站缓存：
+当发布新内容或部署新版本时，可以通过 Cloudflare API 清除特定 URL 或全站缓存：
 
 ```bash
-# 通过 cURL 调用 Cloudflare Purge API 精准清除首页缓存
+# 通过 cURL 调用 Cloudflare Purge API 清除首页缓存
 curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" \
      -H "Authorization: Bearer {API_TOKEN}" \
      -H "Content-Type: application/json" \
      --data '{"files":["https://example.com/","https://example.com/posts"]}'
 ```
 
-在 GitHub Actions CI/CD 流水线末尾集成上述指令，即可实现“代码合并即自动发布并秒级刷新全网 CDN”。
+在 GitHub Actions CI/CD 流水线末尾调用该接口，发布后能及时刷新边缘缓存，避免用户访问到旧版本静态页面。
 
 ---
 
@@ -130,8 +130,8 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 
 - [Cloudflare：Cache Rules](https://developers.cloudflare.com/cache/how-to/cache-rules/)
 
-## 总结
+## 工程经验小结
 
-* **合理规划缓存分层**：静态资产（带哈希）长效强缓存，HTML 页面使用 `s-maxage` 配合 `stale-while-revalidate`。
-* **利用 Cloudflare Anycast**：在全球数十个地区降低 TCP/TLS 握手往返时延（RTT）。
-* **自动化闭环**：CI 构建完成后调用 Purge API，兼顾高性能与内容及时性。
+缓存策略的核心在于区分不变资产与易变入口。
+
+带内容哈希的静态 JS/CSS 适合直接配置一年以上的长效缓存；而 HTML 页面虽然也可以在边缘缓存，但必须配合合理的 `s-maxage` 与主动 Purge 机制。如果只配边缘缓存却缺少自动清理机制，发布新版本时容易出现用户请求到旧 HTML、进而找不到对应哈希 chunk 的 404 故障。

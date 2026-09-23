@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Monorepo 实践：pnpm Workspace 与 Turborepo',
-  description: '深度解析前端 Monorepo 架构演进：对比 Lerna 与 Turborepo 的构建管道与哈希缓存，详解 pnpm workspace 依赖拓扑、软硬链接去重与多包统一发版。',
+  description: '探讨前端 Monorepo 方案中 pnpm workspace 的依赖组织与 Turborepo 任务编排机制，分析依赖拓扑、增量构建缓存与跨包联调实践。',
   date: '2024-12-28',
   category: '前端工程化',
   readingTime: '10 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'Monorepo 实践：pnpm Workspace 与 Turborepo',
-    description: '深度解析前端 Monorepo 架构演进：对比 Lerna 与 Turborepo 的构建管道与哈希缓存，详解 pnpm workspace 依赖拓扑、软硬链接去重与多包统一发版。',
+    description: '探讨前端 Monorepo 方案中 pnpm workspace 的依赖组织与 Turborepo 任务编排机制，分析依赖拓扑、增量构建缓存与跨包联调实践。',
     url: '/posts/monorepo-management', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'Monorepo 实践：pnpm Workspace 与 Turborepo',
-    description: '深度解析前端 Monorepo 架构演进：对比 Lerna 与 Turborepo 的构建管道与哈希缓存，详解 pnpm workspace 依赖拓扑、软硬链接去重与多包统一发版。', images: ['/og-image.png'] },
+    description: '探讨前端 Monorepo 方案中 pnpm workspace 的依赖组织与 Turborepo 任务编排机制，分析依赖拓扑、增量构建缓存与跨包联调实践。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -34,9 +34,9 @@ flowchart TD
 
 Workspace 管依赖安装与包链接，任务编排器管命令顺序和缓存。把两者职责分开，才能定位“依赖没解析”和“任务没重跑”这两类不同问题。
 
-在复杂企业级前端架构中，随着业务模块和公共组件库（如 UI 组件库、工具函数包、SDK、管理后台、移动端 H5）的膨胀，**多仓库（Multi-Repo）**模式面临版本联动升级繁琐、跨仓库联调困难、依赖重复安装等痛点。
+在项目规模扩大后，随着公共 UI 组件、工具函数库与多个业务应用的拆分，多仓库（Multi-repo）往往会带来版本发布繁琐、跨仓库联调链路长等问题。
 
-将所有关联项目聚合在单一代码仓库中的 **Monorepo（单体多包）** 成为主流解法。本文剖析从早期 Lerna 到现代 **pnpm Workspace + Turborepo** 的性能飞跃与最佳工程拓扑。
+将关联项目聚合在同一仓库中维护（Monorepo）是一种常见解法。本文结合 pnpm workspace 的依赖拓扑与 Turborepo 任务调度，梳理大仓工程化组织与构建缓存实践。
 
 ---
 
@@ -150,8 +150,8 @@ packages:
 
 - [pnpm：Workspaces](https://pnpm.io/workspaces)
 
-## 总结
+## 工程经验小结
 
-* **依赖隔离与空间节省**：pnpm workspace 彻底解决了幽灵依赖与磁盘空间浪费。
-* **极速构建**：Turborepo 的有向无环图调度与指纹缓存将大仓构建耗时压缩至极限。
-* **团队协同**：配合统一的代码规范与版本流，为多人协作的大型前端工程奠定稳固基石。
+Monorepo 并不会自动带来工程效率的提升，反而对团队的依赖规范和发版流程提出了更高要求。
+
+使用 Turborepo 时，最关键的是合理配置 `inputs` 与 `outputs` 缓存边界：如果 `outputs` 遗漏了关键产物目录，或者 `inputs` 没有包含影响构建的环境变量，就可能导致 CI 命中错误缓存、构建出带有隐性问题的产物。另外，跨包之间尽量避免循环依赖，保持单向依赖拓扑是保证 Monorepo 可持续维护的前提。
