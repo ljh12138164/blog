@@ -48,27 +48,18 @@ flowchart LR
 
 ## 步骤一：创建 Supabase PostgreSQL 数据库
 
-Umami 依赖 PostgreSQL 存储站点元数据与时序访问日志。Supabase 提供了开箱即用的免费托管实例：
+Umami 依赖 PostgreSQL 存储站点元数据与时序访问日志。Supabase 提供了开箱即用的免费托管实例用于部署 umami的环境变量：
 
 1. 登录 [Supabase 官网](https://supabase.com) 并新建一个 Project。
 2. 填写数据库密码（Database Password），所在地域建议选择与目标受众最近的节点（如 `Northeast Asia (Tokyo)` 或 `Southeast Asia (Singapore)`）。
 3. 项目初始化完成后，进入 **Project Settings -> Database** 面板，找到 **Connection string**。
 
 ### 连接字符串注意事项
+![start](./image2.png)
 
 在 Serverless 环境下（如 Vercel），数据库连接处理需要区分**直连**与**连接池（Pooler）**：
 * **Direct Connection（端口 5432）**：适合构建期执行数据库迁移（Migration）。
 * **Transaction Pooler（端口 6543）**：通过 PgBouncer 管理连接，适合运行时高并发请求。
-
-Umami 初次启动时需要执行 Prisma 数据库表结构初始化，建议在连接串后显式加上连接池参数或直接使用端口 5432 的直连 URI：
-
-```text
-postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
-```
-
-{/* screenshot-placeholder:start */}
-
-{/* screenshot-placeholder:end */}
 
 ---
 
@@ -82,26 +73,12 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 
 ### 2. 配置环境变量
 
-在 Vercel 项目设置中的 **Environment Variables** 填入以下两个核心参数：
-
-| 变量名 | 说明 | 示例值 |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | 上一步获取的 Supabase PostgreSQL 连接串 | `postgresql://postgres:pass@host:5432/postgres` |
-| `APP_SECRET` | 用于哈希加密密码和 Salt 的随机字符串 | 任意 32 位随机字符（可通过终端 `openssl rand -hex 32` 生成） |
+在 Vercel 项目设置中的 **Environment Variables** 填入以下两个核心参数DIRECT_DATABASE_URL和DATABASE_URL：
+![start](./image1.png)
 
 ### 3. 执行首次构建
 
 点击 **Deploy**。Vercel 会自动拉取依赖并调用 `prisma migrate deploy` 将 Umami 所需的表结构（包括 `website`、`session`、`website_event` 等）写入 Supabase 数据库中。整个部署耗时通常在 2 分钟左右。
-
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 02：Vercel 环境变量配置与部署完成界面**
->
-> 图片放到 `public/images/posts/umami-vercel-supabase/vercel-env-deploy.webp` 后，将本段替换为：
->
-> `![Vercel 环境变量配置与部署完成界面](/images/posts/umami-vercel-supabase/vercel-env-deploy.webp)`
->
-> 建议截取 Vercel Project Settings 中的 Environment Variables 列表与 Deployment Success 状态。
-{/* screenshot-placeholder:end */}
 
 ---
 
@@ -134,112 +111,8 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 ```html
 <script defer src="https://analytics.yourdomain.com/script.js" data-website-id="8f91c34a-9b12-4e56-8a7c-0123456789ab"></script>
 ```
+![start](./image3.png)
 
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 03：Umami 后台添加网站与获取 Tracking Code**
->
-> 图片放到 `public/images/posts/umami-vercel-supabase/umami-add-website.webp` 后，将本段替换为：
->
-> `![Umami 后台添加网站与获取 Tracking Code](/images/posts/umami-vercel-supabase/umami-add-website.webp)`
->
-> 建议截取 Settings -> Websites -> Edit 弹窗中的 Tracking Code 代码段。
-{/* screenshot-placeholder:end */}
-
----
-
-## 步骤四：在 Next.js / Nextra 项目中接入统计
-
-在现代基于 Next.js App Router 构建的静态站点中，推荐在根布局 (`app/layout.tsx`) 中通过原生 `<script>` 或 Next.js 的 `<Script />` 组件引入：
-
-### 1. 注入脚本
-
-```tsx
-// app/layout.tsx
-import Script from 'next/script';
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-  const umamiScriptUrl = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL;
-
-  return (
-    <html lang="zh-CN">
-      <head>
-        {umamiWebsiteId && umamiScriptUrl && (
-          <Script
-            src={umamiScriptUrl}
-            data-website-id={umamiWebsiteId}
-            strategy="afterInteractive"
-          />
-        )}
-      </head>
-      <body>{children}</body>
-    </html>
-  );
-}
-```
-
-将变量配置到 `.env.local` 或生产构建环境中：
-```bash
-NEXT_PUBLIC_UMAMI_WEBSITE_ID=8f91c34a-9b12-4e56-8a7c-0123456789ab
-NEXT_PUBLIC_UMAMI_SCRIPT_URL=https://analytics.yourdomain.com/script.js
-```
-
-### 2. SPA 路由切换自动兼容
-
-Umami 的客户端脚本底层通过重写浏览器的 `history.pushState` 与监听 `popstate` 实现路由感知。当用户在 Next.js 页面间通过 `<Link>` 进行客户端软导航时，Umami 会自动捕获新路径并发送上报请求，不需要额外在 `usePathname()` 中手动写上报触发器。
-
-### 3. 自定义事件埋点（可选）
-
-对于文章阅读完毕、代码复制或暗黑模式切换等特定交互，可以调用 Umami 的全局 API 进行事件上报：
-
-```ts
-// lib/analytics.ts
-declare global {
-  interface Window {
-    umami?: {
-      track: (eventName: string, eventData?: Record<string, string | number>) => void;
-    };
-  }
-}
-
-export function trackEvent(name: string, data?: Record<string, string | number>) {
-  if (typeof window !== 'undefined' && window.umami) {
-    window.umami.track(name, data);
-  }
-}
-```
-
-在组件中直接使用：
-```tsx
-<button
-  onClick={() => {
-    trackEvent('copy_code_snippet', { language: 'typescript' });
-  }}
->
-  复制代码
-</button>
-```
-
----
-
-## 步骤五：数据流验证与仪表盘效果
-
-在本地或生产环境部署完成后，打开浏览器开发者工具的 **Network** 面板：
-1. 刷新页面，确认 `script.js` 成功拉取（体积仅约 2.5KB，Gzip 传输约 1.2KB）。
-2. 查看向 `https://analytics.yourdomain.com/api/send` 发起的 POST 请求，返回 HTTP 200 即说明采集成功。
-3. 打开 Umami 管理后台，进入该站点的 **Realtime** 标签页，可以看到当前在线人数、正在访问的页面路由、引荐来源（Referrers）以及地理分布。
-
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 04：Umami 仪表盘实时访客与访问概览**
->
-> 图片放到 `public/images/posts/umami-vercel-supabase/umami-dashboard-overview.webp` 后，将本段替换为：
->
-> `![Umami 仪表盘实时访客与访问概览](/images/posts/umami-vercel-supabase/umami-dashboard-overview.webp)`
->
-> 建议截取 Realtime 活跃访客、页面浏览排行、来源国家与设备分布面板。
-{/* screenshot-placeholder:end */}
-
----
 
 ## 官方资料
 
