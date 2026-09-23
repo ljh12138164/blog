@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Web Canvas 2D 图形库选型与性能对比',
-  description: '全面评测主流 Web Canvas 图形库：对比 Fabric.js 的对象模型与 SVG 序列化、Konva 的分层缓存机制、Pixi.js 的 WebGL 极致性能与 Paper.js 的矢量布尔运算。',
+  description: '从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。',
   date: '2025-01-22',
   category: '前端图形学',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'Web Canvas 2D 图形库选型与性能对比',
-    description: '全面评测主流 Web Canvas 图形库：对比 Fabric.js 的对象模型与 SVG 序列化、Konva 的分层缓存机制、Pixi.js 的 WebGL 极致性能与 Paper.js 的矢量布尔运算。',
+    description: '从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。',
     url: '/posts/canvas-library-research', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'Web Canvas 2D 图形库选型与性能对比',
-    description: '全面评测主流 Web Canvas 图形库：对比 Fabric.js 的对象模型与 SVG 序列化、Konva 的分层缓存机制、Pixi.js 的 WebGL 极致性能与 Paper.js 的矢量布尔运算。', images: ['/og-image.png'] },
+    description: '从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -24,11 +24,7 @@ export const metadata = {
 
 这不是“哪一个库最好”的排名。选型的关键是先写出约束：是否需要对象编辑手柄、是否必须导出 SVG、典型场景有多少图元、是否依赖复杂几何运算。约束不同，答案就会不同。
 
-HTML5 原生 Canvas 仅提供了极低级的像素绘制 API（如 `ctx.fillRect()`、`ctx.arc()`）。它没有内置的 DOM 树、没有事件委托、没有选区变换（Bounding Box 缩放/旋转手柄），更无法记录历史图元对象。
-
-在构建在线平面设计平台（如 Canva 替代品）、海报编辑器、白板或流程图系统时，选择合适的 **Canvas 2D 开源图形库** 决定了整个系统的研发上限。
-
-本文对四大主流图形库进行深度横向评测与选型分析。
+原生 Canvas 只是一个画布：每画一个圆或一条线，它立马变成一堆像素，没有图层、没有事件监听，也没有选中后的缩放旋转手柄。要做画板、海报编辑器或在线白板，几乎不可能从零手写所有交互。但目前开源的几个图形库定位完全不同：有的强在对象编辑，有的强在分层树，有的强在数万个图元的 WebGL 渲染。这篇文章记录我们调研这四大库时的权衡与结论。
 
 ---
 
@@ -38,7 +34,7 @@ HTML5 原生 Canvas 仅提供了极低级的像素绘制 API（如 `ctx.fillRect
 Canvas 图形库生态矩阵:
 ├── 1. 交互式平面设计器: Fabric.js (开箱即用的变换手柄与 SVG 互转)
 ├── 2. 结构化场景树与图表: Konva.js (分层渲染 Layer + React-Konva 原生组件化)
-├── 3. 极致高帧率 2D 游戏/粒子: Pixi.js (基于 WebGL / WebGPU 硬件加速)
+├── 3. 高帧率 2D 游戏/粒子: Pixi.js (基于 WebGL / WebGPU 硬件加速)
 └── 4. 复杂矢量路径与布尔运算: Paper.js (数学矢量与曲线布尔操作)
 ```
 
@@ -46,23 +42,23 @@ Canvas 图形库生态矩阵:
 
 ## 逐项深度剖析
 
-### 1. Fabric.js（LJH-Design 选用方案）
+### 1. Fabric.js（画板/海报排版常用）
 * **核心优势**：
-  * **开箱即用的选区交互**：任何添加到 Canvas 的图形，Fabric 会自动附带 8 个缩放手柄、旋转锚点和多选包围盒；
-  * **强大的 SVG 双向解析**：支持 `fabric.loadSVGFromString` 将 SVG 矢量文件解析为可编辑图元，也能将整个画板一键导出为纯净的 SVG 代码；
-  * **Node.js 服务端渲染**：结合 `node-canvas`，可以在后端无头（Headless）生成超高清海报图片。
+  * **开箱即用的选区交互**：添加到 Canvas 的任何图形，自动附带 8 个缩放手柄、旋转锚点和多选包围盒；
+  * **SVG 双向序列化**：支持将 SVG 矢量文件解析为可编辑图元，也能将整个画板一键导出为纯净的 SVG 代码；
+  * **Node.js 服务端渲染**：结合 `node-canvas`，可以在后端无头生成高清海报图片。
 * **适用场景**：海报编辑器、T恤印花定制、图片标注、桌面级排版软件。
 
 ### 2. Konva.js
 * **核心优势**：
-  * **分层缓存架构（Layering & Node Caching）**：支持将背景层、静态层和动态交互层分离为多个 Canvas 叠加，仅重绘变化层；
+  * **分层缓存架构**：支持将背景层、静态层和动态交互层分离为多个 Canvas 叠加，仅重绘变化层；
   * **框架绑定深度**：提供了官方维护的 `react-konva` 与 `vue-konva`，可用声明式 JSX 编写 Canvas 元素。
-* **适用场景**：在线白板、拓扑图、轻量 2D 互动游戏。
+* **适用场景**：在线白板、拓扑图、轻量 2D 互动演示。
 
 ### 3. Pixi.js
 * **核心优势**：
-  * **WebGL / WebGPU 极速渲染**：采用批处理（Batch Rendering）和纹理图集（Texture Atlases），能轻松在 60 FPS 下渲染数万个精灵图元（Sprites）；
-  * **滤镜系统丰富**：内置强大的 GLSL Shader 滤镜。
+  * **WebGL / WebGPU 批量渲染**：采用批处理（Batch Rendering）和纹理图集，能稳定渲染数万个精灵图元（Sprites）；
+  * **滤镜系统丰富**：内置强大的 GLSL Shader 滤镜体系。
 * **适用场景**：H5 互动小游戏、数据可视化重度粒子动画。
 
 ### 4. Paper.js
@@ -72,16 +68,16 @@ Canvas 图形库生态矩阵:
 
 ---
 
-## 全方位对比矩阵
+## 对比矩阵
 
 | 评估维度 | Fabric.js | Konva.js | Pixi.js | Paper.js |
 | :--- | :--- | :--- | :--- | :--- |
-| **底层渲染器** | Canvas 2D | Canvas 2D | **WebGL / WebGPU** | Canvas 2D |
-| **开箱即用变换手柄** | **原生自带 (强大)** | 需配置 Transformer | 需第三方插件 | 需自研手柄 |
-| **SVG 导入/导出** | **业界顶级支持** | 较弱 | 需插件转位图 | 良好支持 |
-| **React / Vue 友好度** | 命令式封装 | **原生 JSX 声明式** | 命令式或 React-Pixi | 命令式 |
-| **万级图元性能** | 一般 (几千图元) | 良好 (分层缓存) | **极强 (数万图元)** | 一般 |
-| **服务端 Node 渲染** | **优秀** | 一般 | 依赖虚拟 GL | 良好 |
+| **底层渲染器** | Canvas 2D | Canvas 2D | WebGL / WebGPU | Canvas 2D |
+| **开箱即用变换手柄** | 原生自带手柄 | 需配置 Transformer | 需第三方插件 | 需自研手柄 |
+| **SVG 导入/导出** | 支持完善 | 较弱 | 需插件转位图 | 良好支持 |
+| **React / Vue 友好度** | 命令式封装 | 原生 JSX 声明式 | 命令式或 React-Pixi | 命令式 |
+| **万级图元性能** | 一般 (几千图元) | 良好 (分层缓存) | 极强 (支持数万图元) | 一般 |
+| **服务端 Node 渲染** | 支持好 | 一般 | 依赖虚拟 GL | 良好 |
 
 ---
 
@@ -89,8 +85,8 @@ Canvas 图形库生态矩阵:
 
 - [MDN：Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
 
-## 结论与选型建议
+## 选型建议
 
-1. **如果是做类似 Canva / 稿定设计的“图层排版、文字排版、海报生成”应用**：**首选 Fabric.js**，能节省 80% 的交互手柄与 SVG 序列化工作量。
-2. **如果是以“声明式组件、无限白板”为核心**：推荐 **Konva.js**。
-3. **如果追求“万人在线同屏、数万粒子与物理引擎”**：选择 **Pixi.js**。
+1. **图层排版、文字编辑、海报导出**：选 **Fabric.js** 最省事，省去大量手写包围盒拖拽与 SVG 解析的工作。
+2. **声明式组件树、层级白板**：选 **Konva.js**，与 React / Vue 的状态流结合最顺畅。
+3. **粒子特效、数万动态图元、小游戏**：果断选 **Pixi.js**，借助 WebGL 硬件加速避免 CPU 计算瓶颈。

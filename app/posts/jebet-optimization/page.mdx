@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
-  description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。',
+  title: '协作平台构建体积优化：ECharts 按需引入与构建分包',
+  description: '记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。',
   date: '2025-02-02',
   category: '性能调优',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/jebet-optimization' },
   openGraph: {
     type: 'article',
-    title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
-    description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。',
+    title: '协作平台构建体积优化：ECharts 按需引入与构建分包',
+    description: '记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。',
     url: '/posts/jebet-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '敏捷协作平台 7MB 巨石应用瘦身实战：ECharts 按需引入、图片压缩与构建分包调优',
-    description: '全面复盘大型中后台协作平台从 7MB 臃肿包体到 1.1MB 极速加载的瘦身历程：涵盖 ECharts 模块化改造、Vite 分包策略、WebP 图片压缩与 Gzip 调优。', images: ['/og-image.png'] },
+    title: '协作平台构建体积优化：ECharts 按需引入与构建分包',
+    description: '记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -24,30 +24,30 @@ export const metadata = {
 
 不要先改 `manualChunks`。先记录入口包、异步包和资源体积，再判断问题属于“引入过多”“压缩不足”还是“缓存边界不稳定”。拆成更多文件不一定更快，它也会增加请求与调度成本。
 
-在 Jebet 敏捷项目管理平台开发初期，随着统计图表（燃尽图、工时分布图、交付漏斗）、富文本编辑器和数据导出功能的加入，生产构建产物（Bundle）直接飙升到了令人触目惊心的 **7.2 MB**！
+在敏捷协作平台开发初期，随着燃尽图、工时分布等图表以及富文本编辑器和数据导出模块的陆续接入，生产构建产物（Bundle）体积增长至 7.2 MB。
 
-在生产环境下，这导致用户初次打开首页需要下载近 8MB 的 JS 资源，白屏时间长达 6 秒以上。本文复盘完整的排查与分包瘦身历程。
+这导致初次访问时需要下载近 8MB 的静态资源，弱网环境下白屏时间明显拉长。本文记录具体的排查方式与逐步瘦身的过程。
 
 ---
 
-## 依赖诊断：谁吞噬了 7MB 的空间？
+## 体积瓶颈分析
 
 通过 `rollup-plugin-visualizer` 开启产物分析矩阵，发现主要体积由三大块构成：
 
 ```text
 7.2 MB 产物解剖图谱:
 ┌───────────────────────────────────────────────────────────┐
-│ 1. ECharts 全量全功能包 (占 2.4 MB) ──► 绝大部分图表用不上! │
-│ 2. 静态 UI 演示图与高清 PNG (占 2.8 MB) ──► 零压缩!        │
-│ 3. 单一大文件 Vendor Bundle (占 2.0 MB) ──► 缓存命中率极低!│
+│ 1. ECharts 全量全功能包 (占 2.4 MB) ──► 绝大部分图表用不上 │
+│ 2. 静态 UI 演示图与高清 PNG (占 2.8 MB) ──► 零压缩         │
+│ 3. 单一大文件 Vendor Bundle (占 2.0 MB) ──► 缓存命中率极低 │
 └───────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 核心优化措施一：ECharts 严格按需模块化加载
+## ECharts 按需引入与模块注册
 
-许多开发者习惯直接写 `import * as echarts from 'echarts'`，这会把 3D 图表、GL 渲染器、树图等所有无关图表全部打包进产物。
+习惯直接写 `import * as echarts from 'echarts'` 会把 3D 图表、GL 渲染器、树图等所有无关模块全部打包进产物。
 
 ### 改造为按需注册核心模块：
 
@@ -78,11 +78,11 @@ echarts.use([
 export default echarts;
 ```
 
-* **收益**：ECharts 体积从 **2.4MB 骤减至 420KB**，瘦身超过 **82%**。
+* **收益**：ECharts 体积从 2.4MB 减少到 420KB，体积下降超过 80%。
 
 ---
 
-## 核心优化措施二：静态资源自动化压缩与 WebP 转换
+## 静态资源构建期压缩
 
 在构建流水线中引入 `vite-plugin-image-optimizer`：
 
@@ -108,11 +108,11 @@ export default defineConfig({
 });
 ```
 
-* **收益**：全站图片体积从 **2.8MB 缩减至 480KB**。
+* **收益**：全站图片体积从 2.8MB 缩减至 480KB。
 
 ---
 
-## 核心优化措施三：Vite / Rollup 精细化拆包（Chunk Splitting）
+## Vite 分包策略（manualChunks）
 
 ```ts
 // vite.config.ts
@@ -135,14 +135,14 @@ export default defineConfig({
 
 ---
 
-## 最终优化战果对比
+## 优化前后数据对比
 
 | 评估维度 | 优化前 | 优化后 | 改善幅度 |
 | :--- | :--- | :--- | :--- |
 | **总构建体积** | 7.2 MB | **1.15 MB** | **-84.0%** |
 | **Gzip 传输体积** | 2.1 MB | **310 KB** | **-85.2%** |
-| **首屏加载白屏时间 (FCP)** | 6.2 秒 | **0.8 秒** | **提速 7.7 倍** |
-| **Lighthouse 性能跑分** | 38 分 (严重卡顿) | **95 分 (极速体验)** | **+57 分** |
+| **首屏加载白屏时间 (FCP)** | 6.2 秒 | **0.8 秒** | **-87.1%** |
+| **Lighthouse 性能跑分** | 38 分 | **95 分** | **+57 分** |
 
 ---
 
@@ -150,8 +150,8 @@ export default defineConfig({
 
 - [Vite：性能指南](https://vite.dev/guide/performance)
 
-## 总结
+## 工程经验小结
 
-* **避免全量导入**：图表库、图标库和工具库必须执行严格的按需 Tree-Shaking。
-* **资源前置压缩**：在构建期集成自动化图片无损压缩，杜绝原始高分大图直接上线。
-* **合理分包**：将核心运行时（React/Vue）与业务组件合理拆分，最大化利用浏览器强缓存。
+分包并非拆得越细越好。过细的 `manualChunks` 会导致浏览器发起过多的并发 HTTP 请求，反而可能在 HTTP/1.1 或弱网高延迟环境下恶化加载瀑布流。
+
+拆包的核心在于区分**变动频率低的基础运行时**（如 react、mobx）与**高频迭代的业务逻辑**，让长期缓存真正发挥作用。同时，静态图片在进入仓库前最好有统一的尺寸和格式规范，单纯依赖构建期插件压缩仍可能掩盖非必要的超大原图引入问题。

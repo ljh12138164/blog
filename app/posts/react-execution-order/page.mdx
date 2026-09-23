@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
-  description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。',
+  title: 'React 组件生命周期与 Effect 执行时序：Render 到 Commit 阶段解析',
+  description: '分析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的时序与常见陷阱。',
   date: '2025-05-20',
   category: 'React 进阶',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/react-execution-order' },
   openGraph: {
     type: 'article',
-    title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
-    description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。',
+    title: 'React 组件生命周期与 Effect 执行时序：Render 到 Commit 阶段解析',
+    description: '分析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的时序与常见陷阱。',
     url: '/posts/react-execution-order', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '图解 React 组件生命周期与 Effect 执行时序：从渲染阶段到 Commit 阶段',
-    description: '深入剖析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的精确时序。', images: ['/og-image.png'] },
+    title: 'React 组件生命周期与 Effect 执行时序：Render 到 Commit 阶段解析',
+    description: '分析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的时序与常见陷阱。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,9 +33,9 @@ flowchart LR
 
 最重要的边界是：Render 必须保持纯净；Commit 之后才能接触真实 DOM。`useLayoutEffect` 会在绘制前同步执行，`useEffect` 通常在绘制后处理与外部系统的同步。
 
-在 React 函数式组件开发中，许多与 DOM 测量、订阅、定时器或事件监听相关的 Bug，往往源于对 **组件函数体、`useLayoutEffect` 与 `useEffect` 在父子组件间的精确执行顺序** 理解不透彻。
+在 React 函数式组件开发中，许多与 DOM 测量、外部订阅、定时器或事件监听相关的异常，通常源于对组件函数体、`useLayoutEffect` 与 `useEffect` 在父子组件间的执行顺序理解偏差。
 
-本文通过清晰的时序图与对照实验，彻底厘清 React 在**挂载（Mount）**、**更新（Update）** 和 **卸载（Unmount）** 三个完整阶段的底层执行流。
+本文通过时序梳理与日志实验，分析 React 在挂载（Mount）、更新（Update）和卸载（Unmount）阶段的副作用执行时序。
 
 ---
 
@@ -170,7 +170,7 @@ function Child() {
 
 - [React：`useEffect`](https://react.dev/reference/react/useEffect)
 
-## 总结速查表
+## 执行时序速查与工程小结
 
 | 执行环节 | 父子先后顺序 | 执行时机 | 是否阻塞页面绘制 |
 | :--- | :--- | :--- | :--- |
@@ -179,3 +179,7 @@ function Child() {
 | **`useLayoutEffect` 激活** | **子 -> 父** | DOM 更新后、Paint 前 | 是 |
 | **`useEffect` 清理** | **子 -> 父** | 浏览器 Paint 之后 | 否 |
 | **`useEffect` 激活** | **子 -> 父** | 浏览器 Paint 之后 | 否 |
+
+在业务开发中，应尽量避免依赖父子组件之间隐式的 Effect 执行顺序来同步状态。如果父子之间存在数据或实例的依赖关系，优先采用“状态提升”（State Lifting）或显式回调，而不是假定某个子组件的 `useEffect` 一定在特定时间点就绪。
+
+此外，`useLayoutEffect` 会在浏览器绘制前同步执行，直接阻塞页面渲染。除非是为解决测量 DOM 尺寸防闪烁这类特定视觉矫正问题，否则大多数异步同步任务都应优先放在 `useEffect` 中。

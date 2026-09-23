@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '大型前端设计平台性能优化实战：从 Fabric.js / Tiptap 重型依赖分包到 SWC 编译调优',
-  description: '全面剖析重型设计系统与画板应用的端到端性能治理：涵盖 Canvas (Fabric.js) 与富文本模块动态懒加载、lodash-es 树摇、关键 CSS 提取与 Core Web Vitals 调优。',
+  title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
+  description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。',
   date: '2025-02-11',
   category: '性能调优',
   readingTime: '9 分钟',
   alternates: { canonical: '/posts/design-optimization' },
   openGraph: {
     type: 'article',
-    title: '大型前端设计平台性能优化实战：从 Fabric.js / Tiptap 重型依赖分包到 SWC 编译调优',
-    description: '全面剖析重型设计系统与画板应用的端到端性能治理：涵盖 Canvas (Fabric.js) 与富文本模块动态懒加载、lodash-es 树摇、关键 CSS 提取与 Core Web Vitals 调优。',
+    title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
+    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。',
     url: '/posts/design-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '大型前端设计平台性能优化实战：从 Fabric.js / Tiptap 重型依赖分包到 SWC 编译调优',
-    description: '全面剖析重型设计系统与画板应用的端到端性能治理：涵盖 Canvas (Fabric.js) 与富文本模块动态懒加载、lodash-es 树摇、关键 CSS 提取与 Core Web Vitals 调优。', images: ['/og-image.png'] },
+    title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
+    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,31 +33,28 @@ flowchart LR
 
 性能治理是测量闭环。动态导入、编译优化和 CSS 调整只是工具，只有能改善目标指标且不损害功能时才值得保留。
 
-在集成图形画布（Fabric.js）、富文本协同（Tiptap / Quill）、代码编辑器（Monaco）与 AI 视觉分析的综合性设计平台中，首屏性能往往面临严峻考验：
-* **首屏 Bundle 动辄超过 2.5MB**，在弱网下白屏时间超 4 秒；
-* **非关键重型模块（如画板导出、复杂滤镜库）**在首屏被全量加载执行，抢占主线程 CPU 时间；
-* **CSS 样式表阻塞渲染**，导致 First Contentful Paint（FCP）与 Largest Contentful Paint（LCP）飘红。
+画板类应用通常集成了 Canvas（Fabric.js）、富文本协同（Tiptap）与通用编辑器，直接同步打包进首屏容易导致主包膨胀到 2.5MB 以上。用户初次访问时白屏时间偏长，非关键交互逻辑抢占主线程执行，拖慢整体响应。
 
-本文记录系统性治理并实现页面秒开的调优实战。
+本文整理排查与分阶段治理的过程。
 
 ---
 
-## 性能优化全景四部曲
+## 优化方向与落地步骤
 
 ```text
 1. 依赖审计与清理 (Bundle Analyzer)
-   └── 剔除重复/遗留依赖，全量迁移 lodash-es 彻底消除未使用的代码
+   └── 剔除重复/遗留依赖，全量迁移 lodash-es 减少未使用的代码
 2. 动态异步加载与懒拆包 (Dynamic Import & Code Splitting)
    └── 将 Fabric.js 画布与 Tiptap 富文本隔离为按需 Chunk (ssr: false)
-3. 编译链路升级 (Next.js SWC Compiler)
-   └── 开启 optimizePackageImports 与模块化导入，削减编译与运行时开销
-4. 渲染关键路径优化 (Critical CSS)
+3. 编译链路优化 (Next.js SWC Compiler)
+   └── 开启 optimizePackageImports 与模块化导入，降低构建与运行时开销
+4. 渲染关键路径处理 (Critical CSS)
    └── 内联首屏核心 CSS，延迟加载非关键动画与次要主题样式
 ```
 
 ---
 
-## 核心措施一：重型第三方库动态懒加载（Dynamic Imports）
+## 重型第三方库动态懒加载
 
 在设计平台中，大部分用户首次进入页面只是查看列表或基础信息，并不需要立即唤醒 Fabric.js Canvas 或 Monaco Editor：
 
@@ -90,7 +87,7 @@ const RichTextEditor = dynamic(
 
 ---
 
-## 核心措施二：Next.js `next.config.ts` 编译层高级优化
+## Next.js 编译层配置优化
 
 利用 Next.js 内置的 Rust SWC 编译器对常用大型 UI / 图标库进行自动化导入优化：
 
@@ -121,20 +118,20 @@ export default nextConfig;
 
 ---
 
-## 核心措施三：关键 CSS 内联与异步样式加载
+## 关键 CSS 与字体加载策略
 
 1. **Critical CSS Inlining**：在 Next.js 构建阶段自动提取首屏 HTML 所需的关键样式并内嵌在 `<style>` 标签中，消除因外部 `.css` 文件下载阻塞导致的白屏。
 2. **字体与图标异步加载**：使用 `next/font` 自动实现本地子集化（Subsetting）与 `font-display: swap`，防止文字闪烁（FOIT）。
 
 ---
 
-## 优化前后 Core Web Vitals 收益对比
+## 优化前后 Core Web Vitals 对比
 
 | 指标 | 优化前 | 优化后 | 改善幅度 |
 | :--- | :--- | :--- | :--- |
 | **首屏 JS 体积 (Uncompressed)** | 2.65 MB | **410 KB** | **-84.5%** |
-| **LCP (最大内容绘制)** | 3.8 秒 (红色) | **0.9 秒 (绿色)** | **-76.3%** |
-| **FCP (首次内容绘制)** | 2.1 秒 (黄色) | **0.6 秒 (绿色)** | **-71.4%** |
+| **LCP (最大内容绘制)** | 3.8 秒 | **0.9 秒** | **-76.3%** |
+| **FCP (首次内容绘制)** | 2.1 秒 | **0.6 秒** | **-71.4%** |
 | **INP (交互响应延迟)** | 140 ms | **35 ms** | **-75.0%** |
 | **Lighthouse 综合性能评分** | 49 分 | **98 分** | **+49 分** |
 
@@ -144,8 +141,8 @@ export default nextConfig;
 
 - [web.dev：Core Web Vitals](https://web.dev/articles/vitals)
 
-## 总结
+## 工程经验小结
 
-* **避免重型库污染首屏**：对 Canvas、富文本、图表库坚决采用 `dynamic(..., { ssr: false })` 异步隔离。
-* **善用现代编译优化**：结合 SWC 的 `optimizePackageImports` 榨干每一点 Tree-Shaking 潜力。
-* **用户体验为王**：以 Core Web Vitals 数据指标为导向，打造极致丝滑的桌面级 Web 应用。
+拆包时需要注意用户体验的平衡：画板引擎延迟加载虽然缩短了首屏白屏，但用户首次切入画板时会经历短暂的动态拉取过程。
+
+合理配置占位骨架屏、在鼠标悬浮到画板入口按钮时提前触发预加载（Prefetch），能在控制首屏体积的同时避免次级交互出现明显的加载卡顿。另外，SWC 的包导入优化只对支持命名导出的库有效，日常仍需定期检查依赖树避免引入全量打入的大型旧模块。

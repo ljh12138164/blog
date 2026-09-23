@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Biome 与 Git Hooks：前端提交自动校验实践',
-  description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。',
+  description: '介绍基于 Biome、lint-staged 与 simple-git-hooks 的 Git 提交检查方案，实现暂存区代码检查、格式化与 Conventional Commits 提交规范约束。',
   date: '2025-01-22',
   category: '前端工程化',
   readingTime: '8 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'Biome 与 Git Hooks：前端提交自动校验实践',
-    description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。',
+    description: '介绍基于 Biome、lint-staged 与 simple-git-hooks 的 Git 提交检查方案，实现暂存区代码检查、格式化与 Conventional Commits 提交规范约束。',
     url: '/posts/git-commit-validation', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'Biome 与 Git Hooks：前端提交自动校验实践',
-    description: '全面解析现代前端工程化提交流：使用 Rust 编写的极速 Biome 替代 ESLint/Prettier，结合 Simple-Git-Hooks 与 lint-staged 构建毫秒级 Git 预提交强约束。', images: ['/og-image.png'] },
+    description: '介绍基于 Biome、lint-staged 与 simple-git-hooks 的 Git 提交检查方案，实现暂存区代码检查、格式化与 Conventional Commits 提交规范约束。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,26 +33,26 @@ flowchart LR
 
 本地钩子优化的是反馈速度，不是强制安全。开发者可以跳过钩子，因此分支保护和 CI 必须重复关键检查。
 
-在多人协作的代码仓库中，常常遇到以下顽疾：
-* 代码格式不一（有的加分号、有的用单引号，Git Diff 产生大量无意义噪音）；
-* 潜在 Bug 溜入生产（未使用的变量、空的 Catch 块、遗留的 `debugger`）；
-* 提交信息随意（如 `git commit -m "fix"`、`"111"`），导致版本历史排查故障极其艰难。
+在多人协作的代码仓库中，常常遇到以下问题：
+* 代码格式不一致，Git Diff 中掺杂大量纯格式改动的噪音；
+* 遗留调试代码或明显错误（未使用的变量、空的 catch 块、未清理的 `debugger`）；
+* 提交信息随意（如 `git commit -m "fix"`、`"111"`），后续排查追溯历史变更困难。
 
-为了从源头拦截低质量代码，必须在 **Git Commit 阶段** 建立自动化的质量守门人流水线。
+在本地提交阶段接入自动化校验，可以在代码推送到远程前拦截基础质量问题。
 
 ---
 
-## 现代工具链演进：为什么用 Biome + Simple-Git-Hooks？
+## 工具选型对比
 
 ```text
-传统方案 vs 现代高性能方案:
+传统方案 vs 现代方案:
 ┌──────────────────────────────┬──────────────────────────────┐
-│       传统主流方案           │       现代极速方案           │
+│       传统常见组合           │       轻量方案               │
 ├──────────────────────────────┼──────────────────────────────┤
-│ • ESLint + Prettier          │ • Biome (Rust 编写，单二进   │
-│   (规则冲突、插件多、速度慢) │   制统一 Format + Lint，极快)│
+│ • ESLint + Prettier          │ • Biome                      │
+│   (规则冲突处理、插件多)     │   (单二进制统一 Format + Lint)│
 │ • Husky                      │ • Simple-Git-Hooks           │
-│   (体积较重、配置繁琐)       │   (极轻量，直接写入 .git/hooks│
+│   (脚本配置较重)             │   (直接写入 .git/hooks)      │
 │ • Commitlint (传统 Node)     │ • 规范化 Conventional Commit │
 └──────────────────────────────┴──────────────────────────────┘
 ```
@@ -169,8 +169,8 @@ module.exports = {
 
 - [Git：Hooks](https://git-scm.com/docs/githooks)
 
-## 总结
+## 工程经验小结
 
-* **极速响应**：基于 Rust 的 **Biome** 将格式化与代码分析耗时从秒级压缩至毫秒级（通常不到 50ms），开发者毫无“卡顿感”。
-* **最小侵入**：**Simple-Git-Hooks + Lint-Staged** 仅对本次暂存区代码生效，防止在重构大项目时被老代码的历史 Lint 报错阻塞。
-* **规范一致**：全团队共享统一的提交信息与代码风格规范，显著提升 Code Review 效率。
+本地 Git Hooks 的核心价值是提供即时反馈，但它不是绝对的安全门禁。开发者可以通过 `git commit --no-verify` 跳过本地校验，因此远程仓库的 CI 流水线与分支保护规则仍然是不可替代的最终防线。
+
+在向已有大型项目引入 Biome 时，建议优先采用增量检查策略（通过 `lint-staged`），只对本次变更的文件生效，避免因为历史代码遗留的格式或 Lint 问题阻塞正常的业务交付。

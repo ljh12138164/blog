@@ -1,6 +1,6 @@
 export const metadata = {
   title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
-  description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。',
+  description: '对比常驻容器与 Edge Runtime 的启动与网络差异，用 Hono 构建轻量边缘 API 并梳理无状态数据库连接方案。',
   date: '2024-12-28',
   category: '全栈与边缘计算',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
-    description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。',
+    description: '对比常驻容器与 Edge Runtime 的启动与网络差异，用 Hono 构建轻量边缘 API 并梳理无状态数据库连接方案。',
     url: '/posts/edge-function-backend-deployment', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API',
-    description: '全面剖析传统 Node.js 容器与 Edge Runtime 边缘函数的差异，记录使用 Hono 框架在 Vercel / Cloudflare 边缘环境快速构建和部署轻量后端的完整链路。', images: ['/og-image.png'] },
+    description: '对比常驻容器与 Edge Runtime 的启动与网络差异，用 Hono 构建轻量边缘 API 并梳理无状态数据库连接方案。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,9 +33,7 @@ flowchart LR
 
 边缘运行时的优势来自就近执行和弹性调度，约束也来自短生命周期与受限运行时。先列出依赖的系统 API 和数据库连接模式，再决定是否迁移。
 
-随着云原生和 Serverless 技术的演进，传统的“买 VPS -> 配 Nginx -> 跑 Node.js Docker 容器”的后端部署模式正受到**边缘计算（Edge Computing）**的强烈冲击。
-
-在边缘计算模式下，后端代码不再跑在某个单机房的服务器中，而是直接运行在遍布全球 CDN 节点的 **V8 沙箱隔离环境（Edge Runtime）**。本文记录基于轻量级 Web 框架 **Hono** 构建并部署边缘后端的全流程与技术权衡。
+搭一个轻量 API（例如 Webhook 接收器、鉴权中间层或静态网站的动态代理），专门租台 VPS、装 Docker 再配 Nginx 常常显得过重，每个月还得花机器成本。边缘运行时（Edge Runtime）提供了一种不用管服务器的思路：代码直接跑在 CDN 边缘节点的 V8 沙箱里，冷启动往往在毫秒级。但这套方案并不是银弹，它带来了严格的运行时约束。
 
 ---
 
@@ -54,16 +52,16 @@ flowchart LR
 ```
 
 > [!NOTE]
-> **Edge Runtime 的约束**：由于边缘运行时并非完整 Linux OS，而是轻量 V8 沙箱（如 Cloudflare workerd），因此**不推荐**依赖 Node.js 底层 C++ 原生扩展或同步文件系统（如 `fs.readFileSync`），必须采用标准的 `fetch`、`Web Crypto`、`Streams` 以及 ESM 模块。
+> **Edge Runtime 的约束**：由于边缘运行时并非完整 Linux OS，而是轻量 V8 沙箱（如 Cloudflare workerd），因此**不能**依赖 Node.js 底层 C++ 原生扩展或同步文件系统（如 `fs.readFileSync`），必须采用标准的 `fetch`、`Web Crypto`、`Streams` 以及 ESM 模块。
 
 ---
 
 ## 核心选型：为什么是 Hono？
 
-Hono（日语意为“火焰”）专为现代 Edge 环境设计：
-1. **体积极小**：零外部依赖，核心库体积小于 20KB。
-2. **极速路由**：内置自研 RegExpRouter 路由算法，路由匹配性能卓越。
-3. **多平台无缝移植**：一套业务代码可同时运行在 Vercel Edge、Cloudflare Workers、Deno、Bun 或传统 Node.js 上。
+Hono 专为现代 Edge 环境设计：
+1. **体积轻量**：核心库几乎无额外依赖，打包体积不到 20KB。
+2. **遵循 Web 标准**：原生基于 Request / Response 与 Fetch API 构建，无需 Node.js 特有包装。
+3. **跨平台兼容**：同一套业务代码可部署在 Vercel Edge、Cloudflare Workers，也能无缝跑在 Deno、Bun 或传统 Node.js 上。
 
 ---
 
@@ -153,7 +151,9 @@ app.get('/api/posts', async (c) => {
 
 - [Hono：Getting Started](https://hono.dev/docs/getting-started/basic)
 
-## 总结
+## 边界与取舍
 
-* **适用场景**：边缘函数极其适合用于轻量级 API 代理、鉴权中心、地理位置路由、Webhook 接收器和高性能元数据服务。
-* **开发范式**：结合 **Hono + Serverless Database**，可以在全球边缘以极低的成本构建起响应极快的现代微服务架构。
+边缘函数最适合无状态或短平快的逻辑：API 代理、地理位置分流、Webhook 转发、轻量鉴权。但如果你的后端有下面这些特征，老老实实买台常规容器反而更省心：
+- 依赖复杂的本地文件读写或重量级 Node.js 原生 C++ 插件（如 Puppeteer、图像处理底层库）；
+- 大量依赖传统长连接 TCP 数据库且没有连接池中间层（边缘函数并发一高很容易瞬间打爆数据库连接数）；
+- 有长时间运行的后台计算或异步任务（大部分边缘函数对执行时长有 30 秒至几分钟的严格限制）。

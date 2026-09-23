@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
-  description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。',
+  title: 'HTTP 重定向状态码选型：301、302、307 与 308 对比',
+  description: '对比 301、302、307 与 308 重定向状态码的语义差异，分析 POST 方法重写为 GET 的历史背景、搜索引擎权重继承机制与配置实践。',
   date: '2025-01-31',
   category: '网络与 SEO',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/redirect-status-codes-seo' },
   openGraph: {
     type: 'article',
-    title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
-    description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。',
+    title: 'HTTP 重定向状态码选型：301、302、307 与 308 对比',
+    description: '对比 301、302、307 与 308 重定向状态码的语义差异，分析 POST 方法重写为 GET 的历史背景、搜索引擎权重继承机制与配置实践。',
     url: '/posts/redirect-status-codes-seo', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '301 / 302 / 307 / 308 HTTP 重定向状态码深度解析：SEO 权重传递与方法变更陷阱',
-    description: '全面剖析 30X 重定向状态码的规范演进、POST 请求方法被篡改为 GET 的历史包袱、搜索引擎权重传递机制以及 302 网址劫持防御。', images: ['/og-image.png'] },
+    title: 'HTTP 重定向状态码选型：301、302、307 与 308 对比',
+    description: '对比 301、302、307 与 308 重定向状态码的语义差异，分析 POST 方法重写为 GET 的历史背景、搜索引擎权重继承机制与配置实践。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -35,9 +35,11 @@ flowchart TD
 
 选型时先回答两个问题：跳转是永久还是临时？原请求的方法与请求体是否必须保留？SEO 是重要结果，但不能覆盖 HTTP 语义和业务安全。
 
-在 Web 开发中，重定向（Redirect）是域名迁移、URL 规范化（Canonicalization）以及路由兼容不可或缺的手段。
+在 Web 开发中，重定向常用于域名迁移、规范化 URL（Canonicalization）以及路由兼容。
 
-然而，面对 `301 Moved Permanently`、`302 Found`、`307 Temporary Redirect` 和 `308 Permanent Redirect` 这四个看似相近的状态码，选错状态码可能导致 **表单 POST 请求变为 GET 导致数据丢失**，或引发 **搜索引擎权重归零甚至网址被恶意劫持**。
+面对 `301 Moved Permanently`、`302 Found`、`307 Temporary Redirect` 和 `308 Permanent Redirect` 这四个常见状态码，不同状态码在浏览器对请求方法的篡改行为、缓存机制以及搜索引擎权重继承上各有差异。
+
+本文梳理 30X 系列状态码的历史演进与选型场景。
 
 ---
 
@@ -133,8 +135,10 @@ server {
 
 - [MDN：HTTP 重定向](https://developer.mozilla.org/docs/Web/HTTP/Guides/Redirections)
 
-## 总结选型口诀
+## 工程经验小结
 
-1. **域名更换 / 永久改版 / 规范化 Canonical**：选 **`301`**（静态页面）或 **`308`**（现代 API/保留 POST）。
-2. **临时活动 / 未登录跳转到登录页 / 维护公告**：选 **`307`**（安全无副作用）。
-3. **日常开发中**：尽量避免使用语义模糊的旧 `302`，拥抱 HTTP/1.1 标准的 `307` 与 `308`。
+重定向不仅关乎 HTTP 状态码的数值，还直接影响浏览器对请求方法的篡改行为以及缓存有效期。
+
+对于涉及表单提交或非幂等操作的 API 接口，如果继续沿用传统的 301/302，部分老客户端会将 POST 转为 GET 导致请求体参数丢失，此时应使用语义明确的 308/307。
+
+此外，301 与 308 默认具备强缓存特性，一旦误配置了永久重定向且被浏览器或 CDN 缓存，后续撤销和修复成本极高。在不确定迁移是否最终确立前，可以先用临时重定向进行灰度验证，待路径稳定后再调整为永久重定向。

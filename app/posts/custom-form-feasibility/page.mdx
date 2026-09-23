@@ -1,6 +1,6 @@
 export const metadata = {
   title: '基于 Zod 模式推导的声明式动态表单（AutoForm）可行性研究与架构实践',
-  description: '深度探索以 Zod Schema 为单一事实来源（Single Source of Truth）自动推导 UI 表单的可行性：涵盖类型反射、字段配置覆盖（fieldConfig）与复杂嵌套校验。',
+  description: '评估从 Zod Schema 自动推导表单 UI 的收益与边界，分析 fieldConfig 覆盖机制与复杂交互下的选型取舍。',
   date: '2024-12-04',
   category: '前端架构',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '基于 Zod 模式推导的声明式动态表单（AutoForm）可行性研究与架构实践',
-    description: '深度探索以 Zod Schema 为单一事实来源（Single Source of Truth）自动推导 UI 表单的可行性：涵盖类型反射、字段配置覆盖（fieldConfig）与复杂嵌套校验。',
+    description: '评估从 Zod Schema 自动推导表单 UI 的收益与边界，分析 fieldConfig 覆盖机制与复杂交互下的选型取舍。',
     url: '/posts/custom-form-feasibility', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '基于 Zod 模式推导的声明式动态表单（AutoForm）可行性研究与架构实践',
-    description: '深度探索以 Zod Schema 为单一事实来源（Single Source of Truth）自动推导 UI 表单的可行性：涵盖类型反射、字段配置覆盖（fieldConfig）与复杂嵌套校验。', images: ['/og-image.png'] },
+    description: '评估从 Zod Schema 自动推导表单 UI 的收益与边界，分析 fieldConfig 覆盖机制与复杂交互下的选型取舍。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -34,13 +34,13 @@ flowchart LR
 关键结论是：Zod 能描述“什么数据有效”，却不总能表达“这个字段应该怎样呈现”。因此 Schema 可以成为校验的单一事实来源，但复杂 UI 仍需要显式配置。
 
 在现代 TypeScript 全栈开发中，一个典型的前端表单通常要写三遍：
-1. **类型定义一遍**（`interface FormValues { ... }`）；
-2. **校验逻辑写一遍**（Zod / Yup 规则）；
-3. **HTML / JSX 标签写一遍**（`<input />`, `<select />`, `<label />`, `<error />`）。
+1. 类型定义一遍（`interface FormValues { ... }`）；
+2. 校验逻辑写一遍（Zod / Yup 规则）；
+3. HTML / JSX 标签写一遍（输入框、选择器、标签与错误展示）。
 
 当后端数据结构调整时，前端需要同步修改这三处地方，稍有疏漏就会引发类型断裂。
 
-**AutoForm（基于 Zod 的自动化表单生成体系）** 提出了一种全新的设计范式：**将 Zod Schema 作为唯一的真相来源（Single Source of Truth），直接通过反射机制自动生成完整的 UI 表单与校验逻辑**。本文对其可行性与边界进行深度评估。
+很多团队尝试用 AutoForm 这类方案：直接读取后端的 Zod 校验规则，通过运行时反射自动生成输入框、下拉框和错误提示。但实际做下来会发现，Schema 能管好数据格式，却管不好界面呈现。比如同样是字符串，究竟该渲染成单行输入框、多行文本域，还是富文本？这篇文章分析用 Zod 自动生成表单在哪些场景划算，在什么情况下反而增加包袱。
 
 ---
 
@@ -62,13 +62,13 @@ AutoForm 智能渲染器 (自动绑定 React Hook Form / VeeValidate + 错误提
 
 ---
 
-## 实战示例：仅通过 Zod Schema 驱动复杂表单
+## 实战示例：仅通过 Zod Schema 驱动表单
 
 ```tsx
 import { z } from 'zod';
 import { AutoForm, AutoFormSubmit } from '@/components/ui/auto-form';
 
-// 1. 声明完整的业务数据模型与校验规则
+// 1. 声明业务数据模型与校验规则
 const userProfileSchema = z.object({
   username: z
     .string()
@@ -127,10 +127,10 @@ export function ProfileFormPage() {
 
 | 评估维度 | 传统手动手写表单 | AutoForm (Zod 驱动) | 权衡与结论 |
 | :--- | :--- | :--- | :--- |
-| **开发效率** | 低（重复编写几十行 JSX） | **极高（仅需定义 Zod Schema）** | CRUD 管理后台提效 **80% 以上** |
-| **类型一致性** | 弱（需手动保证 TS 与 UI 同步） | **强（类型与校验 100% 自动绑定）** | 重构时字段改动直接在编译期报错 |
-| **极致高度定制 UI** | 强（可任意排列 DOM 像素） | 中等（需通过 fieldConfig 覆盖） | 营销活动类奇特布局仍需局部手写 |
-| **异步动态选项支持** | 原生支持 | 需在 fieldConfig 中注入 Hook | 通过组件插槽（Slots）机制可良好兼容 |
+| **开发效率** | 编写较多重复排版 JSX | 仅需定义 Zod Schema | 标准后台表单提效明显 |
+| **类型一致性** | 需手动保证 TS 与 UI 同步 | 类型与校验天然绑定 | 字段改动可在编译期捕获 |
+| **高度定制 UI** | 可任意排列 DOM 节点与样式 | 需通过 fieldConfig 覆盖 | 复杂排版维护成本上升 |
+| **异步动态选项** | 原生支持 | 需在 fieldConfig 中注入 Hook | 需要自定义插槽扩展 |
 
 ---
 
@@ -138,7 +138,7 @@ export function ProfileFormPage() {
 
 - [Zod：官方文档](https://zod.dev/)
 
-## 总结
+## 选型结论
 
-* **中后台降本增效利器**：对于标准的数据录入、配置页、后台 CRUD 模块，基于 Zod 的 AutoForm 能够消除 90% 的模板代码。
-* **渐进式增强**：通过提供 `fieldConfig` 和自定义渲染槽，既保留了 Schema 驱动的速度，又兼顾了复杂场景的定制能力。
+- **适合的场景**：内部运营后台、参数配置面板、标准化 CRUD 弹窗。这类页面的特点是字段多、样式要求统一，用 Schema 自动推导能省去大量重复排版。
+- **不适合的场景**：高度定制的 C 端核心页面、复杂分步向导（Wizard）、或者多字段强联动的复杂表单。一旦 `fieldConfig` 里的重载代码写得比原生 JSX 还长，就违背了自动化的初衷，老老实实手写表单反而更好维护。

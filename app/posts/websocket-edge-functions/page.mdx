@@ -1,6 +1,6 @@
 export const metadata = {
   title: '边缘 WebSocket 实时协同：Deno Deploy 与 Hocuspocus',
-  description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。',
+  description: '探讨在 Deno Deploy 边缘运行环境中接入 Hocuspocus (Yjs) 的 WebSocket 服务架构，包括连接鉴权、状态持久化与多节点路由权衡。',
   date: '2025-02-15',
   category: '全栈与边缘计算',
   readingTime: '8 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '边缘 WebSocket 实时协同：Deno Deploy 与 Hocuspocus',
-    description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。',
+    description: '探讨在 Deno Deploy 边缘运行环境中接入 Hocuspocus (Yjs) 的 WebSocket 服务架构，包括连接鉴权、状态持久化与多节点路由权衡。',
     url: '/posts/websocket-edge-functions', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '边缘 WebSocket 实时协同：Deno Deploy 与 Hocuspocus',
-    description: '探索基于 Deno Deploy 与 Hocuspocus (Yjs) 在无服务器边缘环境中构建多人实时协同富文本 WebSocket 服务的架构与部署方案。', images: ['/og-image.png'] },
+    description: '探讨在 Deno Deploy 边缘运行环境中接入 Hocuspocus (Yjs) 的 WebSocket 服务架构，包括连接鉴权、状态持久化与多节点路由权衡。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -36,9 +36,9 @@ sequenceDiagram
 
 “部署到边缘”不自动解决状态问题。实时协同要求同一文档的连接能够协调；如果平台只提供短生命周期无状态函数，就需要额外的有状态房间或专用协同服务。
 
-在构建类似 Notion 或 Google Docs 的多人实时协同富文本编辑器时，**WebSocket** 是实现客户端 CRDT / Yjs 状态同步的核心通信协议。
+在构建类似 Notion 或在线文档的多人实时协同编辑器时，WebSocket 是实现客户端 CRDT / Yjs 状态同步的常见通信方式。
 
-传统方案通常需要运维独立的 Node.js / Docker 虚机来保持 WebSocket 长连接。然而借助 **Deno Deploy** 等支持持久 WebSocket 的现代边缘平台（Edge Runtime），我们可以在无需购买固定 VPS、按需计费的无服务器环境下，运行基于 **Hocuspocus** 的企业级实时协同服务。
+传统方案通常需要运维独立的 Node.js 虚拟机来保持 WebSocket 长连接。借助支持持久 WebSocket 的边缘运行环境（如 Deno Deploy），可以免去固定虚拟机的日常运维，按需运行基于 Hocuspocus 的协同服务。不过将有状态长连接放到无服务器平台，也会带来节点路由与实例状态管理的新权衡。
 
 ---
 
@@ -167,11 +167,11 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 
 ---
 
-## 边缘 WebSocket 的优势与权衡
+## 适用场景与架构边界
 
-* **极致低延迟**：边缘节点分布于全球各个区域，跨国/跨地区协同用户的网络 RTT 大幅削减。
-* **零闲置运维成本**：没有固定服务器租金与系统补丁维护负担。
-* **注意多房间分布式路由**：在超大规模集群中，若不同协作者被路由至不同物理节点，需结合 Durable Objects（如 Cloudflare DO）或 Redis Pub/Sub 保证同一个房间（Document Room）的消息在同一个实例汇聚。
+* **延迟表现**：边缘节点分布在多个地理区域，能就近响应客户端的 TCP/TLS 握手。
+* **按需计费与免运维**：无需为低峰期预留常驻 VPS 算力与配置系统补丁。
+* **跨节点协同约束**：在多区域分布式边缘环境下，若不同协作者被路由至不同的物理边缘节点，纯单机内存房间无法自动互通，必须引入集中式中继（如 Redis Pub/Sub）或全局协调实例（如 Cloudflare Durable Objects）来保证同一房间消息汇聚。
 
 ---
 
@@ -179,7 +179,8 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 
 - [MDN：WebSocket](https://developer.mozilla.org/docs/Web/API/WebSocket)
 
-## 总结
+## 工程经验小结
 
-* 利用 **Deno Deploy** 的原生 Web 标准与 WebSocket 支持，可以极简部署无服务器长连接服务。
-* **Hocuspocus + Yjs** 提供了完善的鉴权、状态同步与数据持久化机制，是构建生产级多人协同编辑器的首选方案。
+边缘 WebSocket 的核心约束在于“协同房间归属”。
+
+如果同一个文档的多个协作者被 Anycast 路由到了不同的物理节点，无状态边缘实例无法直接在内存中同步。此时必须依赖中心化中继（如 Redis Pub/Sub）或支持单实例强一致性的边缘协调层（如 Cloudflare Durable Objects）。在业务规模较小或并发可控的初期阶段，直接指定单区域部署通常是实现成本最低、状态一致性最容易保证的方案。

@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Markdown/MDX 渲染原理与 Nextra 选型',
-  description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。',
+  description: '解析 Markdown/MDX 在 Unified 生态下的 AST 编译流程（mdast 到 hast），对比 Nextra 与 Fumadocs 等静态文档框架选型，并介绍 Pagefind 静态检索方案。',
   date: '2025-01-25',
   category: '前端工程化',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'Markdown/MDX 渲染原理与 Nextra 选型',
-    description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。',
+    description: '解析 Markdown/MDX 在 Unified 生态下的 AST 编译流程（mdast 到 hast），对比 Nextra 与 Fumadocs 等静态文档框架选型，并介绍 Pagefind 静态检索方案。',
     url: '/posts/markdown-to-html', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'Markdown/MDX 渲染原理与 Nextra 选型',
-    description: '全面解析现代前端 Markdown 渲染原理：从 remark/rehype 抽象语法树（AST）转换，到 Nextra 与 Fumadocs 等现代文档框架的选型与踩坑实践。', images: ['/og-image.png'] },
+    description: '解析 Markdown/MDX 在 Unified 生态下的 AST 编译流程（mdast 到 hast），对比 Nextra 与 Fumadocs 等静态文档框架选型，并介绍 Pagefind 静态检索方案。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -29,14 +29,15 @@ flowchart LR
   R --> H[HAST]
   H --> E[rehype 转换]
   E --> O[HTML 或 React 页面]
-  O --> I[Pagefind 静态索引]
+  I[Pagefind 静态索引]
+  O --> I
 ```
 
 把每一层的输入输出想清楚，插件顺序就不再神秘：remark 处理 Markdown 语义树，rehype 处理 HTML 语义树，框架负责路由、组件映射与最终构建。
 
-在现代内容驱动型网站（如技术博客、产品文档和知识库）中，Markdown / MDX 是内容创作者最青睐的格式。然而，从一段纯文本 `.md` 或带有 React 组件的 `.mdx`，到浏览器中呈现的带有语法高亮、可交互组件和 SEO 优化的 HTML 页面，底层经历了怎样的编译与渲染流水线？
+在内容驱动型站点中，Markdown / MDX 是主流写作格式。从纯文本 `.md` 或可交互的 `.mdx`，到浏览器中呈现的静态 HTML，底层依赖着 Unified 生态的 AST 编译流水线。
 
-本文结合实际搭建本博客时的选型考量，解析底层编译原理与上层框架对比。
+本文结合搭建技术博客时的考量，梳理编译链路、上层文档框架选型与离线全文检索机制。
 
 ---
 
@@ -158,8 +159,8 @@ Next.js 构建生成静态 HTML (out/)
 
 - [Unified：官方文档](https://unifiedjs.com/learn/)
 
-## 总结
+## 工程经验小结
 
-1. **底层原理**：Markdown 渲染本质是 `Text -> mdast -> hast -> React/HTML` 的 AST 编译与转换流水线。
-2. **架构选型**：Nextra 提供了与 Next.js App Router 结合最自然的 MDX 文件路由体验，配合 `mdx-components.tsx` 可实现完全自定义的视觉与交互。
-3. **检索增强**：采用 Pagefind 离线索引配合静态导出，能够在零后端服务成本下实现企业级搜索体验。
+MDX 的引入让静态文档具备了动态交互能力，但也会显著增加构建期的解析与打包负担。
+
+在设计组件映射（`mdx-components`）时，应避免在 Markdown 中混入过多重量级的客户端组件，尽量优先使用纯 HTML 语义标签或轻量组件。对于站内检索，Pagefind 在纯静态导出架构下具有明显的免运维优势，但它的索引生成依赖构建产物目录，因此构建流水线中必须确保静态 HTML 完全生成后再执行 `pagefind`。

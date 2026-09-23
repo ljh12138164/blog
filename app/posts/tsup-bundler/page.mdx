@@ -1,19 +1,19 @@
 export const metadata = {
-  title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
-  description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。',
+  title: '基于 tsup 构建 TypeScript 库：双格式打包与导出配置',
+  description: '介绍使用 tsup 打包 TypeScript 库的配置要点，涵盖 ESM 与 CommonJS 双格式输出、.d.ts 类型生成、package.json exports 字段规范与 Monorepo 本地联动。',
   date: '2025-01-26',
   category: '前端工程化',
   readingTime: '8 分钟',
   alternates: { canonical: '/posts/tsup-bundler' },
   openGraph: {
     type: 'article',
-    title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
-    description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。',
+    title: '基于 tsup 构建 TypeScript 库：双格式打包与导出配置',
+    description: '介绍使用 tsup 打包 TypeScript 库的配置要点，涵盖 ESM 与 CommonJS 双格式输出、.d.ts 类型生成、package.json exports 字段规范与 Monorepo 本地联动。',
     url: '/posts/tsup-bundler', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
-    title: '为什么开发 TypeScript 库首选 tsup？基于 esbuild 的极速双格式打包实战',
-    description: '全面解析 tsup 核心特性：双格式（ESM + CommonJS）输出、自动生成 d.ts 类型定义、Monorepo 实时监听与 package.json 导出规范。', images: ['/og-image.png'] },
+    title: '基于 tsup 构建 TypeScript 库：双格式打包与导出配置',
+    description: '介绍使用 tsup 打包 TypeScript 库的配置要点，涵盖 ESM 与 CommonJS 双格式输出、.d.ts 类型生成、package.json exports 字段规范与 Monorepo 本地联动。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -35,29 +35,29 @@ flowchart LR
 
 库打包的成功标准不是“命令执行成功”，而是目标消费者能按声明的入口加载代码和类型。格式越多，验证矩阵也越大，只发布确实需要的产物。
 
-在开发 TypeScript 工具库、React 组件库或 Monorepo 内部公共包时，配置 Webpack 或 Rollup 往往需要编写冗长的配置文件，处理复杂的 Babel / SWC 插件和类型声明插件。
+在开发 TypeScript 工具库、React 组件库或 Monorepo 内部共享包时，配置 Webpack 或 Rollup 往往需要编写冗长的配置，并处理 Babel/SWC 插件与类型声明插件的配合。
 
-**tsup** 基于 Go 语言编写的 **esbuild** 构建，主打“开箱即用、零配置或极简配置”，能在毫秒级时间内完成 TypeScript 源码到 ESM / CommonJS 双格式产物与 `.d.ts` 类型文件的编译。
+**tsup** 基于 Go 语言编写的 **esbuild** 构建，主打轻量与近乎零配置，能快速完成 TypeScript 源码到 ESM / CommonJS 双格式产物与 `.d.ts` 类型文件的编译。
 
-本文记录了在为开源项目 [autoform](https://github.com/vantezzen/autoform)（[PR #145](https://github.com/vantezzen/autoform/pull/145)）贡献构建优化时，使用 tsup 提升 DX 的实战经验。
+本文记录为开源项目 [autoform](https://github.com/vantezzen/autoform)（[PR #145](https://github.com/vantezzen/autoform/pull/145)）优化构建链路时使用 tsup 的实践与注意事项。
 
 ---
 
-## 为什么选择 tsup？核心优势剖析
+## tsup 的构建机制与特点
 
 ```text
 传统 Rollup/Webpack 流程:
-  TS 源码 -> Babel/TSC 单线程解析 -> AST 转换 -> 插件链 -> 打包 (耗时 5~15s)
+  TS 源码 -> Babel/TSC 单线程解析 -> AST 转换 -> 插件链 -> 打包 (耗时较长)
 
 tsup 架构:
-  TS 源码 ──► esbuild (Go 原生并行编译) ──► 极速产出 ESM/CJS (耗时 50~200ms)
+  TS 源码 ──► esbuild (Go 原生并行编译) ──► 快速产出 ESM/CJS
           └──► 并行触发 tsc 提取类型 ────► 产出 .d.ts 声明文件
 ```
 
-1. **极致构建速度**：底层由 esbuild 驱动，比纯 JavaScript 编写的编译器快 10~100 倍。
-2. **开箱即用的双模块格式（Dual Formats）**：一条命令同时输出 Modern ESM (`.mjs`) 与 Node.js 兼容的 CommonJS (`.cjs`)。
-3. **无痛生成类型声明**：通过 `--dts` 自动调用 TypeScript Compiler 提取 `.d.ts`，无需繁琐的 `rollup-plugin-dts` 配置。
-4. **Monorepo 级热重载**：内置 `--watch` 模式，子包代码变更毫秒级重新打包，上层 App 页面实时更新。
+1. **构建速度更快**：底层由 esbuild 驱动，解析与转译效率明显高于传统 JS 编译器。
+2. **双模块格式支持**：直接输出 Modern ESM (`.mjs`) 与 Node.js 兼容的 CommonJS (`.cjs`)。
+3. **类型声明生成**：通过 `--dts` 配置调用 TypeScript 编译器提取 `.d.ts`。
+4. **增量监听构建**：内置 `--watch` 模式，在 Monorepo 本地联调时支持改动即时重构。
 
 ---
 
@@ -133,7 +133,7 @@ export default defineConfig({
 
 ---
 
-## 在 Monorepo 中的绝佳协同体验
+## Monorepo 内部包协同实践
 
 在 pnpm workspace 或 Turborepo 架构中，公共 UI 组件包或通用工具库常被多个业务应用引用：
 
@@ -146,8 +146,8 @@ packages/
 
 1. 在 `packages/ui-kit` 中启动 `pnpm dev`（即 `tsup --watch`）。
 2. 在 `apps/web-portal` 中直接导入 `@my-org/ui-kit`。
-3. 当修改 `ui-kit` 中的组件代码时，tsup 在 **80ms** 内完成增量打包，Vite / Next.js 的 HMR 立即捕捉到变化并刷新页面。
-4. 这种方式既保证了多包隔离与严格的发布边界，又完全不牺牲单体开发的流畅体验。
+3. 当修改 `ui-kit` 中的组件代码时，tsup 增量打包，Vite / Next.js 的 HMR 捕捉到产物变化并更新页面。
+4. 这种方式兼顾了模块隔离与本地联调效率。
 
 ---
 
@@ -155,8 +155,8 @@ packages/
 
 - [tsup：官方仓库](https://github.com/egoist/tsup)
 
-## 总结
+## 工程经验小结
 
-* **定位清晰**：tsup 是目前开发 TypeScript 库、SDK 和 Monorepo 公共包最高效的构建利器。
-* **低心智负担**：告别上百行的 Rollup 配置，一条命令搞定 CJS、ESM、d.ts 与 SourceMap。
-* **开发体验**：毫秒级的 Watch 模式让跨包联调如丝般顺滑。
+使用 tsup 打包库时，最容易踩坑的不是编译本身，而是 `package.json` 中的 `exports` 条件导出以及 `peerDependencies` 处理。
+
+如果库依赖了 React 或 Vue，务必将其配置到 `external` 中，避免打包进产物导致消费端出现双重实例或 Context 丢失问题。另外，类型生成阶段依然由 tsc 执行，若项目源码存在类型报错，tsup 构建依然会被打断，不能用它来绕过严格的类型检查。

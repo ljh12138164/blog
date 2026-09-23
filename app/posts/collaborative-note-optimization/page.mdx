@@ -1,6 +1,6 @@
 export const metadata = {
   title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
-  description: '全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。',
+  description: '记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。',
   date: '2025-01-29',
   category: '性能调优',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
-    description: '全面记录富文本协同 SPA 应用的性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。',
+    description: '记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。',
     url: '/posts/collaborative-note-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战',
-    description: '全面记录富文本协同 SPA应用性能优化闭环：从 Vercel History 路由重定向解决 404，到 lodash-es 树摇、highlight.js 按需语言加载与 Vite 分包瘦身。', images: ['/og-image.png'] },
+    description: '记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -24,11 +24,7 @@ export const metadata = {
 
 本文不是一组互不相关的技巧，而是一条诊断链：先确认请求是否到达正确页面，再确认浏览器下载了什么，最后确认主线程何时可交互。每一步只解决一个已测量的问题。
 
-在富文本协同笔记项目上线后，随着功能的丰富（加入多语言代码高亮、公式渲染、表格扩展和复杂数据请求），应用往往面临两大挑战：
-1. **部署后子路由刷新 404**（SPA HTML5 History 模式在静态服务器上的路由穿透问题）；
-2. **打包体积过大（Vendor Bundle 超过 1.8MB）**，导致首屏 FCP / LCP 严重偏慢，Lighthouse 性能评分低下。
-
-本文复盘完整的排查与瘦身优化历程。
+协同笔记项目刚上线时，最先暴露的往往是两个直观问题：一是在子路由一按刷新页面就直接 404；二是首屏静态资源包体积逼近 2MB，在弱网下白屏时间很长。这篇文章记录这两个问题的排查过程与瘦身改动。
 
 ---
 
@@ -133,7 +129,7 @@ export default defineConfig({
         },
       },
     },
-    // 开启现代浏览器 esnext 构建与 terser 极致压缩
+    // 开启现代浏览器 esnext 构建与 terser 压缩
     target: 'esnext',
     minify: 'terser',
   },
@@ -153,7 +149,7 @@ export default defineConfig({
    * 补充标准的 OpenGraph 和 Twitter Card 元标签；
    * 自动生成 `robots.txt` 与 `sitemap.xml`。
 3. **最终成效**：
-   * Vendor 首屏 JS 体积从 **1.85MB 压减至 320KB（Gzip 后仅约 90KB）**；
+   * Vendor 首屏 JS 体积从 **1.85MB 压减至 320KB（Gzip 后约 90KB）**；
    * Lighthouse 性能得分从 **58 分跃升至 96 分**；
    * 首屏 FCP 进入 **0.8 秒** 内。
 
@@ -163,8 +159,7 @@ export default defineConfig({
 
 - [web.dev：性能测量](https://web.dev/articles/vitals)
 
-## 总结
+## 优化复盘与建议
 
-* **SPA 路由配置**：在 Vercel / Nginx 端通过重写规则保障 HTML5 History 模式的子路由刷新稳定。
-* **精准 Tree-shaking**：坚决弃用 CommonJS 依赖（用 `lodash-es` 替代 `lodash`），对代码高亮与图标库执行严格的按需注册。
-* **分包与缓存策略**：将稳定的大型依赖（Tiptap, Yjs）抽离独立 Chunk，实现跨版本更新时的浏览器长效缓存。
+- **静态部署一定要做兜底重写**：SPA 采用 HTML5 History 路由时，服务端的 `try_files` 或 `rewrites` 是必须配置的基础设施，否则任何带参数的深层链接分享给别人都是 404。
+- **警惕巨石库的全量引用**：富文本生态中像 `highlight.js`、`lowlight` 或 `lucide` 这类工具，一旦没有配置按需打包，分分钟把 100 多种未用语言或几千个图标全部打入首包。每次引入第三方库后，在 Visualizer 里看一眼体积应该成为打包习惯。

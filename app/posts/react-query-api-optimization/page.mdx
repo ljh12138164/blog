@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取',
-  description: '全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。',
+  description: '厘清客户端 UI 状态与服务端缓存的区别，通过 QueryKey 去重、staleTime/gcTime 配置与乐观更新提升数据加载体验。',
   date: '2025-01-28',
   category: 'React 进阶',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: 'TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取',
-    description: '全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。',
+    description: '厘清客户端 UI 状态与服务端缓存的区别，通过 QueryKey 去重、staleTime/gcTime 配置与乐观更新提升数据加载体验。',
     url: '/posts/react-query-api-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: 'TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取',
-    description: '全面剖析 TanStack Query 服务端状态管理哲学：对比传统 Axios 封装，详解 QueryKey 缓存分层、并发请求自动合并去重、乐观更新与预取机制。', images: ['/og-image.png'] },
+    description: '厘清客户端 UI 状态与服务端缓存的区别，通过 QueryKey 去重、staleTime/gcTime 配置与乐观更新提升数据加载体验。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -34,11 +34,7 @@ stateDiagram-v2
 
 Axios 负责“怎样发请求”，TanStack Query 负责“何时请求、结果缓存在哪里、何时视为过期”。两者并不竞争，职责边界清楚后配置才有意义。
 
-在前端应用中，许多团队经常混淆 **客户端本地状态（Client State，如弹窗显隐、侧边栏折叠）** 与 **服务端状态（Server State，如用户列表、文章详情、订单流水）**。
-
-传统使用 `useEffect + useState + axios` 获取数据时，不仅需要手写大量的 `isLoading`、`isError` 状态变量，更面临**重复请求泛滥、数据陈旧不同步、Tab 切换无缓存白屏**等问题。
-
-**TanStack Query（React Query）** 重新定义了数据获取范式。本文详解其底层的缓存管理与性能优化精髓。
+在 React 里用 `useEffect` 发请求，最常见的问题是样板代码满天飞：每个接口都要自己维护 `isLoading`、`isError` 和 `data` 三个状态。组件一多，兄弟组件重复发起相同的接口请求，或者切个 Tab 回来页面又白屏闪一下重新拉数据。TanStack Query 解决的核心痛点，就是把“数据发请求、缓存多久、什么时候后台刷新”当成一套独立的服务端缓存来管。
 
 ---
 
@@ -64,7 +60,7 @@ Axios 负责“怎样发请求”，TanStack Query 负责“何时请求、结�
 
 ## 核心优化一：QueryKey 与并发请求自动去重（Deduplication）
 
-在复杂仪表盘（Dashboard）中，导航栏头像组件、侧边栏用户徽章组件和主内容区往往同时需要当前登录用户的信息：
+在复杂仪表盘中，导航栏头像组件、侧边栏用户徽章组件和主内容区往往同时需要当前登录用户的信息：
 
 ```text
 组件 A (NavBar)    ─── useQuery(['user', 'me']) ──┐
@@ -76,13 +72,13 @@ Axios 负责“怎样发请求”，TanStack Query 负责“何时请求、结�
 
 ---
 
-## 核心优化二：深刻理解 `staleTime` 与 `gcTime`
+## 核心优化二：理解 `staleTime` 与 `gcTime`
 
 很多开发者对 React Query 数据的“保鲜期”产生误解：
 
 ```text
 数据生命周期时序:
-  [数据获取成功] ────(staleTime: 5分钟)────► [数据变为 Stale 陈旧] ────(gcTime: 10分钟)────► [内存回收]
+  [数据获取成功] ────(staleTime: 2分钟)────► [数据变为 Stale 陈旧] ────(gcTime: 10分钟)────► [内存回收]
        │                                            │
        ▼                                            ▼
   在此期间重新挂载组件:                      在此期间重新挂载组件:
@@ -157,8 +153,7 @@ const mutation = useMutation({
 
 - [TanStack Query：Important Defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults)
 
-## 总结
+## 最容易踩的两个坑
 
-* **告别手动状态管理**：消除 80% 的样板代码（`useEffect` + `setLoading`）。
-* **极速响应与去重**：自动请求合并与缓存分层让页面拥有“桌面级”切换响应速度。
-* **极致用户体验**：结合乐观更新，让网络应用交互获得本地应用般的即时反馈。
+- **staleTime 默认值为 0**：这是新手最困惑的地方。默认情况下，只要组件重新挂载或窗口切回前台，TanStack Query 就会立刻在后台重新发请求（即使两秒前刚拉过数据）。对于不常变动的基础数据，一定要显式配置合理的 `staleTime`（例如 1~5 分钟）。
+- **QueryKey 数组深度比较**：QueryKey 内部采用哈希校验。对象参数中的键值顺序不同也会被判为相同（`{ a: 1, b: 2 }` 与 `{ b: 2, a: 1 }` 视为等价），但传未固定的动态引用或非序列化数据会导致缓存频繁击穿。
