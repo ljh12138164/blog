@@ -1,5 +1,14 @@
 export const recentPosts = [
   {
+    slug: 'umami-vercel-supabase',
+    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
+    description:
+      '记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。',
+    date: '2026-09-23',
+    category: '建站与专题',
+    readingTime: '9 分钟'
+  },
+  {
     slug: 'local-english-chinese-translation',
     title: '给 Next.js 网站加上本地翻译',
     description: '使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。',
@@ -105,6 +114,10 @@ export const archiveGroups = [
   {
     title: '建站与专题',
     posts: [
+      {
+        title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
+        href: '/posts/umami-vercel-supabase'
+      },
       { title: '基于 Next.js 和 Nextra 搭建个人技术博客', href: '/posts/nextra-blog-setup' },
       { title: '流程图的自定义连接', href: '/posts/custom-flowchart-connections' },
       { title: '让websocket服务运行在边缘函数中', href: '/posts/websocket-edge-functions' },
