@@ -34,32 +34,28 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           {
             '@type': ['TechArticle', 'BlogPosting'],
             '@id': `${articleUrl}#article`,
+            isPartOf: {
+              '@id': `${site.url}/#website`
+            },
             headline: meta.title,
             description: meta.description || undefined,
+            abstract: meta.description || undefined,
             image: [`${site.url}/og-image.png`],
             datePublished: meta.date ? new Date(meta.date).toISOString() : undefined,
             dateModified: meta.date ? new Date(meta.date).toISOString() : undefined,
             inLanguage: 'zh-CN',
             mainEntityOfPage: {
               '@type': 'WebPage',
-              '@id': articleUrl
+              '@id': articleUrl,
+              isPartOf: {
+                '@id': `${site.url}/#website`
+              }
             },
             author: {
-              '@type': 'Person',
-              name: site.author.name,
-              alternateName: site.author.englishName,
-              url: site.author.url,
-              jobTitle: site.author.jobTitle,
-              sameAs: site.author.sameAs
+              '@id': `${site.url}/#author`
             },
             publisher: {
-              '@type': 'Organization',
-              name: site.name,
-              url: site.url,
-              logo: {
-                '@type': 'ImageObject',
-                url: `${site.url}/favicon.webp`
-              }
+              '@id': `${site.url}/#organization`
             },
             articleSection: meta.category || undefined,
             keywords: [meta.category, '前端架构', '全栈开发', '技术博客'].filter(Boolean)

@@ -47,6 +47,22 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </Link>
             <a
               className="no-underline transition-colors hover:text-accent"
+              href="/feed.xml"
+              target="_blank"
+              rel="noreferrer"
+            >
+              RSS 订阅
+            </a>
+            <a
+              className="no-underline transition-colors hover:text-accent"
+              href="/llms.txt"
+              target="_blank"
+              rel="noreferrer"
+            >
+              llms.txt
+            </a>
+            <a
+              className="no-underline transition-colors hover:text-accent"
               href={site.author.github}
               target="_blank"
               rel="noreferrer"

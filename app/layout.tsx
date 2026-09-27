@@ -140,6 +140,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+        <link rel="alternate" type="application/rss+xml" title={site.title} href="/feed.xml" />
+        <link rel="alternate" type="text/markdown" title="LLM Overview" href="/llms.txt" />
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"

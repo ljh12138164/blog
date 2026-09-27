@@ -48,6 +48,7 @@ for (const htmlPath of collectHtmlFiles(outDir)) {
 
 for (const outputName of [
   'sitemap.xml',
+  'feed.xml',
   'robots.txt',
   'llms.txt',
   'llms-full.txt',
