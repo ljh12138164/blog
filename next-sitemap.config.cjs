@@ -49,12 +49,27 @@ module.exports = {
         disallow: ['/_next/', '/_pagefind/']
       },
       {
+        userAgent: 'OAI-SearchBot',
+        allow: '/',
+        disallow: ['/_next/', '/_pagefind/']
+      },
+      {
         userAgent: 'ClaudeBot',
         allow: '/',
         disallow: ['/_next/', '/_pagefind/']
       },
       {
+        userAgent: 'Claude-SearchBot',
+        allow: '/',
+        disallow: ['/_next/', '/_pagefind/']
+      },
+      {
         userAgent: 'PerplexityBot',
+        allow: '/',
+        disallow: ['/_next/', '/_pagefind/']
+      },
+      {
+        userAgent: 'Google-Extended',
         allow: '/',
         disallow: ['/_next/', '/_pagefind/']
       },
