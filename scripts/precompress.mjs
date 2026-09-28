@@ -54,7 +54,7 @@ async function main() {
   console.log(`📦 静态预压缩完成：生成 ${count} 个 .gz 文件，累计节省 ${savedKb} KB 体积。`)
 }
 
-if (process.argv[1] && process.argv[1].endsWith('precompress.mjs')) {
+if (process.argv[1]?.endsWith('precompress.mjs')) {
   main().catch((err) => {
     console.error('静态预压缩失败:', err)
     process.exit(1)
