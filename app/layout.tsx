@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import NextTopLoader from 'nextjs-toploader'
 import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
@@ -174,6 +175,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </Head>
       <body>
+        <NextTopLoader color="var(--color-accent)" showSpinner={false} height={2.5} />
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

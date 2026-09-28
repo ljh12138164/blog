@@ -11,12 +11,8 @@ describe('precompress', () => {
     await mkdir(testDir, { recursive: true })
 
     try {
-      const sampleHtml =
-        '<html><body>' +
-        '<h1>Hello World</h1><p>Test content for precompression.</p>'.repeat(50) +
-        '</body></html>'
-      const sampleCss =
-        'body { margin: 0; background: #fff; } ' + '.class { color: red; } '.repeat(50)
+      const sampleHtml = `<html><body>${'<h1>Hello World</h1><p>Test content for precompression.</p>'.repeat(50)}</body></html>`
+      const sampleCss = `body { margin: 0; background: #fff; } ${'.class { color: red; } '.repeat(50)}`
       const tinyFile = 'tiny'
 
       await writeFile(path.join(testDir, 'index.html'), sampleHtml, 'utf8')

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
+import { ScrollProgress } from './scroll-progress'
 import { Search } from './search'
 import { ThemeToggle } from './theme-toggle'
 
@@ -35,6 +36,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </nav>
       </header>
       <main>{children}</main>
+      <ScrollProgress />
       <footer className="mx-auto flex w-[min(720px,calc(100%_-_40px))] flex-col gap-4 border-t border-line py-10 text-xs text-muted max-md:w-[calc(100%_-_28px)]">
         <div className="flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
           <p className="m-0 font-mono">持续修订，写给下一次遇到同样问题的自己。</p>
