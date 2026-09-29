@@ -169,6 +169,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           data-website-id="e61fca0c-3e46-4f5c-aeda-ae30990ef482"
           strategy="afterInteractive"
         />
+        <Script id="baidu-analytics" strategy="afterInteractive">
+          {`
+            var _hmt = _hmt || [];
+            (function() {
+              var hm = document.createElement("script");
+              hm.src = "https://hm.baidu.com/hm.js?${site.baiduAnalyticsId}";
+              var s = document.getElementsByTagName("script")[0]; 
+              s.parentNode.insertBefore(hm, s);
+            })();
+          `}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndOrganizationJsonLd) }}

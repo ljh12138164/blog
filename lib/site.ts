@@ -1,12 +1,12 @@
 import siteConfig from '@/site.config.json'
 
 export const site = {
-  name: 'ljh的技术博客',
-  title: 'ljh的技术博客 - 前端架构、实时协同与 AI 工程化实践',
-  description:
-    '专注分享前端架构设计、多人实时协同（CRDT/OT）、现代 Web 性能调优、全栈边缘计算与 AI 大模型（LLM/Agent）工程化落地实践的技术博客。',
+  name: 'ljh.notes',
+  title: 'ljh.notes - 前端架构、实时协同与 AI 工程化实践',
+  description: 'ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。',
   url: siteConfig.url,
   googleAnalyticsId: 'G-CNJ6XX4XBJ',
+  baiduAnalyticsId: '0f1b632716b21f7c3c7ed60e47890594',
   author: {
     name: '李建辉',
     englishName: 'ljh',

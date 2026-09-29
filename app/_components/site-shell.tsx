@@ -16,7 +16,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <Link
             className="min-w-0 truncate text-lg font-extrabold no-underline"
             href="/"
-            aria-label="ljh的技术博客首页"
+            aria-label="ljh.notes 首页"
           >
             ljh<span className="text-accent">.</span>notes
           </Link>
@@ -30,6 +30,15 @@ export function SiteShell({ children }: { children: ReactNode }) {
             >
               <span className="inline-flex min-h-11 items-center px-3">关于</span>
             </Link>
+            <a
+              className="no-underline transition-colors hover:text-accent max-sm:hidden"
+              href="https://www.travellings.cn/go.html"
+              target="_blank"
+              rel="noreferrer"
+              title="开往-友链接力"
+            >
+              <span className="inline-flex min-h-11 items-center px-3">🚇 开往</span>
+            </a>
             <Search />
             <ThemeToggle />
           </div>
@@ -47,6 +56,15 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link className="no-underline transition-colors hover:text-accent" href="/privacy">
               隐私权政策
             </Link>
+            <a
+              className="no-underline transition-colors hover:text-accent"
+              href="https://www.travellings.cn/go.html"
+              target="_blank"
+              rel="noreferrer"
+              title="开往-友链接力"
+            >
+              🚇 开往
+            </a>
             <a
               className="no-underline transition-colors hover:text-accent"
               href="/feed.xml"

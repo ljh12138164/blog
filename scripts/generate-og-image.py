@@ -35,7 +35,7 @@ draw.rounded_rectangle(pill_box, radius=8, fill=(18, 38, 38), outline="#2dd4bf",
 draw.text((106, 105), "FRONTEND NOTES & AI LAB", font=tag_font, fill="#2dd4bf")
 
 # Main Title
-draw.text((90, 175), "ljh的技术博客", font=title_font, fill="#fdfdfc")
+draw.text((90, 175), "ljh.notes", font=title_font, fill="#fdfdfc")
 
 # Subtitle (2 well-spaced lines, no chips, no overflow)
 draw.text((90, 275), "专注前端架构设计 · 多人实时协同（CRDT/OT）", font=subtitle_font, fill="#cbd5e1")

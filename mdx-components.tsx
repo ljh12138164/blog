@@ -9,7 +9,7 @@ function OptimizedImage(props: ImageProps) {
       loading="lazy"
       className="my-6 rounded-lg border border-line"
       {...props}
-      alt={props.alt || '技术手记配图 · ljh的技术博客'}
+      alt={props.alt || '技术手记配图 · ljh.notes'}
     />
   )
 }
