@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
+import { Comments } from './comments'
 
 type ArticleProps = {
   children: ReactNode
@@ -198,6 +199,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           </div>
         </footer>
       </article>
+      <Comments />
       {toc && toc.length > 0 && (
         <div className="absolute top-16 bottom-28 left-[calc(100%+40px)] w-[180px] max-xl:hidden">
           <aside
