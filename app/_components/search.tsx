@@ -1,33 +1,24 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-
-type SearchResult = { url: string; meta: { title?: string }; excerpt: string }
-type Pagefind = {
-  init(): Promise<void>
-  search(query: string): Promise<{ results: Array<{ data(): Promise<SearchResult> }> }>
-}
-
-let pagefind: Pagefind | undefined
-
-function normalizeResultUrl(url: string) {
-  return url.endsWith('.html') ? url.slice(0, -5) : url
-}
-
-async function loadPagefind() {
-  if (pagefind) return pagefind
-  const pagefindUrl = '/_pagefind/pagefind.js'
-  pagefind = (await import(/* webpackIgnore: true */ pagefindUrl)) as Pagefind
-  await pagefind.init()
-  return pagefind
-}
+import { getPostsHref } from '@/lib/post-discovery'
+import { usePostSearch } from '@/lib/use-post-search'
 
 export function Search() {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [status, setStatus] = useState('输入关键词开始搜索')
+  const { results, loading, error, retry } = usePostSearch(query)
+  const status = !query.trim()
+    ? '输入关键词开始搜索'
+    : loading
+      ? '搜索中…'
+      : error
+        ? '搜索索引暂不可用，请重试'
+        : results.length
+          ? `找到 ${results.length} 篇文章${results.length > 6 ? ' · 显示前 6 篇' : ''}`
+          : '没有找到相关内容'
 
   function openSearch() {
     dialogRef.current?.showModal()
@@ -50,36 +41,6 @@ export function Search() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([])
-      setStatus('输入关键词开始搜索')
-      return
-    }
-
-    let cancelled = false
-    const timer = window.setTimeout(async () => {
-      try {
-        setStatus('搜索中…')
-        const api = await loadPagefind()
-        const response = await api.search(query)
-        const items = await Promise.all(response.results.slice(0, 6).map((item) => item.data()))
-        if (cancelled) return
-        setResults(items)
-        setStatus(items.length ? `找到 ${items.length} 条结果` : '没有找到相关内容')
-      } catch {
-        if (cancelled) return
-        setResults([])
-        setStatus('搜索索引暂不可用，请在构建完成后重试')
-      }
-    }, 180)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [query])
 
   return (
     <>
@@ -127,12 +88,21 @@ export function Search() {
           <p className="m-0 px-4 py-3 font-mono text-[11px] text-muted" aria-live="polite">
             {status}
           </p>
+          {error && (
+            <button
+              className="mx-4 mb-3 min-h-11 cursor-pointer text-sm text-accent"
+              type="button"
+              onClick={retry}
+            >
+              重新搜索
+            </button>
+          )}
           <ul className="m-0 list-none px-2 pb-3">
-            {results.map((result) => (
+            {results.slice(0, 6).map((result) => (
               <li key={result.url}>
                 <a
                   className="grid min-h-11 gap-1 rounded-md px-3 py-3 no-underline hover:bg-code"
-                  href={normalizeResultUrl(result.url)}
+                  href={result.url}
                   onClick={closeSearch}
                 >
                   <strong className="text-pretty">{result.meta.title ?? '未命名文章'}</strong>
@@ -143,6 +113,15 @@ export function Search() {
               </li>
             ))}
           </ul>
+          {query.trim() && !loading && !error && (
+            <Link
+              className="flex min-h-11 items-center border-t border-line px-4 py-3 text-sm text-accent"
+              href={getPostsHref(query)}
+              onClick={closeSearch}
+            >
+              查看完整结果与分类筛选 →
+            </Link>
+          )}
         </section>
       </dialog>
     </>

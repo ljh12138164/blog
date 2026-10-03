@@ -1,5 +1,6 @@
 import type { MdxFile, PageMapItem } from 'nextra'
 import { getPageMap } from 'nextra/page-map'
+import { cache } from 'react'
 
 export type PostSummary = {
   slug: string
@@ -30,7 +31,7 @@ function readRequiredString(metadata: Record<string, unknown>, key: string, rout
   return value
 }
 
-export async function getAllPosts(): Promise<PostSummary[]> {
+export const getAllPosts = cache(async (): Promise<PostSummary[]> => {
   const pageMap = await getPageMap('/posts')
   const files = flattenMdxFiles(pageMap).filter((file) => /^\/posts\/[^/]+$/.test(file.route))
 
@@ -48,16 +49,4 @@ export async function getAllPosts(): Promise<PostSummary[]> {
       }
     })
     .sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title, 'zh-CN'))
-}
-
-export function groupPostsByYear(posts: PostSummary[]) {
-  return posts.reduce<Map<string, PostSummary[]>>((groups, post) => {
-    const year = post.date.slice(0, 4)
-    const yearPosts = groups.get(year) ?? []
-
-    yearPosts.push(post)
-    groups.set(year, yearPosts)
-
-    return groups
-  }, new Map())
-}
+})
