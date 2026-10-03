@@ -43,6 +43,8 @@
 
 ### 梳理 2~3 个核心专栏系列（Topic Clusters）
 
+状态：已完成（本次分类与阅读体验改进）。实现与验证见[文章发现与阅读体验](../development/blog-reading-discovery.md)。
+
 - **Value**:
   - 将现有近 40 篇深度技术文章按照主题脉络进行体系化整理（构建 Topic Clusters），强化 Google 算法对全域的 Topical Authority（主题权威度）评估。
   - 引导读者深度连贯阅读，提升站内停留时长并降低跳出率。
@@ -53,9 +55,9 @@
      - 《现代 Web 性能与边缘计算工程》（Cloudflare、Anycast 缓存、Early Hints、打包调优等博文）
      - 《大模型与 AI Agent 全栈落地手记》（Gemini、DeepSeek 本地部署、Prompting、Token 机制等博文）
   2. **系统支撑**:
-     - 在 `lib/posts.ts` 扩展 `series?: { id: string; title: string; order: number }` 元数据字段；
-     - 在文章详情页头部/尾部渲染“所属系列及上一篇/下一篇”引导卡片；
-     - 在首页或独立路由开辟“精选专栏”索引入口。
+     - 在 `lib/post-discovery.ts` 集中维护系列与有序文章 slug，从已有 MDX 自动读取标题等元数据；
+     - 在文章详情页尾部渲染所属系列、上一篇/下一篇及相关推荐；
+     - 在 `/series` 与 `/series/<slug>` 提供专栏入口与阅读清单，文章索引、导航及页脚可进入。
 
 - **Completion signal**:
   - 读者进入某篇系列文章时，可清楚了解当前系列进度并快速跳转上下篇；

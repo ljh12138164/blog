@@ -2,7 +2,9 @@ import Link from 'next/link'
 import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
+import { ArticleDiscovery } from './article-discovery'
 import { Comments } from './comments'
+import { TableOfContents } from './table-of-contents'
 
 type ArticleProps = {
   children: ReactNode
@@ -24,6 +26,7 @@ type ArticleMetadata = {
 export function Article({ children, toc, metadata = {} }: ArticleProps) {
   const meta = metadata as ArticleMetadata
   const canonicalPath = meta.alternates?.canonical || ''
+  const postSlug = canonicalPath.match(/^\/posts\/([^/]+)$/)?.[1]
   const articleUrl = canonicalPath
     ? `${site.url}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}`
     : site.url
@@ -151,6 +154,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
             )}
           </div>
         </header>
+        {toc && <TableOfContents toc={toc} />}
         {children}
         <footer
           className="not-prose mt-16 rounded-xl border border-line bg-surface/50 p-6 backdrop-blur-xs max-md:p-5"
@@ -199,30 +203,8 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           </div>
         </footer>
       </article>
+      {postSlug && <ArticleDiscovery slug={postSlug} />}
       <Comments />
-      {toc && toc.length > 0 && (
-        <div className="absolute top-16 bottom-28 left-[calc(100%+40px)] w-[180px] max-xl:hidden">
-          <aside
-            className="sticky top-24 self-start border-l border-line pl-5 text-xs max-lg:hidden"
-            aria-label="文章目录"
-            data-pagefind-ignore
-          >
-            <strong className="font-mono text-[11px] text-ink">本页目录</strong>
-            <ol className="list-none p-0">
-              {toc.map((item) => (
-                <li key={item.id} className={`my-3 ${item.depth === 3 ? 'pl-3' : ''}`}>
-                  <a
-                    className="text-muted no-underline transition-colors hover:text-accent"
-                    href={`#${item.id}`}
-                  >
-                    {item.value}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </aside>
-        </div>
-      )}
     </div>
   )
 }

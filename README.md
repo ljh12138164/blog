@@ -30,6 +30,12 @@ pnpm check:write
 
 `pnpm check` 执行全仓 lint；`pnpm check:write` 适合主动统一全仓格式。`pnpm install` 会通过 simple-git-hooks 安装 `pre-commit` 钩子，提交时 lint-staged 仅将暂存的 JavaScript、TypeScript、JSON 和 CSS 文件交给 Biome 检查并安全修复。
 
+## 文章发现与阅读
+
+- `/posts` 支持分类筛选和 Pagefind 全文搜索；`q` 与 `category` 查询参数可分享，搜索需要先完成生产构建。
+- `/series` 提供系列入口，`/series/<slug>` 按策划顺序展示文章。系列配置位于 `lib/post-discovery.ts` 的 `series`，每个 slug 必须指向已有 MDX 文章；新增普通文章无需加入系列。
+- 文章页自动生成同系列上下篇及最多三篇相关推荐（同系列优先，其次同分类）。目录支持手机、平板与桌面，正文图片复用 Nextra ImageZoom。
+
 ## SEO 配置
 
 正式站点域名统一配置在 `site.config.json`。该值用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引；不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于正式域名的 canonical。
