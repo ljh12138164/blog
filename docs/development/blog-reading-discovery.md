@@ -54,5 +54,7 @@
 
 本机 QA 脚本、报告与截图保存在临时目录 `C:/Users/34792/AppData/Local/Temp/blog-reading-qa`，未引入仓库依赖或测试工具配置。
 
+PR：[文章发现与阅读体验 #27](https://github.com/ljh12138164/blog/pull/27)。GitHub CI 状态与审查反馈见 PR；未发布生产。
+
 ## Risks
 Pagefind 依赖完整生产构建生成索引；浏览器验证应使用静态导出。推荐采用可解释的系列/分类规则；不引入向量检索。
