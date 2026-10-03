@@ -1,15 +1,15 @@
 # Hermes
 
-## 状态：空闲
+## 状态：已完成待交付
 
-目标：实现用户确认的分类筛选、系列与推荐、移动目录、图片放大、搜索增强。
+目标：使用 Workbox 构建脚本集成 Service Worker，实现页面 NetworkFirst、哈希静态资源 CacheFirst、第三方动态请求 NetworkOnly 的缓存策略。
 
-分支：`feat/blog-reading-discovery`，基线 `89632c7`。
+分支：`feat/service-worker-caching`，基线 `d5e9f61`。
 
-开发文档：`docs/development/blog-reading-discovery.md`。
+开发文档：`docs/development/service-worker-caching.md`。
 
-验证：typecheck、Biome、21 项单元测试、生产构建、资源提示测试通过；桌面/平板/手机明暗交互与静态 SEO 产物检查通过。无未解决阻塞。
+验证：typecheck、Biome、24 项单元测试（含 SW 策略测试）、生产构建与 postbuild 流水线通过；`out/sw.js` 包含内联 Workbox 运行时，`out/index.html` 包含注册逻辑，`sw.js.gz` 预压缩生成完毕。无阻塞。
 
-PR：https://github.com/ljh12138164/blog/pull/27
+PR：待推送与创建
 
-## 下一步：无
+## 下一步：向用户汇报实现方案与测试结果，确认后提交并推送到远端创建 PR。

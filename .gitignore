@@ -5,6 +5,7 @@ node_modules/
 public/_pagefind/
 public/robots.txt
 public/sitemap*.xml
+public/sw.js*
 .env.local
 *.tsbuildinfo
 .superpowers/
