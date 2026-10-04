@@ -137,6 +137,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <meta name="baidu-site-verification" content="codeva-IiA93WOaG7" />
         <meta name="msvalidate.01" content="DD5A2B7DB351923A5E482555DC0A57C4" />
+        <meta name="google-adsense-account" content="ca-pub-7441827328189379" />
         <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
