@@ -28,7 +28,7 @@ jobs:
       - run: pnpm test:indexnow-submit
       - run: pnpm test:theme
       - run: pnpm test:redirects
-      - run: pnpm exec vitest run lib/post-discovery.test.ts
+      - run: pnpm exec vitest run lib/post-discovery.test.ts lib/article-summaries.test.ts
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:resource-hints

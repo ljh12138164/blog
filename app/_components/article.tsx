@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
+import { articleSummaries } from '@/lib/article-summaries'
 import { site } from '@/lib/site'
 import { ArticleDiscovery } from './article-discovery'
 import { Comments } from './comments'
@@ -27,6 +28,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
   const meta = metadata as ArticleMetadata
   const canonicalPath = meta.alternates?.canonical || ''
   const postSlug = canonicalPath.match(/^\/posts\/([^/]+)$/)?.[1]
+  const aiSummary = postSlug ? articleSummaries[postSlug] : undefined
   const articleUrl = canonicalPath
     ? `${site.url}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}`
     : site.url
@@ -129,23 +131,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           {meta.description && (
             <p className="text-pretty text-[17px] leading-8 text-muted">{meta.description}</p>
           )}
-          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-line/60 pt-5 text-xs text-muted">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/15 font-mono text-xs font-bold text-accent">
-                {site.author.englishName.slice(0, 2).toUpperCase()}
-              </span>
-              <div>
-                <Link
-                  href="/about"
-                  className="font-medium text-ink hover:text-accent no-underline transition-colors"
-                  title="查看作者简介"
-                >
-                  {site.author.name}
-                </Link>
-                <span className="mx-2 text-line">·</span>
-                <span className="text-muted">{site.author.jobTitle}</span>
-              </div>
-            </div>
+          <div className="mt-7 flex items-center justify-end border-t border-line/60 pt-5 text-xs text-muted">
             {meta.date && (
               <p className="m-0 font-mono text-[11px] text-muted uppercase tabular-nums">
                 <time dateTime={meta.date}>{meta.date}</time>
@@ -153,6 +139,54 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
               </p>
             )}
           </div>
+          {aiSummary && (
+            <details
+              className="group/summary mt-8 rounded-xl border border-accent/20 bg-accent-soft/45 px-5 py-3 max-md:px-4"
+              open
+              data-pagefind-ignore
+            >
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2.5 font-semibold text-accent">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent/10">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="5" y="3" width="14" height="18" rx="2" />
+                      <path d="M9 8h6M9 12h6M9 16h3" />
+                    </svg>
+                  </span>
+                  AI 摘要
+                </span>
+                <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
+                  <span className="group-open/summary:hidden">展开</span>
+                  <span className="hidden group-open/summary:inline">收起</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="group-open/summary:rotate-180"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
+              </summary>
+              <p className="mt-2 mb-2 border-t border-accent/15 pt-4 text-pretty text-sm leading-7 text-ink/85">
+                {aiSummary}
+              </p>
+            </details>
+          )}
         </header>
         {toc && <TableOfContents toc={toc} />}
         {children}
