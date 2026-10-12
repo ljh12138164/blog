@@ -51,6 +51,8 @@ CI 的文章测试步骤同时执行摘要覆盖检查，新增或删除文章�
 
 首次验证因本机缺少已声明的 `workbox-build` 导致 Service Worker 测试及 postbuild 失败；执行 `pnpm install --frozen-lockfile` 恢复依赖后，测试与完整构建通过，未修改 manifest 或 lockfile。构建产生的 `next-env.d.ts` 与 RSS 构建日期差异已恢复。
 
+交付：`feat/ai-article-summary` 已推送，[PR #28](https://github.com/ljh12138164/blog/pull/28) 已创建并附加到当前任务。远端 verify 检查在交付时仍运行中；本次未合并或部署。
+
 ## Risks
 
 静态摘要不会随正文自动更新，需编辑者同步核对。内容覆盖测试能发现遗漏，不能自动证明摘要语义与正文一致。
