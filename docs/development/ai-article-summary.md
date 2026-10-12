@@ -2,7 +2,7 @@
 
 ## Background
 
-为技术长文增加阅读前摘要，让读者先了解内容与关键边界。用户已确认静态摘要、原有青绿色细边线、默认展开且可收起的方案，并指定 Impeccable 与 humanizer-zh。
+为技术长文增加阅读前摘要，让读者先了解内容与关键边界。用户已确认静态摘要、青绿色配色、默认展开且可收起的方案，并指定 Impeccable 与 humanizer-zh。预览后用户反馈摘要与正文过于相似，要求增强视觉区分。
 
 ## Scope
 
@@ -36,7 +36,7 @@ CI 的文章测试步骤同时执行摘要覆盖检查，新增或删除文章�
 
 设计依据：已读取 Impeccable 官方 SKILL.src.md、shape、new-work 与 craft-floor；本地启动器不可用，直接读取现有代码与设计记录。UI Skills MCP 的 interface-design 与 baseline-ui 已加载。内容依据 humanizer-zh 保留信息和确定程度，不新增数字、经历或性能承诺。
 
-摘要使用主要文字色、略小于正文的字号与 1px 强调色左边线。展开按钮保留文字标签与可见焦点，触摸区域至少 44px。只包含展开与收起状态，无加载或生成状态。
+摘要改为独立浅青色卡片，复用 accent-soft 背景、accent 边框与现有 rounded-xl 圆角。摘要图标与加粗标签构成标题，内容用分隔线与 14px / 28px 字体区分于正文；采用 4px 间距基准、桌面 20px 和手机 16px 水平内边距，不增加阴影或动画。展开按钮保留文字标签与可见焦点，触摸区域至少 44px。只包含展开与收起状态，无加载或生成状态。
 
 头部不再显示作者身份栏，日期和阅读时长继续靠右显示。改动复用所有文章的 Article 包装器；正文末尾的作者简介与结构化作者数据保持原样。
 
@@ -51,6 +51,7 @@ CI 的文章测试步骤同时执行摘要覆盖检查，新增或删除文章�
 - `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml`、`out/robots.txt` 和 `out/sw.js` 存在。
 - 本地生产产物 `/posts/nextra-blog-setup` 在 1280px 桌面与 390px 手机的明暗主题中完成视觉检查；摘要正文 15px / 28.5px 行高，控件高度 44px，无页面级横向溢出。
 - 鼠标收起、Enter 展开、2px 键盘焦点已确认；禁用 JavaScript 并刷新后，Space 收起与 Enter 展开仍正常。
+- 卡片改版后重新通过类型检查、Biome 检查、2 项摘要测试及完整构建；39/39 导出文章具有新卡片样式。1280px 桌面与 390px 手机在明暗主题下完成视觉核对，无横向溢出；控件 44px，摘要字体 14px / 28px，鼠标收起与 Enter 展开正常。沿用已加载的 UI Skills 与项目 frontend-design 指引，审查无阻塞项。
 - 独立审查逐篇核对摘要及 Article 实现，无阻塞或接受的后续项，因此不新增空路线图。
 
 首次验证因本机缺少已声明的 `workbox-build` 导致 Service Worker 测试及 postbuild 失败；执行 `pnpm install --frozen-lockfile` 恢复依赖后，测试与完整构建通过，未修改 manifest 或 lockfile。构建产生的 `next-env.d.ts` 与 RSS 构建日期差异已恢复。

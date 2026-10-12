@@ -141,12 +141,30 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           </div>
           {aiSummary && (
             <details
-              className="group/summary mt-8 border-l border-accent pl-5 max-md:pl-4"
+              className="group/summary mt-8 rounded-xl border border-accent/20 bg-accent-soft/45 px-5 py-3 max-md:px-4"
               open
               data-pagefind-ignore
             >
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm [&::-webkit-details-marker]:hidden">
-                <span className="font-medium text-accent">AI 摘要</span>
+                <span className="flex items-center gap-2.5 font-semibold text-accent">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent/10">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="5" y="3" width="14" height="18" rx="2" />
+                      <path d="M9 8h6M9 12h6M9 16h3" />
+                    </svg>
+                  </span>
+                  AI 摘要
+                </span>
                 <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
                   <span className="group-open/summary:hidden">展开</span>
                   <span className="hidden group-open/summary:inline">收起</span>
@@ -164,7 +182,9 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
                   </svg>
                 </span>
               </summary>
-              <p className="mt-1 text-pretty text-[15px] leading-[1.9] text-ink/90">{aiSummary}</p>
+              <p className="mt-2 mb-2 border-t border-accent/15 pt-4 text-pretty text-sm leading-7 text-ink/85">
+                {aiSummary}
+              </p>
             </details>
           )}
         </header>
