@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
+import { articleSummaries } from '@/lib/article-summaries'
 import { site } from '@/lib/site'
 import { ArticleDiscovery } from './article-discovery'
 import { Comments } from './comments'
@@ -27,6 +28,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
   const meta = metadata as ArticleMetadata
   const canonicalPath = meta.alternates?.canonical || ''
   const postSlug = canonicalPath.match(/^\/posts\/([^/]+)$/)?.[1]
+  const aiSummary = postSlug ? articleSummaries[postSlug] : undefined
   const articleUrl = canonicalPath
     ? `${site.url}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}`
     : site.url
@@ -153,6 +155,34 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
               </p>
             )}
           </div>
+          {aiSummary && (
+            <details
+              className="group/summary mt-8 border-l border-accent pl-5 max-md:pl-4"
+              open
+              data-pagefind-ignore
+            >
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm [&::-webkit-details-marker]:hidden">
+                <span className="font-medium text-accent">AI 摘要</span>
+                <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
+                  <span className="group-open/summary:hidden">展开</span>
+                  <span className="hidden group-open/summary:inline">收起</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="group-open/summary:rotate-180"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
+              </summary>
+              <p className="mt-1 text-pretty text-[15px] leading-[1.9] text-ink/90">{aiSummary}</p>
+            </details>
+          )}
         </header>
         {toc && <TableOfContents toc={toc} />}
         {children}

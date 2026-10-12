@@ -1,15 +1,15 @@
 # Hermes
 
-## 状态：已完成待交付
+## 状态：已验证待交付
 
-目标：使用 Workbox 构建脚本集成 Service Worker，实现页面 NetworkFirst、哈希静态资源 CacheFirst、第三方动态请求 NetworkOnly 的缓存策略。
+目标：为全部 39 篇文章增加静态 AI 摘要，使用已确认的 Impeccable 阅读前注记设计与 humanizer-zh 内容规范。
 
-分支：`feat/service-worker-caching`，基线 `d5e9f61`。
+分支：`feat/ai-article-summary`，基线 `e9de916`。此前 Service Worker 已包含在 master 的 `50e9bcf` 提交中。
 
-开发文档：`docs/development/service-worker-caching.md`。
+开发文档：`docs/development/ai-article-summary.md`。
 
-验证：typecheck、Biome、24 项单元测试（含 SW 策略测试）、生产构建与 postbuild 流水线通过；`out/sw.js` 包含内联 Workbox 运行时，`out/index.html` 包含注册逻辑，`sw.js.gz` 预压缩生成完毕。无阻塞。
+验证：39/39 篇覆盖；typecheck、Biome、26 项测试、完整生产构建及静态产物检查通过。1280px/390px 明暗主题、鼠标与键盘、禁用 JavaScript 折叠均通过。独立内容与代码审查无阻塞。已按锁文件补齐本机缺失依赖，manifest 与 lockfile 无改动。
 
-PR：待推送与创建
+PR：待验证后推送与创建。
 
-## 下一步：向用户汇报实现方案与测试结果，确认后提交并推送到远端创建 PR。
+## 下一步：提交已验证改动并尝试推送、创建 PR；GitHub CLI 当前无认证，如无法创建则记录具体限制并交付本地预览。
