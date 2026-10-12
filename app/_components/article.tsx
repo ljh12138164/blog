@@ -131,23 +131,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
           {meta.description && (
             <p className="text-pretty text-[17px] leading-8 text-muted">{meta.description}</p>
           )}
-          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-line/60 pt-5 text-xs text-muted">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/15 font-mono text-xs font-bold text-accent">
-                {site.author.englishName.slice(0, 2).toUpperCase()}
-              </span>
-              <div>
-                <Link
-                  href="/about"
-                  className="font-medium text-ink hover:text-accent no-underline transition-colors"
-                  title="查看作者简介"
-                >
-                  {site.author.name}
-                </Link>
-                <span className="mx-2 text-line">·</span>
-                <span className="text-muted">{site.author.jobTitle}</span>
-              </div>
-            </div>
+          <div className="mt-7 flex items-center justify-end border-t border-line/60 pt-5 text-xs text-muted">
             {meta.date && (
               <p className="m-0 font-mono text-[11px] text-muted uppercase tabular-nums">
                 <time dateTime={meta.date}>{meta.date}</time>
