@@ -87,7 +87,7 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://lj
 
 按下面顺序发布，保留根域名和 blog 两个直接访问入口：
 
-1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中只有一个 async AdSense 脚本、验证 meta、根域名 canonical，以及 sitemap 中的根域名 URL。
+1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中唯一的 AdSense 验证 meta、同步默认同意、根域名 canonical，以及 sitemap 中的根域名 URL。浏览器加载后检查只有一份 AdSense 脚本和默认同意脚本，无 hydration 错误；AdSense 使用 afterInteractive，不能要求导出 HTML 提前执行它。
 2. 保持 `ljhboard.cn` 与 `blog.ljhboard.cn` 均直接提供同一份静态内容，不配置两个主机之间的跳转。分别验证首页、文章及 `/sitemap.xml` 返回 200；两端 HTML 的 canonical 和 sitemap 正文均使用根域名 URL。
 3. 按[完整迁移对照](self-site-migration.md)核验“关于我”的资料、四站入口、工具、贡献与技术栈；将 self 首页及 `/about` 永久跳转至 `https://ljhboard.cn/about`，`/privacy` 跳至根域名隐私页，保留查询参数和有效锚点。旧图片保留服务或映射至 `/profile/*`，不能全部送到 HTML 页面；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。关闭原站每日贡献蛇部署任务，避免重复部署旧服务；博客不接替该定时任务。
 4. GSC 已有 `sc-domain:ljhboard.cn` 网域资源；在该资源检查正式 sitemap 的读取、代表文章实时抓取和 Google 选择的 canonical。保留历史报告用于对照，不把“实时测试可索引”写成“已经收录”。

@@ -24,22 +24,14 @@ for (const htmlPath of collectHtmlFiles(outDir)) {
   const html = fs.readFileSync(htmlPath, 'utf8')
   const relativePath = path.relative(rootDir, htmlPath)
   const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? ''
-  const adScripts = (html.match(/<script\b[^>]*>/gi) ?? []).filter((tag) =>
-    attribute(tag, 'src')?.includes('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')
+  const adsenseMeta = (head.match(/<meta\b[^>]*>/gi) ?? []).filter(
+    (tag) => attribute(tag, 'name') === 'google-adsense-account'
   )
-  const adScript = adScripts[0]
   if (
-    adScripts.length !== 1 ||
-    !head.includes(adScript) ||
-    attribute(adScript, 'src') !==
-      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379' ||
-    !/\sasync(?:[\s=>])/i.test(adScript) ||
-    attribute(adScript, 'crossorigin') !== 'anonymous' ||
-    attribute(adScript, 'data-cfasync') !== 'false'
+    adsenseMeta.length !== 1 ||
+    attribute(adsenseMeta[0], 'content') !== 'ca-pub-7441827328189379'
   ) {
-    errors.push(
-      `${relativePath}: expected one async AdSense script in head, excluded from Rocket Loader`
-    )
+    errors.push(`${relativePath}: expected one AdSense verification meta in head`)
   }
   const canonicalTags = (html.match(/<link\b[^>]*>/gi) ?? []).filter((tag) =>
     /\brel=["']canonical["']/i.test(tag)
