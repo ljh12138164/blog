@@ -41,42 +41,42 @@ module.exports = {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'GPTBot',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'OAI-SearchBot',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'ClaudeBot',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'Claude-SearchBot',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'PerplexityBot',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'Google-Extended',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       },
       {
         userAgent: 'Applebot-Extended',
         allow: '/',
-        disallow: ['/_next/', '/_pagefind/']
+        disallow: ['/_pagefind/']
       }
     ],
     additionalSitemaps: []

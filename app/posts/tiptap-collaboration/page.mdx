@@ -198,7 +198,7 @@ server.listen();
 2. **Awareness（感知状态）的心跳与超时**：
    当用户突然断网或异常关闭标签页时，Awareness 协议会在 30 秒超时后自动清理残留的彩色光标，避免页面出现“僵尸光标”。
 3. **数据快照压缩**：
-   定期对长篇文档执行 `Y.encodeStateAsUpdate(ydoc)`，合并过往编辑碎片，可让文档加载体积减少 80% 以上。
+   可以用 `Y.encodeStateAsUpdate(ydoc)` 导出当前文档状态；它本身不保证缩小文档体积。
 
 ---
 

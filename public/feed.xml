@@ -5,7 +5,7 @@
     <link>https://ljhboard.cn</link>
     <description>ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。</description>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 Oct 2026 16:05:24 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 17 Oct 2026 19:33:27 GMT</lastBuildDate>
     <atom:link href="https://ljhboard.cn/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title><![CDATA[项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践]]></title>
@@ -131,7 +131,7 @@
       <title><![CDATA[设计平台首屏性能治理：重型依赖按需分包与编译调优]]></title>
       <link>https://ljhboard.cn/posts/design-optimization</link>
       <guid isPermaLink="true">https://ljhboard.cn/posts/design-optimization</guid>
-      <description><![CDATA[记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。]]></description>
+      <description><![CDATA[记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。]]></description>
       <category>性能调优</category>
       <pubDate>Tue, 11 Feb 2025 00:00:00 GMT</pubDate>
     </item>
@@ -184,7 +184,7 @@
       <pubDate>Thu, 30 Jan 2025 00:00:00 GMT</pubDate>
     </item>
     <item>
-      <title><![CDATA[协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战]]></title>
+      <title><![CDATA[协同笔记系统性能调优：SPA 路由 404、Tree-shaking 与 Bundle 分包]]></title>
       <link>https://ljhboard.cn/posts/collaborative-note-optimization</link>
       <guid isPermaLink="true">https://ljhboard.cn/posts/collaborative-note-optimization</guid>
       <description><![CDATA[记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。]]></description>

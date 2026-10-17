@@ -24,13 +24,13 @@ export const metadata = {
 
 优化顺序应当由证据决定：先记录首屏资源、交互延迟和重渲染次数，再分别调整代码分包、连接建立与状态订阅。没有基线的“优化”无法判断是收益还是迁移成本。
 
-动态表单做大了之后，性能瓶颈通常分成两端：一是首屏载入时加载了根本用不上的导出库（比如几百 KB 的 ExcelJS）；二是表单字段一多，用户在某个输入框里敲个字，整张表单几十个输入框全部跟着重新 render。这篇文章记录这两处卡顿的定位与改动。
+动态表单做大了之后，性能瓶颈通常分成两端：一是首屏载入时加载了根本用不上的导出库（比如 ExcelJS）；二是表单字段一多，用户在某个输入框里敲个字，整张表单的输入框全部跟着重新 render。这篇文章记录这两处卡顿的定位与改动。
 
 ---
 
 ## 核心优化措施一：重型库（ExcelJS）异步按需加载
 
-在表单系统中，用户只有在点击“导出数据为 Excel”按钮时才需要 `exceljs`（体积约 800KB+）。
+在表单系统中，用户只有在点击“导出数据为 Excel”按钮时才需要 `exceljs`。
 
 ```ts
 // ❌ 优化前：页面加载时直接同步引用
@@ -74,7 +74,7 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 表单设计器依赖动态图标库（如 Iconify API）渲染组件小图标。为了避免渲染时临时进行 DNS 解析和 TLS 握手，在 HTML `<head>` 中注入预连接标头：
 
 ```html
-<!-- 提前建立 TCP/TLS 连接通道，缩短图标加载时间 150ms+ -->
+<!-- 提前建立 TCP/TLS 连接通道 -->
 <link rel="preconnect" href="https://api.iconify.design" crossorigin />
 <link rel="dns-prefetch" href="https://api.iconify.design" />
 ```
@@ -95,9 +95,7 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 | 评估项 | 优化前 | 优化后 |
 | :--- | :--- | :--- |
-| **首屏 JS 产物体积** | 2.1 MB | 380 KB (Gzip 后 ~95KB) |
 | **Excel 模块加载时机** | 首屏强制下载 | 用户点击导出时按需拉取 |
-| **100 字段表单打字延迟** | 120 ms (明显卡顿) | 8 ms (单帧内完成) |
 
 ---
 
@@ -107,5 +105,5 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 ## 调优心得
 
-- **分包看触发频次**：导出 Excel 是低频操作，放在点击事件里动态 `import()`，用户几乎感知不到下载等待，却能实打实帮首屏减掉近 1MB 的未压缩 JS。
-- **长表单避免受控全局状态**：表单字段超过 20 个时，尽量不要用单一 `useState` 存所有值。改用 React Hook Form 或非受控模式，能把输入延迟从“肉眼可见卡顿”直接降到单帧以内。
+- **分包看触发频次**：导出 Excel 是低频操作，放在点击事件里动态 `import()`，可以把导出依赖移出首屏加载路径，但首次导出仍需等待模块下载。
+- **长表单避免受控全局状态**：字段较多时，单一 `useState` 存所有值可能扩大重渲染范围。可以使用 React Hook Form 或非受控模式隔离字段更新，具体效果需要用 Profiler 验证。
