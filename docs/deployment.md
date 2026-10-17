@@ -50,7 +50,7 @@ gate 不提供 shell、SFTP 或任意命令执行。
 - Pull Request：安装依赖、类型检查、静态构建和产物验证，不发布。
 - 推送 `master`：验证通过后在 Actions Runner 构建 `blog:sha-<commit>`，打包 `image.tar`、`compose.yaml`、宿主 Nginx 和部署脚本，再传输给服务器。
 - 手动触发：基于所选 Git ref 重建并发布该 ref，对历史版本回滚时选择对应的提交或引用。
-- 贡献图使用仓库内的明暗 SVG 静态快照，随正常构建发布；不配置 cron、贡献蛇生成或相关 artifact 传递。
+- 普通贡献热力图使用仓库内的明暗 SVG 静态快照，随正常构建发布；不配置 cron、贡献蛇生成或相关 artifact 传递。
 - 服务器验证发布包、`docker load` 镜像、同步受管配置、执行 `docker compose up -d --remove-orphans web`，并检查 `http://127.0.0.1:18080/healthz`。
 - 公网页面和根目录 IndexNow 密钥验证通过后，读取线上 `sitemap.xml` 并向 IndexNow 全局端点提交同站 URL。
 

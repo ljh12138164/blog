@@ -40,8 +40,8 @@ jobs:
           test -f out/_pagefind/pagefind.js
           test -f out/sitemap.xml
           test -f out/robots.txt
-          cmp public/profile/snake-light.svg out/profile/snake-light.svg
-          cmp public/profile/snake-dark.svg out/profile/snake-dark.svg
+          cmp public/profile/contributions-light.svg out/profile/contributions-light.svg
+          cmp public/profile/contributions-dark.svg out/profile/contributions-dark.svg
           test -f .next/early-hints-map.conf
           cmp public/1da648d59c024d869f2523943dce4c6b.txt out/1da648d59c024d869f2523943dce4c6b.txt
       - name: Build and verify runtime image

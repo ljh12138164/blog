@@ -1,10 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-[data-theme="dark"] .profile-snake-light {
+[data-theme="dark"] .profile-contributions-light {
   display: none;
 }
-[data-theme="dark"] .profile-snake-dark {
+[data-theme="dark"] .profile-contributions-dark {
   display: block;
 }
 

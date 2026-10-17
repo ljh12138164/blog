@@ -62,8 +62,8 @@ describe('personal site migration', () => {
       'news.webp',
       'pro-components.png',
       'autoform.png',
-      'snake-light.svg',
-      'snake-dark.svg'
+      'contributions-light.svg',
+      'contributions-dark.svg'
     ]) {
       expect(body).toContain(`/profile/${name}`)
       expect(existsSync(new URL(`../out/profile/${name}`, import.meta.url))).toBe(true)
@@ -73,10 +73,18 @@ describe('personal site migration', () => {
     }
     const skillsSection = body.slice(body.indexOf('id="skills"'), body.indexOf('id="contact"'))
     expect(skillsSection.match(/<svg\b/g)).toHaveLength(43)
+  })
+
+  it('shows an ordinary contribution heatmap without snake animation', () => {
+    expect(aboutPage).not.toMatch(/snake-|贪吃蛇/)
     for (const theme of ['light', 'dark']) {
-      expect(
-        readFileSync(new URL(`../out/profile/snake-${theme}.svg`, import.meta.url), 'utf8')
-      ).toContain('prefers-reduced-motion')
+      const chart = readFileSync(
+        new URL(`../out/profile/contributions-${theme}.svg`, import.meta.url),
+        'utf8'
+      )
+      expect(chart.match(/data-level="[0-4]"/g)).toHaveLength(371)
+      expect(chart.match(/data-level="[1-4]"/g)).toHaveLength(178)
+      expect(chart).not.toMatch(/animation|@keyframes|<animate|Platane|class="s /)
     }
   })
 })

@@ -164,22 +164,22 @@ export function PersonalWork() {
           className="overflow-x-auto rounded-sm border border-line bg-code p-4"
           // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the wide contribution chart.
           tabIndex={0}
-          aria-label="GitHub 贡献贪吃蛇，可横向滚动"
+          aria-label="GitHub 贡献热力图，可横向滚动"
         >
           <Image
-            className="profile-snake-light block h-auto min-w-[720px] w-full"
-            src="/profile/snake-light.svg"
-            alt="ljh12138164 的 GitHub 公开贡献贪吃蛇动画"
+            className="profile-contributions-light block h-auto min-w-[640px] w-full"
+            src="/profile/contributions-light.svg"
+            alt="ljh12138164 的 GitHub 公开贡献热力图"
             width={856}
-            height={122}
+            height={150}
             loading="lazy"
           />
           <Image
-            className="profile-snake-dark hidden h-auto min-w-[720px] w-full"
-            src="/profile/snake-dark.svg"
-            alt="ljh12138164 的 GitHub 公开贡献贪吃蛇动画"
+            className="profile-contributions-dark hidden h-auto min-w-[640px] w-full"
+            src="/profile/contributions-dark.svg"
+            alt="ljh12138164 的 GitHub 公开贡献热力图"
             width={856}
-            height={122}
+            height={150}
             loading="lazy"
           />
         </section>
