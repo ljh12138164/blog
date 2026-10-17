@@ -31,6 +31,7 @@ jobs:
       - run: pnpm exec vitest run lib/post-discovery.test.ts lib/article-summaries.test.ts
       - run: pnpm typecheck
       - run: pnpm build
+      - run: pnpm exec vitest run scripts/google-consent.test.mjs
       - run: pnpm test:resource-hints
       - run: pnpm exec vitest run scripts/personal-hub.test.mjs
       - name: Verify static artifacts

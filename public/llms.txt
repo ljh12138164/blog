@@ -83,10 +83,10 @@
 
 ### 性能调优
 
-- [设计平台首屏性能治理：重型依赖按需分包与编译调优](https://ljhboard.cn/posts/design-optimization): 记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。 (发布日期: 2025-02-11)
+- [设计平台首屏性能治理：重型依赖按需分包与编译调优](https://ljhboard.cn/posts/design-optimization): 记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。 (发布日期: 2025-02-11)
 - [协作平台构建体积优化：ECharts 按需引入与构建分包](https://ljhboard.cn/posts/jebet-optimization): 记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。 (发布日期: 2025-02-02)
 - [复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘](https://ljhboard.cn/posts/custom-form-optimization): 将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。 (发布日期: 2025-01-31)
-- [协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战](https://ljhboard.cn/posts/collaborative-note-optimization): 记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。 (发布日期: 2025-01-29)
+- [协同笔记系统性能调优：SPA 路由 404、Tree-shaking 与 Bundle 分包](https://ljhboard.cn/posts/collaborative-note-optimization): 记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。 (发布日期: 2025-01-29)
 
 ### 全栈与安全
 

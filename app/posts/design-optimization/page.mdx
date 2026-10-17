@@ -1,6 +1,6 @@
 export const metadata = {
   title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
-  description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。',
+  description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。',
   date: '2025-02-11',
   category: '性能调优',
   readingTime: '9 分钟',
@@ -8,12 +8,12 @@ export const metadata = {
   openGraph: {
     type: 'article',
     title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
-    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。',
+    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。',
     url: '/posts/design-optimization', images: ['/og-image.png'] },
   twitter: {
     card: 'summary_large_image',
     title: '设计平台首屏性能治理：重型依赖按需分包与编译调优',
-    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。', images: ['/og-image.png'] },
+    description: '记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。', images: ['/og-image.png'] },
 }
 
 ## 读完你能做什么
@@ -33,7 +33,7 @@ flowchart LR
 
 性能治理是测量闭环。动态导入、编译优化和 CSS 调整只是工具，只有能改善目标指标且不损害功能时才值得保留。
 
-画板类应用通常集成了 Canvas（Fabric.js）、富文本协同（Tiptap）与通用编辑器，直接同步打包进首屏容易导致主包膨胀到 2.5MB 以上。用户初次访问时白屏时间偏长，非关键交互逻辑抢占主线程执行，拖慢整体响应。
+画板类应用通常集成了 Canvas（Fabric.js）、富文本协同（Tiptap）与通用编辑器，直接同步打包进首屏容易导致主包膨胀。用户初次访问时白屏时间偏长，非关键交互逻辑抢占主线程执行，拖慢整体响应。
 
 本文整理排查与分阶段治理的过程。
 
@@ -83,8 +83,6 @@ const RichTextEditor = dynamic(
 );
 ```
 
-* **收益**：首屏初始 JS 载荷直接减少 **1.1 MB**。
-
 ---
 
 ## Next.js 编译层配置优化
@@ -122,18 +120,6 @@ export default nextConfig;
 
 1. **Critical CSS Inlining**：在 Next.js 构建阶段自动提取首屏 HTML 所需的关键样式并内嵌在 `<style>` 标签中，消除因外部 `.css` 文件下载阻塞导致的白屏。
 2. **字体与图标异步加载**：使用 `next/font` 自动实现本地子集化（Subsetting）与 `font-display: swap`，防止文字闪烁（FOIT）。
-
----
-
-## 优化前后 Core Web Vitals 对比
-
-| 指标 | 优化前 | 优化后 | 改善幅度 |
-| :--- | :--- | :--- | :--- |
-| **首屏 JS 体积 (Uncompressed)** | 2.65 MB | **410 KB** | **-84.5%** |
-| **LCP (最大内容绘制)** | 3.8 秒 | **0.9 秒** | **-76.3%** |
-| **FCP (首次内容绘制)** | 2.1 秒 | **0.6 秒** | **-71.4%** |
-| **INP (交互响应延迟)** | 140 ms | **35 ms** | **-75.0%** |
-| **Lighthouse 综合性能评分** | 49 分 | **98 分** | **+49 分** |
 
 ---
 

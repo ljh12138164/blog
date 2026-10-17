@@ -5,6 +5,7 @@ import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
 import { themeInitScript } from '@/lib/theme'
+import { AdSenseScript } from './_components/adsense-script'
 import { SiteShell } from './_components/site-shell'
 import './globals.css'
 
@@ -144,15 +145,25 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="alternate" type="application/rss+xml" title={site.title} href="/feed.xml" />
         <link rel="alternate" type="text/markdown" title="LLM Overview" href="/llms.txt" />
         <script
+          id="google-consent-default"
           data-cfasync="false"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"
-          crossOrigin="anonymous"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+              gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'denied',
+                wait_for_update: 500
+              });
+            `
+          }}
         />
+        <AdSenseScript />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
             gtag('config', '${site.googleAnalyticsId}');
