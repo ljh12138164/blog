@@ -49,3 +49,22 @@ blog 前缀的网页报告更新于 2026-10-12：22 个已索引、50 个未索�
 先发布并验证根域名 HTML、作者资料、AdSense 脚本、ads.txt、sitemap，再设置 blog/www 逐路径永久跳转与 self 资料页映射。随后复查根域名代表文章的 Google 实时抓取、历史索引和 Google canonical，确认新 sitemap 继续成功；最后结合实际内容修订决定是否申请 AdSense 复审。
 
 参见 [部署顺序](deployment.md)、[开发与验证记录](development/adsense-trust-domain.md)。
+
+## 2026-10-18 同意管理与双域名复核
+
+核查时间约 00:00–00:08，北京时间。只读查看，没有切换开关、保存消息或重提网站审核。
+
+AdSense 的欧洲法规嵌入页持续加载，直接打开该页面已经提供的详情入口后，成功读到消息列表与设置：
+
+- 名称为 `European regulations message - ljhboard.cn`，网站列为 `ljhboard.cn`。
+- 状态为“已发布”，发布开关开启，上次修改日期为 2026-08-25。
+- 默认英语，另外 31 种语言；概览为 1 条有效消息。默认统计视图显示次数 0、同意率 0%，不能据此否认其已发布状态或推断故障原因。
+- “允许 Google 最大限度地扩大消息覆盖范围”已开启。
+- **“为广告用途启用意见征求模式”未勾选**。分析用途子选项在广告用途关闭时未显示；没有将它说成已启用。仓库中的 GA 初始化也没有发现独立的默认拒绝与更新联动。
+- 没有改动合法权益、合作伙伴、覆盖范围或其他隐私设置；保存与撤消按钮均处于不可用状态。
+
+已有消息不等于 GA 已接收同意信号。Google 提供广告用途和分析用途两项 Consent Mode 设置；若决定使用现有 Google CMP 联动 GA，需要结合默认状态与加载时序一起验证，不能只把后台复选框当作端到端合规证明。参见 [Google：管理意见征求模式](https://support.google.com/adsense/answer/16053245?hl=en)。
+
+消息编辑内容未加载完成，尚未核实隐私链接与拒绝按钮。依据 [Google 官方测试说明](https://support.google.com/adsense/answer/10924669?hl=en#test-your-messages)，尝试通过 `?fc=alwaysshow&fctype=gdpr` 预览根域名消息，但浏览器导航超时，未得到可判断的页面结果；没有完成真实 EEA 地区或接受/拒绝后的请求测试。消息列表绑定根域名也不足以证明本次已验证 blog 子域名的显示行为。
+
+双域名普通请求的结果：两个首页均为 200，canonical 都指向 `https://blog.ljhboard.cn`；blog 的 Umami 文章为 200、canonical 为 blog 同路径。根域名该文章的一次复核请求超时，这不是已确认的站点故障，前一轮 39 篇检查的成功结果也不能替代当前这次失败。根域名 robots 仍禁止 `/_next/`，Host/Sitemap 仍为 blog。两个域名能访问与迁移尚未完成可以同时成立；本次没有修改 DNS、跳转或 robots。

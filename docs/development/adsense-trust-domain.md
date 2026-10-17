@@ -51,6 +51,8 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 建站文章改正版本、容器端口与浮动包管理器示例，固定代码证据到基线提交；SEO 文章增加真实 GSC 观察，删除未提供图片的截图占位，修正已存在 Article image 的描述。保留原始发布日期，在正文标明核对时间，不编造性能采样。
 
+2026-10-18 按用户收窄的范围修正 Umami 文章，不新增教程：更正 GA4 第一方 Cookie、共享连接池与免费方案限制，删除正文未覆盖的 Next.js SPA/事件承诺、固定体积和部署耗时、长期零成本与保证绕过拦截的表述。标题及 `lib/posts.ts` 摘要同步，章节、图片和 HTML 脚本示例保留。旧项目已下线，不恢复项目或补造测量材料；其他实战文章本轮不改。
+
 部署检查正常发布仅接受根域名，首次迁移回滚允许旧 blog canonical。未改源站 ai 的证书、回源、服务器配置或线上 Cloudflare 规则。
 
 ## Verification
@@ -69,6 +71,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 文案润色后再次通过 typecheck、build、4 项迁移测试与改动文件 Biome 检查；逐句核对含义，并比较结构化资料及 JSX，确认只改描述文字，页面结构与事实字段不变。浏览器预览截图为 `about-copy-introduction.jpg` 与 `about-copy-skills.jpg`。
 - 本地 `/stats/` 404 属于未经过 Nginx 统计代理的预览环境，生产代理不在本次修改范围。
 - 后台实证见 [AdSense 与搜索核查](../adsense-search-audit.md)。未提交复审或更改线上规则。
+- Umami 修订通过 `pnpm typecheck`、`pnpm build` 与 `pnpm exec biome check lib/posts.ts`；一次性比对确认章节、四张图片和 HTML 脚本不变，生成页面包含修正后的内容。双域名首页仍为 200、canonical 都指 blog；同意消息已发布且绑定根域名，但广告用途 Consent Mode 关闭。细节与未完成的浏览器预览见后台核查的 2026-10-18 补充。
 
 ## Review
 

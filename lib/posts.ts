@@ -1,9 +1,9 @@
 export const recentPosts = [
   {
     slug: 'umami-vercel-supabase',
-    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
+    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践',
     description:
-      '记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。',
+      '记录使用 Vercel 托管 Umami、配合 Supabase PostgreSQL 的部署流程，包括数据库连接、环境变量、自定义域名和网站追踪脚本。',
     date: '2026-09-23',
     category: '建站与专题',
     readingTime: '9 分钟'

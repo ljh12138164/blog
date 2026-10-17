@@ -5,13 +5,13 @@
     <link>https://ljhboard.cn</link>
     <description>ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。</description>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 Oct 2026 12:15:02 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 17 Oct 2026 16:05:24 GMT</lastBuildDate>
     <atom:link href="https://ljhboard.cn/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
-      <title><![CDATA[项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践]]></title>
+      <title><![CDATA[项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践]]></title>
       <link>https://ljhboard.cn/posts/umami-vercel-supabase</link>
       <guid isPermaLink="true">https://ljhboard.cn/posts/umami-vercel-supabase</guid>
-      <description><![CDATA[记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。]]></description>
+      <description><![CDATA[记录使用 Vercel 托管 Umami、配合 Supabase PostgreSQL 的部署流程，包括数据库连接、环境变量、自定义域名和网站追踪脚本。]]></description>
       <category>建站与专题</category>
       <pubDate>Wed, 23 Sep 2026 00:00:00 GMT</pubDate>
     </item>

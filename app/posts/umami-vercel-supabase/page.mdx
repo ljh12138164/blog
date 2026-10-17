@@ -1,21 +1,21 @@
 export const metadata = {
-  title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
-  description: '记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。',
+  title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践',
+  description: '记录使用 Vercel 托管 Umami、配合 Supabase PostgreSQL 的部署流程，包括数据库连接、环境变量、自定义域名和网站追踪脚本。',
   date: '2026-09-23',
   category: '建站与专题',
   readingTime: '9 分钟',
   alternates: { canonical: '/posts/umami-vercel-supabase' },
   openGraph: {
     type: 'article',
-    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
-    description: '记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。',
+    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践',
+    description: '记录使用 Vercel 托管 Umami、配合 Supabase PostgreSQL 的部署流程，包括数据库连接、环境变量、自定义域名和网站追踪脚本。',
     url: '/posts/umami-vercel-supabase',
     images: ['/og-image.png'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践',
-    description: '记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。',
+    title: '项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践',
+    description: '记录使用 Vercel 托管 Umami、配合 Supabase PostgreSQL 的部署流程，包括数据库连接、环境变量、自定义域名和网站追踪脚本。',
     images: ['/og-image.png'],
   },
 }
@@ -23,43 +23,43 @@ export const metadata = {
 ## 读完你能做什么
 
 - 申请并配置 Supabase 免费 PostgreSQL 数据库，规避 Serverless 下的连接池配置陷阱。
-- 将 Umami 分析服务部署到 Vercel，绑定独立统计二级域名以降低广告拦截器误伤率。
-- 在 Next.js App Router 项目中接入追踪脚本，实现无感知 SPA 路由切换统计与自定义事件埋点。
+- 将 Umami 分析服务部署到 Vercel，绑定独立统计二级域名。
+- 在 Umami 中添加网站，获取用于统计访问的追踪脚本。
 
 ![start](./image.png)
 
 ```mermaid
 flowchart LR
-  U[访客浏览器] -->|1. 加载 < 3KB 统计脚本| S[analytics.yourdomain.com]
+  U[访客浏览器] -->|1. 加载统计脚本| S[analytics.yourdomain.com]
   U -->|2. 异步上报 PV / Event| V[Vercel Serverless Function]
   V -->|3. Prisma 写入数据| D[(Supabase PostgreSQL)]
   A[管理员浏览器] -->|4. 查看实时仪表盘| V
 ```
 
-自建分析服务的核心不是追求功能比 Google Analytics 更繁复，而是在保障访客隐私、避免广告拦截器全盘误杀的同时，以最低的运维与存储成本获取关键访问漏斗。
+本文使用 Vercel 托管 Umami、Supabase 存储统计数据，记录这套部署的配置过程。免费方案可以用于起步，但有额度和使用范围限制。
 
-在个人技术博客或全栈项目的访问分析选型中，传统方案常常伴随着以下痛点：
-* **Google Analytics 4 (GA4)**：脚本体积偏大（往往超过 45KB），依赖第三方 Cookie 需要强制弹出弹窗提醒；在国内网络环境下加载延迟高，且几乎被所有 AdBlock 类浏览器插件无差别拦截。
-* **百度统计 / 友盟**：界面陈旧，脚本偶有外链加载与隐私合规疑虑，且不易深度集成进现代化前端框架中。
+选择访问分析工具时，需要核对脚本加载、数据存储和隐私处理方式：
+* **Google Analytics 4 (GA4)**：JavaScript 标签使用第一方 Cookie 区分用户与会话，并非依赖第三方 Cookie。是否需要征求同意，取决于用户所在地区、数据用途和实际配置，不能仅凭 Cookie 类型判断。参见 [GA4 Cookie 使用说明](https://support.google.com/analytics/answer/11397207?hl=zh_CN)。
+* **百度统计 / 友盟**：属于第三方统计服务，接入前应核对实际加载的脚本、采集字段和隐私说明。
 
-**Umami** 是目前开源社区中最受欢迎的轻量级分析方案之一：脚本体积不足 3KB，完全无需 Cookie 即可统计唯一访客，数据 100% 掌握在自己手中。结合 **Vercel**（免费 Serverless 托管）与 **Supabase**（免费 500MB PostgreSQL），可以搭建一套长期稳定的零成本自建数据面板。
+**Umami** 的访问统计不依赖 Cookie，可以自行部署和管理数据库；使用 Vercel 与 Supabase 时，托管基础设施仍由这两家服务商提供。能否维持免费取决于用量和方案限制，不能保证长期零成本。Vercel Hobby 限个人非商业用途；Supabase Free 目前包含 500 MB 数据库，具体额度以 [Vercel 方案说明](https://vercel.com/docs/plans/hobby)和 [Supabase 定价页](https://supabase.com/pricing)为准。
 
 ---
 
 ## 步骤一：创建 Supabase PostgreSQL 数据库
 
-Umami 依赖 PostgreSQL 存储站点元数据与时序访问日志。Supabase 提供了开箱即用的免费托管实例用于部署 umami的环境变量：
+Umami 使用 PostgreSQL 存储网站配置与访问事件。先创建 Supabase 项目，再获取部署所需的数据库连接信息：
 
 1. 登录 [Supabase 官网](https://supabase.com) 并新建一个 Project。
 2. 填写数据库密码（Database Password），所在地域建议选择与目标受众最近的节点（如 `Northeast Asia (Tokyo)` 或 `Southeast Asia (Singapore)`）。
-3. 项目初始化完成后，进入 **Project Settings -> Database** 面板，找到 **Connection string**。
+3. 项目初始化完成后，点击项目中的 **Connect**，获取所需连接模式的连接字符串。
 
 ### 连接字符串注意事项
 ![start](./image2.png)
 
 在 Serverless 环境下（如 Vercel），数据库连接处理需要区分**直连**与**连接池（Pooler）**：
-* **Direct Connection（端口 5432）**：适合构建期执行数据库迁移（Migration）。
-* **Transaction Pooler（端口 6543）**：通过 PgBouncer 管理连接，适合运行时高并发请求。
+* **Direct Connection（端口 5432）**：可用于数据库迁移，但需确认部署环境能连接该地址。不能仅凭端口判断为直连，共享连接池的 Session 模式也使用 5432。
+* **Transaction Pooler（端口 6543）**：共享连接池使用 Supavisor，适合 Serverless 的短连接。Transaction 模式不支持预处理语句，客户端需按所用驱动配置兼容参数。
 
 ---
 
@@ -73,12 +73,12 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 
 ### 2. 配置环境变量
 
-在 Vercel 项目设置中的 **Environment Variables** 填入以下两个核心参数DIRECT_DATABASE_URL和DATABASE_URL：
+在 Vercel 项目设置中的 **Environment Variables** 配置所用 Umami 版本要求的变量。截图中的 `DIRECT_DATABASE_URL` 与 `DATABASE_URL` 用于区分迁移连接和运行时连接，不代表所有版本都只需填写这两项：
 ![start](./image1.png)
 
 ### 3. 执行首次构建
 
-点击 **Deploy**。Vercel 会自动拉取依赖并调用 `prisma migrate deploy` 将 Umami 所需的表结构（包括 `website`、`session`、`website_event` 等）写入 Supabase 数据库中。整个部署耗时通常在 2 分钟左右。
+点击 **Deploy**，查看依赖安装、数据库初始化和构建日志。数据库初始化命令与表结构取决于所用 Umami 版本，应核对该版本的构建脚本，不能假定 Vercel 会额外自动执行 `prisma migrate deploy`。部署耗时也会随版本和网络环境变化。
 
 ---
 
@@ -94,11 +94,11 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 
 ### 2. 绑定自定义二级域名（关键步骤）
 
-很多去广告插件（如 uBlock Origin）默认内置了对 `*.vercel.app` 域名的上报过滤规则。为了保证统计数据的完整性，建议绑定自己的二级域名（例如 `analytics.yourdomain.com`）：
+可以绑定自己的二级域名（例如 `analytics.yourdomain.com`），便于管理统计服务地址。能否被广告拦截器拦截取决于具体规则，不能保证自定义域名就能完整采集：
 
 1. 在 Vercel 项目的 **Settings -> Domains** 中添加 `analytics.yourdomain.com`。
-2. 在你的 DNS 解析服务商（如 Cloudflare 或阿里云）处添加一条 CNAME 记录，指向 `cname.vercel-dns.com`。
-3. 等待 Vercel 自动签发 Let's Encrypt SSL 证书。
+2. 在 DNS 解析服务商（如 Cloudflare 或阿里云）处添加 Vercel 项目页面要求的记录，以该项目显示的目标地址为准。
+3. 等待 Vercel 完成域名验证并签发 TLS 证书。
 
 ### 3. 添加被统计站点
 
@@ -122,8 +122,8 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 
 ## 工程经验小结
 
-这套 Vercel + Supabase + Umami 的架构对于独立博客和中小项目而言性价比极高，但在长期运行中有以下几点需要注意：
+这套部署需要持续关注连接数、免费方案限制和追踪脚本的实际加载情况：
 
-1. **连接数耗尽防线**：Vercel Serverless Function 在突发流量下会并发拉起多个函数实例，若每个实例都直接连接 PostgreSQL，可能会瞬间占满 Supabase 免费配额中的最大连接数（通常为 60）。生产环境下建议在 `DATABASE_URL` 中指定连接上限参数（例如 `?connection_limit=3`），或者使用 Supabase 的 Transaction Pooler 端口（6543）配合 PgBouncer。
-2. **Supabase 免费实例休眠机制**：Supabase 免费项目在连续 7 天无 API 或数据库请求时会被自动暂停（Paused）。对于正常线上运行的博客，每日只要有零星真实访客或搜索引擎爬虫触发页面访问，数据上报就会持续写入数据库，一般不会触发休眠。若属于流量极低的个人实验站，可以借助 GitHub Actions 配置一个每周定时执行的保活 Workflow 定期查询数据库。
-3. **域名反代与脚本混淆**：除了绑定第一方自定义域名避免被 AdBlock 拦截器基于域名的静态黑名单过滤外，Umami 还支持在构建期通过配置 `TRACKER_SCRIPT_NAME` 环境变量自定义脚本名称（例如将 `script.js` 替换为自定义的静态文件名），能够进一步降低被基于通用 URL 规则误拦截的概率。
+1. **连接数耗尽防线**：多个 Serverless 实例各自建立连接池，可能耗尽数据库连接。连接数上限应查看项目实际配置；Prisma 的 `connection_limit` 参数只限制单个客户端连接池，不能代替整个部署的容量评估。使用共享 Transaction Pooler 时，还要核对驱动对预处理语句的兼容设置。
+2. **Supabase 免费实例休眠机制**：免费项目在一周不活跃后可能暂停，低流量站点不能把免费实例视为持续可用的保证。以控制台的项目状态和当前方案说明为准。
+3. **域名反代与脚本混淆**：Umami 支持通过 `TRACKER_SCRIPT_NAME` 修改追踪脚本文件名。自定义域名或文件名不能保证避开所有拦截规则，应检查浏览器中的实际加载与上报结果。
