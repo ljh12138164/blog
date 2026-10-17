@@ -31,7 +31,7 @@ export const profile = {
       short: '长文与手记',
       url: '/posts',
       preview: '/profile/blog.webp',
-      description: '前端架构、协同算法和性能优化方面的踩坑手记与长文复盘。',
+      description: '记录前端架构、协同算法和性能优化中遇到的问题，也写长文复盘。',
       category: '写作'
     },
     {
@@ -40,7 +40,7 @@ export const profile = {
       short: '18 个在线工具',
       url: 'https://tools.ljhboard.cn',
       preview: '/profile/tools.webp',
-      description: '常用编码、格式化和哈希工具，纯浏览器本地跑，不传服务器。',
+      description: '常用的编码、格式化和哈希工具，在浏览器本地运行，数据不传到服务器。',
       category: '工具'
     },
     {
@@ -49,7 +49,7 @@ export const profile = {
       short: 'Token 计算器',
       url: 'https://token.ljhboard.cn',
       preview: '/profile/token.webp',
-      description: '算大模型 Token 成本用的，支持常见模型本地分词和官方计费。',
+      description: '用来算大模型的 Token 成本，支持常见模型的本地分词，按官方价格估算费用。',
       category: '实验'
     },
     {
@@ -101,8 +101,8 @@ export const profile = {
       langColor: '#3178c6',
       contribution: {
         title: '为 AutoForm 新增 Ant Design 支持',
-        problem: '希望用 Ant Design 组件承接基于数据模式自动生成表单的能力。',
-        work: '提交 Ant Design 集成，覆盖普通字段、嵌套对象与数组表单的展示和交互。',
+        problem: '希望用 Ant Design 组件，根据数据模式自动生成表单。',
+        work: '接入 Ant Design 组件，处理普通字段、嵌套对象和数组表单的展示与交互。',
         pr: 'https://github.com/vantezzen/autoform/pull/145',
         number: 145,
         status: 'merged',

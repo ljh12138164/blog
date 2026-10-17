@@ -1,13 +1,13 @@
 export const metadata = {
   title: '关于李建辉',
   description:
-    '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+    '李建辉（ljh）的个人介绍、技术手记与联系方式。记录前端架构、多人实时协同、Web 性能和 AI 工程实践。',
   alternates: { canonical: '/about' },
   openGraph: {
     type: 'profile',
     title: '关于李建辉 · ljh.notes',
     description:
-      '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+      '李建辉（ljh）的个人介绍、技术手记与联系方式。记录前端架构、多人实时协同、Web 性能和 AI 工程实践。',
     url: '/about',
     images: ['/og-image.png']
   },
@@ -15,7 +15,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: '关于李建辉 · ljh.notes',
     description:
-      '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
+      '李建辉（ljh）的个人介绍、技术手记与联系方式。记录前端架构、多人实时协同、Web 性能和 AI 工程实践。',
     images: ['/og-image.png']
   }
 }

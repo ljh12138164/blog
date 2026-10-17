@@ -61,8 +61,8 @@ export function PersonalIntroduction() {
         {author.jobTitle} · {author.bio}
       </p>
       <p className="mt-3 mb-0 text-pretty leading-7 text-muted">
-        这里放我的工具、开源贡献和技术手记。写前端架构、实时协同、Web 性能与 AI
-        工程，也留下那些最后没有采用的方案。
+        这里放了我做的工具、参与的开源项目和写过的技术手记。文章主要聊前端架构、实时协同、Web 性能和
+        AI 工程，也会写最后没采用的方案。
       </p>
       <p className="mt-6 mb-0 border-l-2 border-accent pl-4 text-pretty text-sm leading-7 text-muted">
         {author.quote}
@@ -155,7 +155,7 @@ export function PersonalWork() {
     <>
       <HubSection id="activity" label="PUBLIC / ACTIVITY" title="GitHub 公开贡献">
         <p className="mt-0 text-pretty text-sm leading-7 text-muted">
-          贡献图记录公开活动，具体做了什么，可以继续看下面的 PR。
+          这张图记录了我在 GitHub 上的公开活动，具体改动可以看下面的 PR。
           <a className="text-accent" href={profile.author.github}>
             在 GitHub 查看 ↗
           </a>
@@ -184,7 +184,7 @@ export function PersonalWork() {
           />
         </section>
         <p className="mt-3 mb-0 text-pretty text-xs leading-6 text-muted">
-          贡献图为已保存的公开活动快照，具体记录以 GitHub 为准。
+          这是一份已保存的活动快照，最新记录请到 GitHub 查看。
         </p>
       </HubSection>
       <HubSection id="projects" label="CHANGE / EVIDENCE" title="我的开源贡献">
@@ -230,9 +230,9 @@ export function PersonalWork() {
                   查看我的 PR #{project.contribution.number} ↗
                 </a>
                 <p className="m-0 text-pretty text-xs leading-6 text-muted">
-                  状态核实于 {project.contribution.checkedAt}：
-                  {project.contribution.status === 'merged' ? '已合并' : '审核中'}。当前状态以 PR
-                  为准。
+                  {project.contribution.checkedAt} 核对时
+                  {project.contribution.status === 'merged' ? '已合并' : '仍在审核'}，最新状态以 PR
+                  页面为准。
                 </p>
               </div>
             </details>
@@ -241,8 +241,8 @@ export function PersonalWork() {
       </HubSection>
       <HubSection id="skills" label="TOOLS / PRACTICE" title="技术栈与实践方向">
         <p className="mt-0 text-pretty text-sm leading-7 text-muted">
-          {skills.length} 项技术与工具，按领域整理。日常以 TypeScript、React、Vue
-          为主，也处理构建、数据和部署；Nuxt.js 了解一些。
+          这里按领域列了 {skills.length} 项技术和工具。平时主要用 TypeScript、React 和
+          Vue，也做构建、数据处理和部署；Nuxt.js 了解一些。
         </p>
         <ProfileSkills />
       </HubSection>

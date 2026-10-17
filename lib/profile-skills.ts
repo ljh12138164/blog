@@ -28,7 +28,7 @@ export const skills: SkillItem[] = [
     name: 'TypeScript',
     category: 'languages',
     iconSlug: 'ts',
-    description: '严谨类型系统、泛型与工程级类型体操',
+    description: '类型系统、泛型，以及项目中的复杂类型处理',
     hot: true
   },
   {
@@ -41,13 +41,13 @@ export const skills: SkillItem[] = [
     name: 'HTML5',
     category: 'languages',
     iconSlug: 'html',
-    description: '语义化标签、Web Components 与无障碍可访问性'
+    description: '语义化标签、Web Components 与无障碍访问'
   },
   {
     name: 'CSS3',
     category: 'languages',
     iconSlug: 'css',
-    description: 'Flexbox, Grid, 现代变量系统与 CSS-in-JS'
+    description: 'Flexbox、Grid、CSS 变量与 CSS-in-JS'
   },
 
   // 框架与全栈 (特别包含 Astro 与 Umi)
@@ -55,7 +55,7 @@ export const skills: SkillItem[] = [
     name: 'Astro',
     category: 'frameworks',
     iconSlug: 'astro',
-    description: '内容优先的零 JS 群岛架构与孤岛渲染 (Island Architecture)',
+    description: '面向内容的零 JS 群岛架构（Island Architecture）',
     hot: true
   },
   {
@@ -69,27 +69,27 @@ export const skills: SkillItem[] = [
     name: 'React',
     category: 'frameworks',
     iconSlug: 'react',
-    description: 'Hooks, Fiber 调度, 并发特性与组件化架构',
+    description: 'Hooks、Fiber 调度、并发特性与组件化架构',
     hot: true
   },
   {
     name: 'Vue.js',
     category: 'frameworks',
     iconSlug: 'vue',
-    description: 'Composition API, 响应式原理与高效渲染'
+    description: 'Composition API、响应式原理与高效渲染'
   },
   {
     name: 'Next.js',
     category: 'frameworks',
     iconSlug: 'nextjs',
-    description: 'App Router, React Server Components (RSC) 与 SSR/SSG',
+    description: 'App Router、React Server Components（RSC）与 SSR/SSG',
     hot: true
   },
   {
     name: 'Nuxt.js',
     category: 'frameworks',
     iconSlug: 'nuxtjs',
-    description: 'Vue3 SSR/SSG 全栈元框架与自动路由'
+    description: '基于 Vue 3 的全栈元框架，支持 SSR/SSG 和自动路由'
   },
   {
     name: 'Tailwind CSS',
@@ -139,19 +139,19 @@ export const skills: SkillItem[] = [
     name: 'Shadcn UI',
     category: 'ecosystem',
     iconSlug: 'shadcn',
-    description: '可拷贝定制的 Radix 基础高质量组件原语'
+    description: '基于 Radix 的组件，可以复制到项目中按需修改'
   },
   {
     name: 'React Router',
     category: 'ecosystem',
     iconSlug: 'reactrouter',
-    description: '声明式路由系统与数据加载契约'
+    description: '声明式路由与路由中的数据加载规则'
   },
   {
     name: 'React Hook Form',
     category: 'ecosystem',
     iconSlug: 'hookform',
-    description: '高性能、低重渲染的表单校验架构'
+    description: '高性能表单校验，减少不必要的重新渲染'
   },
   {
     name: 'Zod',
@@ -163,7 +163,7 @@ export const skills: SkillItem[] = [
     name: 'Nextra',
     category: 'ecosystem',
     iconSlug: 'nextra',
-    description: '基于 Next.js 的高颜值文档与博客生成引擎'
+    description: '基于 Next.js 生成文档和博客'
   },
   {
     name: 'Yjs',
@@ -196,13 +196,13 @@ export const skills: SkillItem[] = [
     name: 'Webpack',
     category: 'tooling',
     iconSlug: 'webpack',
-    description: '经典模块打包器、深入 Loader/Plugin 机制'
+    description: '模块打包，以及 Loader 和 Plugin 的工作机制'
   },
   {
     name: 'Rollup',
     category: 'tooling',
     iconSlug: 'rollupjs',
-    description: '高内聚类库打包与精细 Tree-shaking'
+    description: '类库打包与细粒度的 Tree-shaking'
   },
   {
     name: 'Turborepo',
@@ -214,7 +214,7 @@ export const skills: SkillItem[] = [
     name: 'Turbopack',
     category: 'tooling',
     iconSlug: 'turbopack',
-    description: '下一代增量打包引擎'
+    description: '增量打包引擎'
   },
   {
     name: 'tsup',
@@ -226,13 +226,13 @@ export const skills: SkillItem[] = [
     name: 'Lighthouse',
     category: 'tooling',
     iconSlug: 'lighthouse',
-    description: 'Web 性能、SEO 与可访问性核心体验审计'
+    description: '检查 Web 性能、SEO 与可访问性'
   },
   {
     name: 'Biome',
     category: 'tooling',
     iconSlug: 'biome',
-    description: '快速的格式化与代码质量 linter 工具'
+    description: '快速格式化代码，并用 linter 检查代码质量'
   },
   {
     name: 'Git & Actions',
@@ -244,7 +244,7 @@ export const skills: SkillItem[] = [
     name: 'pnpm',
     category: 'tooling',
     iconSlug: 'pnpm',
-    description: '硬链接内容寻址的高效磁盘占用包管理器'
+    description: '通过内容寻址和硬链接管理依赖，节省磁盘空间'
   },
 
   // 服务端与云
@@ -282,12 +282,12 @@ export const skills: SkillItem[] = [
     name: 'Gemini AI',
     category: 'backend',
     iconSlug: 'gemini',
-    description: '大语言模型 API 集成与智能交互落地'
+    description: '接入大语言模型 API，开发智能交互功能'
   },
   {
     name: 'Resend',
     category: 'backend',
     iconSlug: 'resend',
-    description: '专为开发者设计的现代事务型邮件服务'
+    description: '面向开发者的事务型邮件服务'
   }
 ]

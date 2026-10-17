@@ -45,6 +45,8 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 作者资料依据 self 站和 GitHub 公开记录，贡献直接链接 PR，不用项目 star 数证明个人贡献。采用 ponytail 最小改动原则，不加依赖。
 
+关于页文案按用户指定的 humanizer-zh 润色：个人介绍、网站说明、贡献说明、技能描述与页面摘要使用直接、自然的表达，保留作者原有简介和短句。标题、锚点、姓名、技能条目、链接、PR 状态及核实日期不变，不补写经历、熟练程度或性能结论；原仓库英文简介保留。
+
 个人资料在 `lib/profile.ts`，技能条目在 `lib/profile-skills.ts`，本地资产在 `public/profile/`。原站旧 favicon、字体、SW、广告与统计初始化由博客现有能力接管，不重复注入；失真的“当前在线”状态不沿用。贡献图按用户要求改为普通绿色热力图，保留已有快照的 371 个日期格子及活跃等级，重新绘制明暗 SVG 与深浅图例，删除蛇、动画及旧资源；不配置定时生成，不新增第三方请求；构建直接读取本地资产。
 
 建站文章改正版本、容器端口与浮动包管理器示例，固定代码证据到基线提交；SEO 文章增加真实 GSC 观察，删除未提供图片的截图占位，修正已存在 Article image 的描述。保留原始发布日期，在正文标明核对时间，不编造性能采样。
@@ -64,6 +66,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 原站两张 GitHub 实现截图外链在本地浏览器加载失败；下载原图迁入 `public/profile/` 并校验 PNG 完整性，不再依赖图片外链。
 - 用户指定的最近文章及文末说明已从初始 HTML 移除，只保留联系方式；43 个技术栈 SVG 从原项目恢复，筛选后图标随条目切换，深色模式的单色图标继承正文颜色。新增截图 `about-skills-restored-desktop.jpg`、`about-contact-only-desktop.jpg` 与 `about-skills-restored-mobile-dark.jpg`。
 - 普通贡献热力图的两种主题逐格对比旧快照：371 个格子的位置与活跃等级完全一致，其中 178 格有公开活动。导出产物不存在旧蛇图，SVG 没有动画或蛇身。生产构建、类型检查、迁移与资源提示 5 项检查、Biome 通过。桌面显示完整图例，390px 手机页面无横向溢出，图内方向键横滚有效；截图 `about-contributions-desktop-dark.jpg` 与 `about-contributions-mobile-dark.jpg`。
+- 文案润色后再次通过 typecheck、build、4 项迁移测试与改动文件 Biome 检查；逐句核对含义，并比较结构化资料及 JSX，确认只改描述文字，页面结构与事实字段不变。浏览器预览截图为 `about-copy-introduction.jpg` 与 `about-copy-skills.jpg`。
 - 本地 `/stats/` 404 属于未经过 Nginx 统计代理的预览环境，生产代理不在本次修改范围。
 - 后台实证见 [AdSense 与搜索核查](../adsense-search-audit.md)。未提交复审或更改线上规则。
 
