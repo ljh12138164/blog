@@ -10,7 +10,7 @@
 
 分支 `feat/adsense-consent-crawl`，基于 origin/master 3e5e49b。9 篇文章的无据数字已删除，robots 放行 /_next/；同步默认 denied + 防止 React 提升 AdSense 已通过生产导出、typecheck 和 32 项测试。记录见 docs/development/adsense-consent-crawl.md。
 
-AdSense 与 Tag Assistant 连续连接关闭；线上强制预览无 CMP 弹窗；Chrome 本地预览被客户端拦截。用户已收到后台连接情况的异步问题。需恢复连接核实 Google CMP 广告/分析联动，并在代码发布后验证两域名首次、接受、拒绝、刷新和撤回；不得声称已完成端到端验证。当前先整理草稿 PR，继续跟进 CI。两域名直接访问，不改跳转，不提交复审。
+用户确认网络恢复。03:39 CST 已保存 Google CMP 广告与分析两项同意模式联动；其他隐私设置未改。线上 Tag Assistant 识别 GA，但旧版本 Config 仍显示未设置默认同意。两个域名强制预览均无 CMP 弹窗，后台编辑器遇 Google 内部 EventBus 加载错误；接受/拒绝/恢复/撤回尚未验证。本地页面已可打开，DOM 中可见默认值、hydration 后 GA config 与 gtag.js，但 Tag Assistant 本地连接超时。需完成草稿 PR 与 CI，在代码发布后验证两域名真实选择；不得声称端到端已完成。两域名直接访问，不改跳转，不提交复审。
 
 ## 计划验证
 
