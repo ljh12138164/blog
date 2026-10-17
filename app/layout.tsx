@@ -144,10 +144,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
         <link rel="alternate" type="application/rss+xml" title={site.title} href="/feed.xml" />
         <link rel="alternate" type="text/markdown" title="LLM Overview" href="/llms.txt" />
-        <Script
+        <script
+          data-cfasync="false"
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"
-          strategy="lazyOnload"
           crossOrigin="anonymous"
         />
         <Script id="google-analytics" strategy="afterInteractive">

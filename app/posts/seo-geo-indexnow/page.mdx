@@ -57,6 +57,21 @@ SEO（Search Engine Optimization）通常优化抓取、索引、页面理解和
 
 ## 第一层：让每篇文章只有一个明确身份
 
+### 本次核对范围与复现入口
+
+2026-10-17 核对的代码基线是 [本站仓库 4a22956](https://github.com/ljh12138164/blog/tree/4a22956188dcbac6cd77dd152a6c1a025d748650)：Next.js 16.0.7、Nextra 4.6.1、next-sitemap 4.2.3、Pagefind 1.5.2。域名迁移另将正式 URL 改为 `https://ljhboard.cn`；旧报告中的 `blog.ljhboard.cn` 是当时的实际地址，不能把它改写成根域名的检查结果。
+
+可直接核对 [SEO 产物检查](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/scripts/verify-seo.mjs)、[IndexNow 提交脚本](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/scripts/submit-indexnow-urls.mjs)和 [生产流水线](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/.github/workflows/ci-deploy.yml)。在同一提交安装锁文件依赖后运行：
+
+```bash
+pnpm typecheck
+pnpm build
+pnpm verify:seo
+pnpm test:indexnow-submit
+```
+
+这里的验收是产物中的 URL 一致、提交脚本过滤行为符合测试；没有把测试通过当作搜索排名改善的测量证据。真实排名与索引需要后台数据单独验证。
+
 本站把正式域名集中在 `site.config.json`，由根布局的 `metadataBase`、文章 metadata、sitemap 和构建校验共同使用。每篇 MDX 文章导出标题、摘要、日期、分类、阅读时间、canonical、Open Graph 与 Twitter 字段：
 
 ```js
@@ -235,34 +250,27 @@ sitemap、IndexNow 和 metadata 解决的是“向搜索系统提供信号”，
 
 完成验证后，按下面的顺序操作：
 
-1. **提交 sitemap**：进入 Sitemaps，提交 `https://blog.ljhboard.cn/sitemap.xml`。这里不是把文件上传给 Google，而是告诉它文件位置，并观察读取时间、状态和解析错误。提交只是一条提示，不保证抓取或收录。参见 [Google：Sitemaps 报告](https://support.google.com/webmasters/answer/7451001)。
+1. **提交 sitemap**：进入正式域名对应资源的 Sitemaps，提交 `https://ljhboard.cn/sitemap.xml`（域名迁移上线后）。这里不是把文件上传给 Google，而是告诉它文件位置，并观察读取时间、状态和解析错误。提交只是一条提示，不保证抓取或收录。参见 [Google：Sitemaps 报告](https://support.google.com/webmasters/answer/7451001)。
 2. **检查新文章 URL**：把完整文章地址输入 URL Inspection，先看 Google 已索引版本，再运行 Live Test。重点核对页面能否抓取、是否允许索引、Google 选择的 canonical 是否与本站声明一致，以及结构化数据是否被识别。
 3. **只对重要单页请求重新编入索引**：新文章或修复关键错误后，可以点击 Request indexing。它有配额，也不保证页面进入索引；多页面变化应依赖 sitemap 和准确的 `lastmod`，而不是逐页点击。参见 [Google：URL Inspection](https://support.google.com/webmasters/answer/9012289)。
 4. **分析 Page indexing 的原因，而不是追求 100%**：优先处理重要 canonical 页面未收录、服务器错误、意外 `noindex` 或 robots 阻止。重定向页、重复页和正确的 alternate URL 不进入索引可能完全正常。参见 [Google：Page indexing 报告](https://support.google.com/webmasters/answer/7440203)。
 5. **用 Performance 找内容机会**：按 Page 筛选一篇文章，再查看 Queries、Clicks、Impressions 与 CTR。高曝光低 CTR 往往需要检查标题和摘要是否准确；出现了相关查询却没有深入回答，则应补充内容。更应该观察数周趋势，而不是被某一天的平均排名牵着走。参见 [Google：Performance 常见任务](https://support.google.com/webmasters/answer/17010961)。
 6. **用 Core Web Vitals 找模板级问题**：报告基于真实用户数据并按相似 URL 分组，适合发现一批文章共有的 LCP、INP 或 CLS 问题；单个页面的即时诊断再交给 PageSpeed Insights。参见 [Google：Core Web Vitals 报告](https://support.google.com/webmasters/answer/9205520)。
 
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 01：Google URL Inspection**
->
-> 图片放到 `public/images/posts/seo-geo-indexnow/google-search-console-url-inspection.webp` 后，将本段替换为：
->
-> `![Google URL Inspection 截图](/images/posts/seo-geo-indexnow/google-search-console-url-inspection.webp)`
->
-> 建议截取索引状态、Google 选择的 canonical、抓取允许状态和 Live Test 入口。
-{/* screenshot-placeholder:end */}
+### 一次真实检查：可抓取不等于已收录
+
+2026-10-17 在本站已验证的 `https://blog.ljhboard.cn/` 资源中检查了两个完整 URL。记录如下，时间均为北京时间；这是一时点观察，不代表所有文章或所有 Google 爬虫的状态。
+
+| URL 路径 | Google 索引中的状态 | 实时测试 |
+| --- | --- | --- |
+| `/posts/nextra-blog-setup` | 已发现，尚未编入索引；无上次抓取时间 | 19:59 抓取成功，允许抓取与索引 |
+| `/posts/seo-geo-indexnow` | 已发现，尚未编入索引；未检测到引荐站点地图 | 20:02 抓取成功，允许抓取与索引 |
+
+两个实时测试都由 Google 检查工具智能手机版执行，读到的用户 canonical 仍指向各自的 `blog.ljhboard.cn` 地址。历史报告没有已抓取页面可供查看，Google 选择的 canonical 也不可用；实时报告明确说要等到编入索引后才能确定。因此，现在只能确认这两次 Google 测试能访问页面，不能宣称它们已经收录，也不能说 Google 已接受迁移后的根域名 canonical。
+
+这次排查也暴露了失败的判断方法：用自己电脑上的 `curl` 得到 200，再把所有未收录归咎于内容或 WAF，证据都不完整。应同时看历史索引、实时抓取和对应主机的安全事件。改域名时则先发布一致的 canonical 与 sitemap，再切换旧域名跳转，之后复查 Google 实际选择；具体步骤参见 [Google 网站迁移指南](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes)。
 
 其他报告按需使用即可：Crawl Stats 更适合在 Googlebot 请求异常、主机不可用或出现大量 5xx 时排查，而不是几十页小站的日常排名仪表盘；Enhancements 只会显示 Google 支持且已经检测到的富媒体类型，报告缺席不等于所有 JSON-LD 都无效；本站也没有商品交易和 Product 数据，不需要为了出现 Merchant listings 报告而添加无关 schema。
-
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 02：Search Performance 趋势**
->
-> 图片放到 `public/images/posts/seo-geo-indexnow/google-search-console-performance.webp` 后，将本段替换为：
->
-> `![Search Performance 趋势截图](/images/posts/seo-geo-indexnow/google-search-console-performance.webp)`
->
-> 建议选中 Clicks、Impressions 与 CTR，并展示按 Page 或 Query 筛选后的趋势。
-{/* screenshot-placeholder:end */}
 
 对本站而言，发布一篇新文章后的最小操作是：确认 sitemap 已出现新 URL，用 URL Inspection 检查一次线上页面，然后等待 Page indexing 与 Performance 数据形成。不要因为当天没有数据就反复请求索引，Search Console 新资源和新页面的数据都可能延迟出现。
 
@@ -277,16 +285,6 @@ Bing 可以直接从已验证的 Google Search Console 导入站点和 sitemap�
 3. **Site Scan 与 SEO Reports 检查模板**：重大改版、导航调整或 metadata 模板变化后，从 sitemap 或指定目录启动 Site Scan，集中发现重复标题、缺失描述、失效链接等技术问题；SEO Reports 则适合定期发现批量页面建议。它们是诊断工具，不是自动排名优化器。参见 [Bing：Site Scan](https://www.bing.com/webmasters/help/site-scan-623520c9)。
 4. **Search Performance 观察搜索与抓取**：结合关键词和页面查看 clicks、impressions、CTR，同时关注 crawl requests、crawl errors 与 indexed pages。新接入站点可能要等待几天才出现数据。参见 [Bing：Search Performance](https://www.bing.com/webmasters/help/search-performance-c680da36)。
 5. **IndexNow Insights 核对通知链路**：查看提交来源、最近 URL、抓取与收录数量、robots 阻止等问题，再用 URL Inspection 检查具体页面。它比只看脚本的 HTTP 200 更完整，但报告收到 URL 仍不等于页面已经收录。参见 [Bing：IndexNow Insights](https://blogs.bing.com/webmaster/March-2024/Optimize-your-Impact-with-IndexNow-Insights)。
-
-{/* screenshot-placeholder:start */}
-> **📷 截图占位 03：Bing IndexNow Insights**
->
-> 图片放到 `public/images/posts/seo-geo-indexnow/bing-indexnow-insights.webp` 后，将本段替换为：
->
-> `![Bing IndexNow Insights 截图](/images/posts/seo-geo-indexnow/bing-indexnow-insights.webp)`
->
-> 建议截取最近提交 URL、抓取与收录状态，以及需要处理的 robots 或 URL 错误。
-{/* screenshot-placeholder:end */}
 
 ### 一套可持续的检查节奏
 
@@ -304,7 +302,7 @@ Bing 可以直接从已验证的 Google Search Console 导入站点和 sitemap�
 一套可信的实践不应只写完成项。结合现有代码，本站接下来最值得补的不是更多 GEO 标签，而是这些数据准确性问题：
 
 - **真实更新时间**：metadata 只有 `date`，导致 `datePublished` 与 `dateModified` 相同；应增加 `updatedAt`，并只在正文发生显著变化时更新。
-- **可见作者与文章图片**：JSON-LD 已声明作者，但页面头部没有可见署名，Article 数据也没有代表性 `image`；补齐后应保持页面与结构化数据一致。
+- **可见作者与文章图片**：JSON-LD 已声明作者，并使用站点共用的 `og-image.png`；页面头部仍没有可见署名。共用图片不能说明每篇文章的具体内容，后续应按真实材料补充，保持页面与结构化数据一致。
 - **安全输出 JSON-LD**：当前直接使用 `JSON.stringify`，如果未来 metadata 来自不可信输入，应按 [Next.js JSON-LD 指南](https://nextjs.org/docs/app/guides/json-ld)转义 `<` 等危险字符。
 - **准确的 sitemap `lastmod`**：`next-sitemap` 默认在每次构建时给全部 URL 写当前时间，这不等于文章真的更新；应从真实修改日期生成，无法保证准确时则不要输出。
 - **只提交发生变化的 URL**：当前 IndexNow 全量提交是小站阶段的简单方案，长期应覆盖新增、显著更新、删除和重定向，而不是每次重发全部页面。

@@ -75,12 +75,26 @@ docker compose -f /opt/stacks/blog/compose.yaml ps
 发布后先验证稳定的响应头契约：
 
 ```bash
-curl --http2 --silent --show-error --dump-header - --output /dev/null https://blog.ljhboard.cn/
+curl --http2 --silent --show-error --dump-header - --output /dev/null https://ljhboard.cn/
 ```
 
 最终 `200` 响应应包含带 `rel=preload; as=style` 的 `Link`。随后可重复请求，或使用 Chrome DevTools、WebPageTest 观察 `103 Early Hints`。Cloudflare 在主响应头更快到达、客户端不兼容或 Early Hints 缓存尚未命中时可能不发出 `103`，因此不能把“每次请求都出现 103”作为稳定健康检查。
 
-## IndexNow
+## 正式域名切换与 self 资料迁移
+
+正式地址为 `https://ljhboard.cn`，统一来源是 `site.config.json`。CI 公网验证和服务器健康检查必须同步切换；首次切换失败后，回滚健康检查允许旧版 `blog.ljhboard.cn` canonical，正常发布仍只接受根域名。源站 `ai.ljhboard.cn`、证书路径和 SaaS 回源配置保持按现有部署链路管理。
+
+按下面顺序发布，避免跳转环路：
+
+1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中只有一个 async AdSense 脚本、验证 meta、根域名 canonical，以及 sitemap 中的根域名 URL。
+2. 在 Cloudflare 停用任何根域名到 blog 的历史跳转后，将 `blog.ljhboard.cn` 和 `www.ljhboard.cn` 永久跳转到根域名对应路径，保留查询参数。旧文章必须跳到同一文章路径，不能全部送到首页。
+3. 验证作者资料完整后，将 self 首页与 `/about` 永久跳转到 `https://ljhboard.cn/about`。先清点 self 其他页面并逐一映射；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。
+4. GSC 已有 `sc-domain:ljhboard.cn` 网域资源；在该资源检查正式 sitemap 的读取、代表文章实时抓取和 Google 选择的 canonical。保留历史报告用于对照，不把“实时测试可索引”写成“已经收录”。
+5. 查看 Cloudflare 安全事件时按主机、时间及 Google 相关用户代理筛选；对命中记录核对路径、方法、规则和爬虫身份。不能仅凭用户代理或 Google Cloud ASN 放行，也不要为了审核关闭全站 WAF。发布后重新核对 AdSense ads.txt 和所有权区域，内容修订完成后再由站长决定复审。
+
+历史 sitemap-0.xml 的抓取失败与当前 sitemap.xml 应分别处理。若仍有旧 sitemap 引用，先核对旧清单是否完整映射，再处理旧提交或提供对应重定向。核查记录见 [AdSense 与搜索后台核查](adsense-search-audit.md)。
+
+## IndexNow 通知
 
 `public/1da648d59c024d869f2523943dce4c6b.txt` 是协议要求的公开所有权证明，随静态站点发布到根目录，不是 GitHub Secret。生产流水线先验证公网密钥内容，再由 `scripts/submit-indexnow-urls.mjs` 读取线上 sitemap，过滤并去重正式站点 URL，最后向 `https://api.indexnow.org/indexnow` 发送一个 JSON 批次。
 

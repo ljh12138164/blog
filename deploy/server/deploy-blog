@@ -74,11 +74,16 @@ write_tag() {
 is_healthy() {
   local attempt=0
   local page
+  local canonical_pattern='<link rel="canonical" href="https://ljhboard\.cn"'
+  # The previous release may still use the blog hostname during the domain migration.
+  if [[ "${1:-}" == rollback ]]; then
+    canonical_pattern='<link rel="canonical" href="https://(blog\.)?ljhboard\.cn"'
+  fi
   page=$(mktemp)
   while [[ "$attempt" -lt 30 ]]; do
     if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/healthz >/dev/null \
       && curl --fail --silent --show-error --max-time 3 --output "$page" http://127.0.0.1:18080/ \
-      && grep -Fq '<link rel="canonical" href="https://blog.ljhboard.cn"' "$page" \
+      && grep -Eq "$canonical_pattern" "$page" \
       && ! grep -Eq 'https?://([0-9]{1,3}\.){3}[0-9]{1,3}' "$page" \
       && curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/posts/react-query-api-optimization >/dev/null; then
       rm -f "$page"
@@ -133,7 +138,7 @@ echo "Health check failed; rolling back to $PREVIOUS_TAG" >&2
 docker compose -f "$STACK_DIR/compose.yaml" logs --tail 80 web >&2 || true
 restore_previous_release
 
-if ! is_healthy; then
+if ! is_healthy rollback; then
   echo "Rollback health check also failed." >&2
   exit 5
 fi

@@ -10,7 +10,7 @@ export const site = {
   author: {
     name: '李建辉',
     englishName: 'ljh',
-    url: 'https://blog.ljhboard.cn/about',
+    url: `${siteConfig.url}/about`,
     github: 'https://github.com/ljh12138164',
     jobTitle: '前端全干工程师',
     sameAs: ['https://github.com/ljh12138164']

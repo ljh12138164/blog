@@ -1,6 +1,6 @@
 # ljh.notes - 全站技术文章全量合集
 
-> 站点 URL: https://blog.ljhboard.cn
+> 站点 URL: https://ljhboard.cn
 > 总文章数: 39 篇
 > 站点简介: ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。
 
@@ -8,7 +8,7 @@
 
 # 项目接入 Umami 统计：基于 Vercel 与 Supabase 的零成本部署实践
 
-- **URL**: https://blog.ljhboard.cn/posts/umami-vercel-supabase
+- **URL**: https://ljhboard.cn/posts/umami-vercel-supabase
 - **分类**: 建站与专题
 - **发布日期**: 2026-09-23
 - **核心导读**: 记录使用 Vercel 托管开源 Umami 并配合 Supabase PostgreSQL 数据库的自建流程，涵盖数据库连接池配置、环境变量、自定义域名接入与 Next.js 客户端统计集成。
@@ -127,7 +127,7 @@ Umami 官方提供了对 Vercel 的原生支持，无需手动编写 Dockerfile 
 
 # 给 Next.js 网站加上本地翻译
 
-- **URL**: https://blog.ljhboard.cn/posts/local-english-chinese-translation
+- **URL**: https://ljhboard.cn/posts/local-english-chinese-translation
 - **分类**: AI 工程
 - **发布日期**: 2026-09-12
 - **核心导读**: 使用 MTranServer 实现文章英译中，在 Next.js 中接入翻译接口、翻译按钮和原文切换。
@@ -304,7 +304,7 @@ bun scripts/prepare-translation.mjs
 
 # 从 SEO 到 GEO：静态技术博客的可发现、可引用与 IndexNow 实践
 
-- **URL**: https://blog.ljhboard.cn/posts/seo-geo-indexnow
+- **URL**: https://ljhboard.cn/posts/seo-geo-indexnow
 - **分类**: 搜索与内容工程
 - **发布日期**: 2026-08-29
 - **核心导读**: 结合本站的 Next.js、Nextra、JSON-LD、sitemap、llms.txt 与 IndexNow 发布链路，说明如何同时优化传统搜索收录和生成式搜索引用。
@@ -351,6 +351,21 @@ SEO（Search Engine Optimization）通常优化抓取、索引、页面理解和
 优化顺序也应按这四层推进。没有稳定 canonical 和可抓取正文时，先做“让 AI 更容易引用”的花式格式，收益通常很有限。
 
 ## 第一层：让每篇文章只有一个明确身份
+
+### 本次核对范围与复现入口
+
+2026-10-17 核对的代码基线是 [本站仓库 4a22956](https://github.com/ljh12138164/blog/tree/4a22956188dcbac6cd77dd152a6c1a025d748650)：Next.js 16.0.7、Nextra 4.6.1、next-sitemap 4.2.3、Pagefind 1.5.2。域名迁移另将正式 URL 改为 `https://ljhboard.cn`；旧报告中的 `blog.ljhboard.cn` 是当时的实际地址，不能把它改写成根域名的检查结果。
+
+可直接核对 [SEO 产物检查](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/scripts/verify-seo.mjs)、[IndexNow 提交脚本](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/scripts/submit-indexnow-urls.mjs)和 [生产流水线](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/.github/workflows/ci-deploy.yml)。在同一提交安装锁文件依赖后运行：
+
+```bash
+pnpm typecheck
+pnpm build
+pnpm verify:seo
+pnpm test:indexnow-submit
+```
+
+这里的验收是产物中的 URL 一致、提交脚本过滤行为符合测试；没有把测试通过当作搜索排名改善的测量证据。真实排名与索引需要后台数据单独验证。
 
 本站把正式域名集中在 `site.config.json`，由根布局的 `metadataBase`、文章 metadata、sitemap 和构建校验共同使用。每篇 MDX 文章导出标题、摘要、日期、分类、阅读时间、canonical、Open Graph 与 Twitter 字段：
 
@@ -530,12 +545,25 @@ sitemap、IndexNow 和 metadata 解决的是“向搜索系统提供信号”，
 
 完成验证后，按下面的顺序操作：
 
-1. **提交 sitemap**：进入 Sitemaps，提交 `https://blog.ljhboard.cn/sitemap.xml`。这里不是把文件上传给 Google，而是告诉它文件位置，并观察读取时间、状态和解析错误。提交只是一条提示，不保证抓取或收录。参见 [Google：Sitemaps 报告](https://support.google.com/webmasters/answer/7451001)。
+1. **提交 sitemap**：进入正式域名对应资源的 Sitemaps，提交 `https://ljhboard.cn/sitemap.xml`（域名迁移上线后）。这里不是把文件上传给 Google，而是告诉它文件位置，并观察读取时间、状态和解析错误。提交只是一条提示，不保证抓取或收录。参见 [Google：Sitemaps 报告](https://support.google.com/webmasters/answer/7451001)。
 2. **检查新文章 URL**：把完整文章地址输入 URL Inspection，先看 Google 已索引版本，再运行 Live Test。重点核对页面能否抓取、是否允许索引、Google 选择的 canonical 是否与本站声明一致，以及结构化数据是否被识别。
 3. **只对重要单页请求重新编入索引**：新文章或修复关键错误后，可以点击 Request indexing。它有配额，也不保证页面进入索引；多页面变化应依赖 sitemap 和准确的 `lastmod`，而不是逐页点击。参见 [Google：URL Inspection](https://support.google.com/webmasters/answer/9012289)。
 4. **分析 Page indexing 的原因，而不是追求 100%**：优先处理重要 canonical 页面未收录、服务器错误、意外 `noindex` 或 robots 阻止。重定向页、重复页和正确的 alternate URL 不进入索引可能完全正常。参见 [Google：Page indexing 报告](https://support.google.com/webmasters/answer/7440203)。
 5. **用 Performance 找内容机会**：按 Page 筛选一篇文章，再查看 Queries、Clicks、Impressions 与 CTR。高曝光低 CTR 往往需要检查标题和摘要是否准确；出现了相关查询却没有深入回答，则应补充内容。更应该观察数周趋势，而不是被某一天的平均排名牵着走。参见 [Google：Performance 常见任务](https://support.google.com/webmasters/answer/17010961)。
 6. **用 Core Web Vitals 找模板级问题**：报告基于真实用户数据并按相似 URL 分组，适合发现一批文章共有的 LCP、INP 或 CLS 问题；单个页面的即时诊断再交给 PageSpeed Insights。参见 [Google：Core Web Vitals 报告](https://support.google.com/webmasters/answer/9205520)。
+
+### 一次真实检查：可抓取不等于已收录
+
+2026-10-17 在本站已验证的 `https://blog.ljhboard.cn/` 资源中检查了两个完整 URL。记录如下，时间均为北京时间；这是一时点观察，不代表所有文章或所有 Google 爬虫的状态。
+
+| URL 路径 | Google 索引中的状态 | 实时测试 |
+| --- | --- | --- |
+| `/posts/nextra-blog-setup` | 已发现，尚未编入索引；无上次抓取时间 | 19:59 抓取成功，允许抓取与索引 |
+| `/posts/seo-geo-indexnow` | 已发现，尚未编入索引；未检测到引荐站点地图 | 20:02 抓取成功，允许抓取与索引 |
+
+两个实时测试都由 Google 检查工具智能手机版执行，读到的用户 canonical 仍指向各自的 `blog.ljhboard.cn` 地址。历史报告没有已抓取页面可供查看，Google 选择的 canonical 也不可用；实时报告明确说要等到编入索引后才能确定。因此，现在只能确认这两次 Google 测试能访问页面，不能宣称它们已经收录，也不能说 Google 已接受迁移后的根域名 canonical。
+
+这次排查也暴露了失败的判断方法：用自己电脑上的 `curl` 得到 200，再把所有未收录归咎于内容或 WAF，证据都不完整。应同时看历史索引、实时抓取和对应主机的安全事件。改域名时则先发布一致的 canonical 与 sitemap，再切换旧域名跳转，之后复查 Google 实际选择；具体步骤参见 [Google 网站迁移指南](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes)。
 
 其他报告按需使用即可：Crawl Stats 更适合在 Googlebot 请求异常、主机不可用或出现大量 5xx 时排查，而不是几十页小站的日常排名仪表盘；Enhancements 只会显示 Google 支持且已经检测到的富媒体类型，报告缺席不等于所有 JSON-LD 都无效；本站也没有商品交易和 Product 数据，不需要为了出现 Merchant listings 报告而添加无关 schema。
 
@@ -569,7 +597,7 @@ Bing 可以直接从已验证的 Google Search Console 导入站点和 sitemap�
 一套可信的实践不应只写完成项。结合现有代码，本站接下来最值得补的不是更多 GEO 标签，而是这些数据准确性问题：
 
 - **真实更新时间**：metadata 只有 `date`，导致 `datePublished` 与 `dateModified` 相同；应增加 `updatedAt`，并只在正文发生显著变化时更新。
-- **可见作者与文章图片**：JSON-LD 已声明作者，但页面头部没有可见署名，Article 数据也没有代表性 `image`；补齐后应保持页面与结构化数据一致。
+- **可见作者与文章图片**：JSON-LD 已声明作者，并使用站点共用的 `og-image.png`；页面头部仍没有可见署名。共用图片不能说明每篇文章的具体内容，后续应按真实材料补充，保持页面与结构化数据一致。
 - **安全输出 JSON-LD**：当前直接使用 `JSON.stringify`，如果未来 metadata 来自不可信输入，应按 [Next.js JSON-LD 指南](https://nextjs.org/docs/app/guides/json-ld)转义 `<` 等危险字符。
 - **准确的 sitemap `lastmod`**：`next-sitemap` 默认在每次构建时给全部 URL 写当前时间，这不等于文章真的更新；应从真实修改日期生成，无法保证准确时则不要输出。
 - **只提交发生变化的 URL**：当前 IndexNow 全量提交是小站阶段的简单方案，长期应覆盖新增、显著更新、删除和重定向，而不是每次重发全部页面。
@@ -598,7 +626,7 @@ Bing 可以直接从已验证的 Google Search Console 导入站点和 sitemap�
 
 # 从 Link 响应头到 Cloudflare 103：静态博客的 Early Hints 实现
 
-- **URL**: https://blog.ljhboard.cn/posts/cloudflare-http3-early-hints
+- **URL**: https://ljhboard.cn/posts/cloudflare-http3-early-hints
 - **分类**: Cloudflare 优化
 - **发布日期**: 2026-08-28
 - **核心导读**: 以 Next.js 静态导出、构建时 Link 映射、Nginx 响应头和 Cloudflare 为主线，完整实现并验证 HTTP 103 Early Hints。
@@ -1004,7 +1032,7 @@ node scripts/generate-early-hints.mjs ./out ./.next/early-hints-map.conf
 
 # Cloudflare 的优选 IP 优化
 
-- **URL**: https://blog.ljhboard.cn/posts/cloudflare-custom-hostname-fast-ip
+- **URL**: https://ljhboard.cn/posts/cloudflare-custom-hostname-fast-ip
 - **分类**: Cloudflare 优化
 - **发布日期**: 2026-08-25
 - **核心导读**: 用 Cloudflare for SaaS、CloudflareSpeedTest 和宝塔计划任务，为同一域名下的博客入口自动选择 Cloudflare IP，并保留可回滚的源站链路。
@@ -1364,7 +1392,7 @@ curl -I 'https://ljhboard.cn/posts?from=root'
 
 # Agent 不是更长的 Prompt：从工具调用到受控执行循环
 
-- **URL**: https://blog.ljhboard.cn/posts/agent-fundamentals
+- **URL**: https://ljhboard.cn/posts/agent-fundamentals
 - **分类**: AI 工程
 - **发布日期**: 2026-08-19
 - **核心导读**: 从工具定义、消息状态、执行循环、MCP 到人工审批，理解 AI Agent 如何可靠地完成真实任务。
@@ -1699,7 +1727,7 @@ const {
 
 # Token 与 Context：模型究竟看见了什么？
 
-- **URL**: https://blog.ljhboard.cn/posts/token-and-context
+- **URL**: https://ljhboard.cn/posts/token-and-context
 - **分类**: AI 基础
 - **发布日期**: 2026-08-19
 - **核心导读**: 通过分词实验和上下文预算，理解 Token 如何影响输入限制、输出空间、成本与提示缓存。
@@ -1921,7 +1949,7 @@ Token 决定输入如何被编码，Context 决定一次推理能使用多少工
 
 # 如何为 AI 应用设计高质量提示词
 
-- **URL**: https://blog.ljhboard.cn/posts/prompting-principles
+- **URL**: https://ljhboard.cn/posts/prompting-principles
 - **分类**: 实践方法
 - **发布日期**: 2026-08-08
 - **核心导读**: 用成功标准、指令边界、示例和评测，把提示词从“会写”变成可验证的工程组件。
@@ -2142,7 +2170,7 @@ flowchart LR
 
 # React 组件生命周期与 Effect 执行时序：Render 到 Commit 阶段解析
 
-- **URL**: https://blog.ljhboard.cn/posts/react-execution-order
+- **URL**: https://ljhboard.cn/posts/react-execution-order
 - **分类**: React 进阶
 - **发布日期**: 2025-05-20
 - **核心导读**: 分析 React 父子组件在挂载、更新与卸载过程中的函数体执行、useLayoutEffect、DOM 绘制与 useEffect 清理函数的时序与常见陷阱。
@@ -2321,7 +2349,7 @@ function Child() {
 
 # 边缘 WebSocket 实时协同：Deno Deploy 与 Hocuspocus
 
-- **URL**: https://blog.ljhboard.cn/posts/websocket-edge-functions
+- **URL**: https://ljhboard.cn/posts/websocket-edge-functions
 - **分类**: 全栈与边缘计算
 - **发布日期**: 2025-02-15
 - **核心导读**: 探讨在 Deno Deploy 边缘运行环境中接入 Hocuspocus (Yjs) 的 WebSocket 服务架构，包括连接鉴权、状态持久化与多节点路由权衡。
@@ -2501,7 +2529,7 @@ export function CollaborativeEditor({ docId, user }: { docId: string; user: { na
 
 # 可视化动态表单设计器架构实践：拖拽编排、JSON Schema 驱动与组件渲染器
 
-- **URL**: https://blog.ljhboard.cn/posts/custom-form-designer
+- **URL**: https://ljhboard.cn/posts/custom-form-designer
 - **分类**: 前端工程化
 - **发布日期**: 2025-02-14
 - **核心导读**: 把表单设计器拆分为物料区、画布排版与属性联动，以 JSON Schema 为契约驱动运行态渲染器。
@@ -2684,7 +2712,7 @@ export function FormRenderer({ schema, onSubmit }: { schema: FormSchema; onSubmi
 
 # Jebet 敏捷项目管理平台架构设计：多租户工作区、MobX 响应式状态与 Socket.io 实时协同
 
-- **URL**: https://blog.ljhboard.cn/posts/jebet-project-management
+- **URL**: https://ljhboard.cn/posts/jebet-project-management
 - **分类**: 系统架构
 - **发布日期**: 2025-02-14
 - **核心导读**: 梳理敏捷协作看板中 MobX 局部响应与 React Query 服务端缓存的分工，结合 Socket.io 实现多成员状态同步。
@@ -2807,7 +2835,7 @@ socket.on('task:updated', (payload: { taskId: string; updatedBy: string; changes
 
 # LJH-Design 设计系统架构设计：从 Design Tokens、Radix UI 到 AI 辅助生成平台
 
-- **URL**: https://blog.ljhboard.cn/posts/ljh-design-system
+- **URL**: https://ljhboard.cn/posts/ljh-design-system
 - **分类**: 架构设计
 - **发布日期**: 2025-02-14
 - **核心导读**: 梳理设计系统的分层结构：用 CSS 变量管理 Design Tokens，通过 Radix UI 与 CVA 解耦无头逻辑与视觉样式。
@@ -2963,7 +2991,7 @@ const buttonVariants = cva(
 
 # 云端协同笔记系统架构设计：从状态同步机、目录树到版本快照回滚
 
-- **URL**: https://blog.ljhboard.cn/posts/note-collaboration-system
+- **URL**: https://ljhboard.cn/posts/note-collaboration-system
 - **分类**: 系统架构
 - **发布日期**: 2025-02-14
 - **核心导读**: 梳理协同笔记系统的分层设计：以 Yjs 与 IndexedDB 实现离线优先，通过同步状态机处理断网重连与历史快照回滚。
@@ -3119,7 +3147,7 @@ export function createCollaborativeDoc(docId: string, token: string) {
 
 # CDN 边缘缓存原理与 Cloudflare Cache Rules 配置实践
 
-- **URL**: https://blog.ljhboard.cn/posts/cloudflare-cdn-acceleration
+- **URL**: https://ljhboard.cn/posts/cloudflare-cdn-acceleration
 - **分类**: 网络与运维
 - **发布日期**: 2025-02-11
 - **核心导读**: 梳理 CDN Anycast 路由与边缘分层缓存机制，配合 Cloudflare Cache Rules 配置静态资源与 HTML 缓存，以及 CI/CD 自动清除缓存。
@@ -3250,7 +3278,7 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/purge_cache" 
 
 # 设计平台首屏性能治理：重型依赖按需分包与编译调优
 
-- **URL**: https://blog.ljhboard.cn/posts/design-optimization
+- **URL**: https://ljhboard.cn/posts/design-optimization
 - **分类**: 性能调优
 - **发布日期**: 2025-02-11
 - **核心导读**: 记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化、首屏样式处理及 Core Web Vitals 实际指标对比。
@@ -3392,7 +3420,7 @@ export default nextConfig;
 
 # Cloudflare Turnstile 无感人机验证全栈集成实践
 
-- **URL**: https://blog.ljhboard.cn/posts/cloudflare-turnstile
+- **URL**: https://ljhboard.cn/posts/cloudflare-turnstile
 - **分类**: 全栈与安全
 - **发布日期**: 2025-02-10
 - **核心导读**: 梳理 Turnstile 的客户端挑战与服务端 Siteverify 校验链路，避免把前端 Token 当作可信凭据。
@@ -3627,7 +3655,7 @@ export async function POST(req: Request) {
 
 # 为什么现代浏览器禁止 a 标签直接在新窗口打开 Data URL？
 
-- **URL**: https://blog.ljhboard.cn/posts/anchor-data-url
+- **URL**: https://ljhboard.cn/posts/anchor-data-url
 - **分类**: 前端核心
 - **发布日期**: 2025-02-05
 - **核心导读**: 解析 Chromium 顶级窗口 Data URL 导航限制的安全背景，并提供 Data URL 转 Blob ObjectURL 的无损转换与内存安全释放方案。
@@ -3814,7 +3842,7 @@ export function openDataUrlInNewTab(dataUrl: string): void {
 
 # 协作平台构建体积优化：ECharts 按需引入与构建分包
 
-- **URL**: https://blog.ljhboard.cn/posts/jebet-optimization
+- **URL**: https://ljhboard.cn/posts/jebet-optimization
 - **分类**: 性能调优
 - **发布日期**: 2025-02-02
 - **核心导读**: 记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。
@@ -3965,7 +3993,7 @@ export default defineConfig({
 
 # 复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘
 
-- **URL**: https://blog.ljhboard.cn/posts/custom-form-optimization
+- **URL**: https://ljhboard.cn/posts/custom-form-optimization
 - **分类**: 性能调优
 - **发布日期**: 2025-01-31
 - **核心导读**: 将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。
@@ -4070,7 +4098,7 @@ export async function exportFormDataToExcel(data: any[], fileName: string) {
 
 # HTTP 重定向状态码选型：301、302、307 与 308 对比
 
-- **URL**: https://blog.ljhboard.cn/posts/redirect-status-codes-seo
+- **URL**: https://ljhboard.cn/posts/redirect-status-codes-seo
 - **分类**: 网络与 SEO
 - **发布日期**: 2025-01-31
 - **核心导读**: 对比 301、302、307 与 308 重定向状态码的语义差异，分析 POST 方法重写为 GET 的历史背景、搜索引擎权重继承机制与配置实践。
@@ -4208,7 +4236,7 @@ server {
 
 # 为什么 Biome / ESLint 推荐用 for...of 替代 forEach？从异步文件上传的踩坑说起
 
-- **URL**: https://blog.ljhboard.cn/posts/for-of-vs-foreach
+- **URL**: https://ljhboard.cn/posts/for-of-vs-foreach
 - **分类**: JavaScript 核心
 - **发布日期**: 2025-01-30
 - **核心导读**: 深入剖析 Array.prototype.forEach 无法 await 异步回调的底层机制，对比 for...of 串行执行与 Promise.all 并发控制的最佳实践。
@@ -4390,7 +4418,7 @@ async function handleUploadFilesParallel(files: File[]) {
 
 # 协同笔记系统端到端性能调优：SPA 路由 404、Lighthouse 95+、Tree-shaking 与 Bundle 分包实战
 
-- **URL**: https://blog.ljhboard.cn/posts/collaborative-note-optimization
+- **URL**: https://ljhboard.cn/posts/collaborative-note-optimization
 - **分类**: 性能调优
 - **发布日期**: 2025-01-29
 - **核心导读**: 记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。
@@ -4549,7 +4577,7 @@ export default defineConfig({
 
 # 基于 Next.js App Router 与 Nextra 4 构建静态博客
 
-- **URL**: https://blog.ljhboard.cn/posts/nextra-blog-setup
+- **URL**: https://ljhboard.cn/posts/nextra-blog-setup
 - **分类**: 建站与专题
 - **发布日期**: 2025-01-28
 - **核心导读**: 记录基于 Next.js App Router 与 Nextra 4 搭建个人静态博客的工程方案，包括 MDX 组件注入、Pagefind 离线检索、Sitemap 自动化生成与 Docker 多阶段构建。
@@ -4582,6 +4610,17 @@ Nextra 4 支持 Next.js App Router，允许直接将 `app/posts/<slug>/page.mdx`
 
 ## 博客架构拓扑
 
+2026-10-17 按实际仓库重新核对了本文配置。可复核的基线是本站仓库 [4a22956](https://github.com/ljh12138164/blog/tree/4a22956188dcbac6cd77dd152a6c1a025d748650)，不是一个独立的教程 demo。后续域名切换以仓库当前 `site.config.json` 为准。
+
+| 项目 | 核对的版本或入口 |
+| --- | --- |
+| 框架 | Next.js 16.0.7、React 19.1.0、Nextra 4.6.1 |
+| 包管理与检索 | pnpm 9.12.3、Pagefind 1.5.2、next-sitemap 4.2.3 |
+| 容器 | Node 22 Alpine 构建，Nginx 1.29 Alpine 运行，容器端口 8080 |
+| 实际配置 | [package.json](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/package.json)、[Dockerfile](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/Dockerfile)、[部署文档](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/docs/deployment.md) |
+
+这里的版本表描述这次核对范围，不代表推荐读者长期停留在这些版本。复现旧提交与新建生产站点的依赖维护是两件事。
+
 ```text
 app/posts/<slug>/page.mdx (MDX 文章源码)
   │
@@ -4592,7 +4631,7 @@ out/ 静态站点产物 (HTML + JS + CSS)
   ├─► npx next-sitemap ────────► 生成 sitemap.xml 与 robots.txt
   │
   ▼ Docker 多阶段打包 (Node 构建 -> Nginx Alpine 静态服务)
-输出仅 25MB 的高可用镜像 blog:sha-<commit>
+输出静态服务镜像 blog:sha-<commit>（体积需按实际构建测量）
 ```
 
 ---
@@ -4600,6 +4639,8 @@ out/ 静态站点产物 (HTML + JS + CSS)
 ## 关键工程配置实战
 
 ### 1. `next.config.ts` 配置
+
+这一段只说明静态导出开关；本站完整配置还包含 Nextra 与资源处理，不能直接用这段覆盖仓库文件。
 
 ```ts
 import nextra from 'nextra';
@@ -4622,6 +4663,8 @@ export default withNextra({
 
 在根目录下创建 `mdx-components.tsx`，统一拦截 Markdown 标签并赋予交互能力：
 
+这是最小映射示意。本站实际还会注入文章容器、目录和代码块组件，完整入口见 [mdx-components.tsx](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/mdx-components.tsx)。
+
 ```tsx
 import type { MDXComponents } from 'mdx/types';
 
@@ -4640,13 +4683,16 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 
 ### 3. `next-sitemap.config.cjs` 自动化 SEO
 
+下面保留本站地图配置的必要部分：从 `site.config.json` 读取域名，设置 `generateIndexSitemap: false`，最终只输出一份 `sitemap.xml`。仓库完整文件还包含页面权重与 robots 策略。
+
 ```js
 /** @type {import('next-sitemap').IConfig} */
+const siteConfig = require('./site.config.json');
+
 module.exports = {
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog.com',
+  siteUrl: siteConfig.url,
   generateRobotsTxt: true,
-  output: 'export',
-  sitemapSize: 5000,
+  generateIndexSitemap: false,
   outDir: 'out',
 };
 ```
@@ -4655,33 +4701,33 @@ module.exports = {
 
 ## 生产级 Docker 多阶段构建 (`Dockerfile`)
 
-为了确保博客能在任意服务器以极小体积、零环境依赖运行，采用 Multi-Stage Dockerfile：
+当前多阶段构建的关键部分如下：使用 Node 22、固定 pnpm 9.12.3 和端口 8080，并复制 Early Hints 映射。健康探针在容器本地访问 `/healthz`。运行环境仍依赖 Docker、端口映射及宿主反向代理；镜像不会替你配置域名和证书。
 
 ```dockerfile
 # 阶段一：依赖安装与构建
-FROM node:20-alpine AS builder
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:22-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-ARG NEXT_PUBLIC_SITE_URL
-ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-
 # 执行静态构建与索引生成
 RUN pnpm build
 
 # 阶段二：生产 Nginx 极简镜像
-FROM nginx:alpine AS runner
+FROM nginx:1.29-alpine AS runner
 WORKDIR /usr/share/nginx/html
 
 # 仅拷贝构建产物
 COPY --from=builder /app/out ./
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/.next/early-hints-map.conf /etc/nginx/conf.d/early-hints-map.conf
 
-EXPOSE 80
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://localhost:8080/healthz || exit 1
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
@@ -4690,6 +4736,34 @@ CMD ["nginx", "-g", "daemon off;"]
 ## 官方资料
 
 - [Nextra：Getting Started](https://nextra.site/docs)
+
+## 怎样复现和判断结果
+
+先检出上述基线，避免把后续改动误认成本文结果。复现需要能安装锁文件中的依赖；构建时还可能获取外部资源，网络失败应单独排查。
+
+```bash
+git clone https://github.com/ljh12138164/blog.git
+cd blog
+git checkout 4a22956188dcbac6cd77dd152a6c1a025d748650
+corepack enable
+corepack prepare pnpm@9.12.3 --activate
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm build
+pnpm test:unit
+pnpm test:resource-hints
+```
+
+`postbuild` 在 Next.js 导出之后运行 RSS、llms 文本、Pagefind、sitemap 和 SEO 校验，再生成 Early Hints、Service Worker 与预压缩文件。判断完成不能只看 Next.js 的路由表：还应检查 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml`、`out/robots.txt` 和 `.next/early-hints-map.conf`。详细顺序以 `package.json` 为准。
+
+本站的 [资源提示测试](https://github.com/ljh12138164/blog/blob/4a22956188dcbac6cd77dd152a6c1a025d748650/scripts/resource-hints.test.mjs)会检查第三方域名只做 DNS 预解析，并核对 HTML 与 Early Hints。它验证产物契约，不测量访客的 LCP，也不能证明 Cloudflare 每次都会返回 103。本文没有附可重复的镜像大小或访问速度采样，因此不提供固定体积、加载提速百分比或高可用承诺。
+
+## 方案取舍与失败边界
+
+- 仅运行开发服务器不足以验证：Pagefind 和 sitemap 在 `postbuild` 生成，开发模式下搜索正常或页面正常都不能代替完整导出检查。
+- 只改页面 canonical 不够：发布脚本也断言正式域名；两者不一致会触发部署失败。域名切换必须同步生成文件、发布断言与旧站跳转，源站证书域名则按实际回源配置保留。
+- 浮动 `pnpm@latest` 不适合复现：本文最初的示例使用浮动版本，本次已按实际文件修正为固定包管理版本并使用锁文件。
+- 静态导出适合本站的公开文章。依赖按用户请求读取 Cookie、鉴权或动态数据库的功能需要独立服务；不能把这些运行时能力写进 MDX 就期待 Nginx 执行。
 
 ## 工程经验小结
 
@@ -4703,7 +4777,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 # TanStack Query (React Query) 架构与性能优化实战：请求去重、缓存分层与数据预取
 
-- **URL**: https://blog.ljhboard.cn/posts/react-query-api-optimization
+- **URL**: https://ljhboard.cn/posts/react-query-api-optimization
 - **分类**: React 进阶
 - **发布日期**: 2025-01-28
 - **核心导读**: 厘清客户端 UI 状态与服务端缓存的区别，通过 QueryKey 去重、staleTime/gcTime 配置与乐观更新提升数据加载体验。
@@ -4856,7 +4930,7 @@ const mutation = useMutation({
 
 # 基于 Tiptap + Yjs + Hocuspocus 的多人富文本协同架构实践
 
-- **URL**: https://blog.ljhboard.cn/posts/tiptap-collaboration
+- **URL**: https://ljhboard.cn/posts/tiptap-collaboration
 - **分类**: 协同架构
 - **发布日期**: 2025-01-26
 - **核心导读**: 将 Tiptap、Yjs 与 Hocuspocus 串联起来，梳理富文本节点映射、Awareness 光标广播与 CRDT 快照入库流程。
@@ -5064,7 +5138,7 @@ server.listen();
 
 # 基于 tsup 构建 TypeScript 库：双格式打包与导出配置
 
-- **URL**: https://blog.ljhboard.cn/posts/tsup-bundler
+- **URL**: https://ljhboard.cn/posts/tsup-bundler
 - **分类**: 前端工程化
 - **发布日期**: 2025-01-26
 - **核心导读**: 介绍使用 tsup 打包 TypeScript 库的配置要点，涵盖 ESM 与 CommonJS 双格式输出、.d.ts 类型生成、package.json exports 字段规范与 Monorepo 本地联动。
@@ -5220,7 +5294,7 @@ packages/
 
 # Next.js 接入 Hono + Zod：端到端类型安全 API 实践
 
-- **URL**: https://blog.ljhboard.cn/posts/type-safe-routing
+- **URL**: https://ljhboard.cn/posts/type-safe-routing
 - **分类**: 全栈开发
 - **发布日期**: 2025-01-26
 - **核心导读**: 探讨在 Next.js App Router 中嵌入 Hono RPC 与 Zod 校验器的方案，实现服务端入参校验、客户端类型自动推导与 React Query 数据集成。
@@ -5426,7 +5500,7 @@ Hono RPC 的核心优势在于维持标准 HTTP 接口形式的同时，省去�
 
 # 基于 Google Gemini 多模态视觉模型的图像智能识别与结构化提取实战
 
-- **URL**: https://blog.ljhboard.cn/posts/gemini-image-recognition
+- **URL**: https://ljhboard.cn/posts/gemini-image-recognition
 - **分类**: AI 工程
 - **发布日期**: 2025-01-25
 - **核心导读**: 将图片转换为模型可消费的 Base64 与 MIME 格式，结合 Zod 校验与 responseSchema 提取发票等结构化数据。
@@ -5629,7 +5703,7 @@ visionRoute.post('/upload-invoice', async (c) => {
 
 # Markdown/MDX 渲染原理与 Nextra 选型
 
-- **URL**: https://blog.ljhboard.cn/posts/markdown-to-html
+- **URL**: https://ljhboard.cn/posts/markdown-to-html
 - **分类**: 前端工程化
 - **发布日期**: 2025-01-25
 - **核心导读**: 解析 Markdown/MDX 在 Unified 生态下的 AST 编译流程（mdast 到 hast），对比 Nextra 与 Fumadocs 等静态文档框架选型，并介绍 Pagefind 静态检索方案。
@@ -5789,7 +5863,7 @@ MDX 的引入让静态文档具备了动态交互能力，但也会显著增加�
 
 # Web Canvas 2D 图形库选型与性能对比
 
-- **URL**: https://blog.ljhboard.cn/posts/canvas-library-research
+- **URL**: https://ljhboard.cn/posts/canvas-library-research
 - **分类**: 前端图形学
 - **发布日期**: 2025-01-22
 - **核心导读**: 从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。
@@ -5875,7 +5949,7 @@ Canvas 图形库生态矩阵:
 
 # 流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染
 
-- **URL**: https://blog.ljhboard.cn/posts/custom-flowchart-connections
+- **URL**: https://ljhboard.cn/posts/custom-flowchart-connections
 - **分类**: 前端图形学
 - **发布日期**: 2025-01-22
 - **核心导读**: 从起点终点与端口朝向推导贝塞尔控制点，结合 React Flow 的 EdgeLabelRenderer 实现带交互按钮的自定义连线。
@@ -6047,7 +6121,7 @@ export function FlowEditor() {
 
 # Biome 与 Git Hooks：前端提交自动校验实践
 
-- **URL**: https://blog.ljhboard.cn/posts/git-commit-validation
+- **URL**: https://ljhboard.cn/posts/git-commit-validation
 - **分类**: 前端工程化
 - **发布日期**: 2025-01-22
 - **核心导读**: 介绍基于 Biome、lint-staged 与 simple-git-hooks 的 Git 提交检查方案，实现暂存区代码检查、格式化与 Conventional Commits 提交规范约束。
@@ -6217,7 +6291,7 @@ module.exports = {
 
 # 多人实时协同冲突解决算法：OT 与 CRDT 的演进与取舍
 
-- **URL**: https://blog.ljhboard.cn/posts/conflict-resolution-algorithm
+- **URL**: https://ljhboard.cn/posts/conflict-resolution-algorithm
 - **分类**: 协同架构
 - **发布日期**: 2025-01-19
 - **核心导读**: 从并发插入导致的坐标错位出发，对比 OT 的中心转换机制与 CRDT（Yjs YATA）的不可变偏序合并思路。
@@ -6347,7 +6421,7 @@ Yjs 链表结构 (Struct / Item):
 
 # Google Gemini API 全栈调用指南：从 Edge 代理、流式传输（SSE）到结构化输出
 
-- **URL**: https://blog.ljhboard.cn/posts/gemini-api
+- **URL**: https://ljhboard.cn/posts/gemini-api
 - **分类**: AI 工程
 - **发布日期**: 2025-01-12
 - **核心导读**: 通过 Hono 边缘代理统一管理 Gemini 密钥与跨域，结合 SSE 流式输出与 responseSchema 结构化约束。
@@ -6587,7 +6661,7 @@ export function GeminiChat() {
 
 # 后端部署到边缘函数的架构探索：用 Hono 构建零服务器高性能 API
 
-- **URL**: https://blog.ljhboard.cn/posts/edge-function-backend-deployment
+- **URL**: https://ljhboard.cn/posts/edge-function-backend-deployment
 - **分类**: 全栈与边缘计算
 - **发布日期**: 2024-12-28
 - **核心导读**: 对比常驻容器与 Edge Runtime 的启动与网络差异，用 Hono 构建轻量边缘 API 并梳理无状态数据库连接方案。
@@ -6740,7 +6814,7 @@ app.get('/api/posts', async (c) => {
 
 # Monorepo 实践：pnpm Workspace 与 Turborepo
 
-- **URL**: https://blog.ljhboard.cn/posts/monorepo-management
+- **URL**: https://ljhboard.cn/posts/monorepo-management
 - **分类**: 前端工程化
 - **发布日期**: 2024-12-28
 - **核心导读**: 探讨前端 Monorepo 方案中 pnpm workspace 的依赖组织与 Turborepo 任务编排机制，分析依赖拓扑、增量构建缓存与跨包联调实践。
@@ -6891,7 +6965,7 @@ Monorepo 并不会自动带来工程效率的提升，反而对团队的依赖�
 
 # 基于 Zod 模式推导的声明式动态表单（AutoForm）可行性研究与架构实践
 
-- **URL**: https://blog.ljhboard.cn/posts/custom-form-feasibility
+- **URL**: https://ljhboard.cn/posts/custom-form-feasibility
 - **分类**: 前端架构
 - **发布日期**: 2024-12-04
 - **核心导读**: 评估从 Zod Schema 自动推导表单 UI 的收益与边界，分析 fieldConfig 覆盖机制与复杂交互下的选型取舍。
@@ -7029,7 +7103,7 @@ export function ProfileFormPage() {
 
 # DeepSeek 大模型本地私有化部署实战：从硬件选型、Ollama / LM Studio 到 WebUI 集成
 
-- **URL**: https://blog.ljhboard.cn/posts/deepseek-local-deployment
+- **URL**: https://ljhboard.cn/posts/deepseek-local-deployment
 - **分类**: AI 工程
 - **发布日期**: 2024-08-16
 - **核心导读**: 从显存与 KV Cache 预算算起，对比 Ollama 与 LM Studio 的本地运行方式，并接入 OpenAI 兼容接口与 WebUI。
