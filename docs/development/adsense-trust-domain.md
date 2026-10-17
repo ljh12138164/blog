@@ -72,6 +72,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 本地 `/stats/` 404 属于未经过 Nginx 统计代理的预览环境，生产代理不在本次修改范围。
 - 后台实证见 [AdSense 与搜索核查](../adsense-search-audit.md)。未提交复审或更改线上规则。
 - Umami 修订通过 `pnpm typecheck`、`pnpm build` 与 `pnpm exec biome check lib/posts.ts`；一次性比对确认章节、四张图片和 HTML 脚本不变，生成页面包含修正后的内容。双域名首页仍为 200、canonical 都指 blog；同意消息已发布且绑定根域名，但广告用途 Consent Mode 关闭。细节与未完成的浏览器预览见后台核查的 2026-10-18 补充。
+- Umami 修订提交 `b63a7d8` 的 PR CI #115 全部通过，包括 Docker 镜像验证。再次只读核对 Cloudflare 实际跳转条件，部署文档补入仅匹配 blog 的具体规则、发布先后顺序、验收和回退；保留双 200 配合统一 canonical 也是可用方式，不把双入口本身认定为拒审原因。
 
 ## Review
 

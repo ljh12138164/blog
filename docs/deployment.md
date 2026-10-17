@@ -95,6 +95,34 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://lj
 
 历史 sitemap-0.xml 的抓取失败与当前 sitemap.xml 应分别处理。若仍有旧 sitemap 引用，先核对旧清单是否完整映射，再处理旧提交或提供对应重定向。核查记录见 [AdSense 与搜索后台核查](adsense-search-audit.md)。
 
+### 两个域名都能访问时的 Cloudflare 配置
+
+2026-10-18 控制台复核：两条单一重定向均禁用；名为“从根重定向到WWW”的旧规则实际匹配根域名，目标是 blog。页面规则仅有图片域名缓存设置。本次只查看，没有保存或启用线上规则。
+
+两个域名同时返回正文不是 AdSense 违规的充分依据。如果需要保留两个地址都返回 200，可以让两端同一文章声明相同的根域名 canonical，并保持 sitemap 与站内链接一致。当前已选择根域名作为正式入口，推荐新版发布验证后把 blog 作为旧入口逐路径永久跳转，避免长期维护重复入口。[Google 的规范网址说明](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)支持这两种处理方式。
+
+在 **规则 → 重定向规则 → 创建规则 → 自定义筛选表达式** 中配置：
+
+| 字段 | 值 |
+| --- | --- |
+| 规则名称 | blog 到正式根域名 |
+| 匹配表达式 | `(http.host eq "blog.ljhboard.cn")` |
+| 重定向类型 | 动态 |
+| 目标表达式 | `concat("https://ljhboard.cn", http.request.uri.path)` |
+| 状态代码 | 301 |
+| 保留查询字符串 | 开启 |
+
+此规则只匹配 blog，不匹配根域名、self 或其他工具子域名。blog DNS 记录需要保持 Cloudflare 代理状态；不必删除域名或修改源站 IP。旧的根到 blog 规则继续禁用。设置方式见 [Cloudflare 官方域名跳转示例](https://developers.cloudflare.com/fundamentals/manage-domains/redirect-domain/)。
+
+启用前必须先确认新版根域名首页、`/about`、代表文章和静态资源可用，页面与 sitemap 已使用根域名地址。启用后验收：
+
+- `https://blog.ljhboard.cn/` → `301` → `https://ljhboard.cn/` → `200`。
+- `https://blog.ljhboard.cn/posts/umami-vercel-supabase?from=old` → `301` → `https://ljhboard.cn/posts/umami-vercel-supabase?from=old` → `200`。
+- 根域名同路径直接返回 `200`，不跳回 blog；图片和脚本路径仍可访问。
+- GSC 使用已有网域资源提交根域名 sitemap；blog URL 成为“重定向网页”是迁移预期，核对最终根域名正文的抓取和索引。
+
+如验收失败，先禁用新规则恢复原双入口，不启用反向规则。跳转是入口整理，不能据此宣称已解决“低价值内容”或保证审核通过。
+
 ## IndexNow 通知
 
 `public/1da648d59c024d869f2523943dce4c6b.txt` 是协议要求的公开所有权证明，随静态站点发布到根目录，不是 GitHub Secret。生产流水线先验证公网密钥内容，再由 `scripts/submit-indexnow-urls.mjs` 读取线上 sitemap，过滤并去重正式站点 URL，最后向 `https://api.indexnow.org/indexnow` 发送一个 JSON 批次。

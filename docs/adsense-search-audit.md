@@ -68,3 +68,5 @@ AdSense 的欧洲法规嵌入页持续加载，直接打开该页面已经提供
 消息编辑内容未加载完成，尚未核实隐私链接与拒绝按钮。依据 [Google 官方测试说明](https://support.google.com/adsense/answer/10924669?hl=en#test-your-messages)，尝试通过 `?fc=alwaysshow&fctype=gdpr` 预览根域名消息，但浏览器导航超时，未得到可判断的页面结果；没有完成真实 EEA 地区或接受/拒绝后的请求测试。消息列表绑定根域名也不足以证明本次已验证 blog 子域名的显示行为。
 
 双域名普通请求的结果：两个首页均为 200，canonical 都指向 `https://blog.ljhboard.cn`；blog 的 Umami 文章为 200、canonical 为 blog 同路径。根域名该文章的一次复核请求超时，这不是已确认的站点故障，前一轮 39 篇检查的成功结果也不能替代当前这次失败。根域名 robots 仍禁止 `/_next/`，Host/Sitemap 仍为 blog。两个域名能访问与迁移尚未完成可以同时成立；本次没有修改 DNS、跳转或 robots。
+
+再次打开 Cloudflare 的实际规则确认：两条单一重定向均禁用，旧根域名规则的目标实际为 blog；页面规则只有图片域名缓存，没有启用的正文跳转。应按“双入口提供同一内容”处理，不能再描述成根域名仅有 301。按已选定的根域名方向，具体 blog 主机匹配、逐路径 301、查询参数保留、发布顺序与回退方式已补入[部署说明](deployment.md#两个域名都能访问时的-cloudflare-配置)。本次未保存控制台规则。
