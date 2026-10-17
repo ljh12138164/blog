@@ -32,6 +32,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:resource-hints
+      - run: pnpm exec vitest run scripts/personal-hub.test.mjs
       - name: Verify static artifacts
         shell: bash
         run: |
@@ -39,6 +40,8 @@ jobs:
           test -f out/_pagefind/pagefind.js
           test -f out/sitemap.xml
           test -f out/robots.txt
+          cmp public/profile/contributions-light.svg out/profile/contributions-light.svg
+          cmp public/profile/contributions-dark.svg out/profile/contributions-dark.svg
           test -f .next/early-hints-map.conf
           cmp public/1da648d59c024d869f2523943dce4c6b.txt out/1da648d59c024d869f2523943dce4c6b.txt
       - name: Build and verify runtime image
@@ -177,14 +180,14 @@ jobs:
             --retry 5 \
             --retry-delay 5 \
             --retry-all-errors \
-            "https://blog.ljhboard.cn/"
+            "https://ljhboard.cn/"
           awk '
             /^HTTP\// { block = $0 ORS; next }
             { block = block $0 ORS }
             END { printf "%s", block }
           ' "$headers" > "$final_headers"
           test "$(grep -o '<link rel="canonical"' "$page" | wc -l)" -eq 1
-          grep -Fq '<link rel="canonical" href="https://blog.ljhboard.cn"' "$page"
+          grep -Fq '<link rel="canonical" href="https://ljhboard.cn"' "$page"
           ! grep -Eq 'https?://([0-9]{1,3}\.){3}[0-9]{1,3}' "$page"
           grep -Eq '^HTTP/[^ ]+ 200' "$final_headers"
           grep -Eiq '^link: .*rel=preload; as=style' "$final_headers"
@@ -194,14 +197,14 @@ jobs:
             --retry 5 \
             --retry-delay 5 \
             --retry-all-errors \
-            "https://blog.ljhboard.cn/posts/react-query-api-optimization"
+            "https://ljhboard.cn/posts/react-query-api-optimization"
           curl --fail --silent --show-error --location \
             --header "Cache-Control: no-cache" \
             --output "$indexnow_key" \
             --retry 5 \
             --retry-delay 5 \
             --retry-all-errors \
-            "https://blog.ljhboard.cn/1da648d59c024d869f2523943dce4c6b.txt"
+            "https://ljhboard.cn/1da648d59c024d869f2523943dce4c6b.txt"
           cmp public/1da648d59c024d869f2523943dce4c6b.txt "$indexnow_key"
       - name: Submit deployed URLs to IndexNow
         run: node scripts/submit-indexnow-urls.mjs

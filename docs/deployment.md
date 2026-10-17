@@ -50,6 +50,7 @@ gate 不提供 shell、SFTP 或任意命令执行。
 - Pull Request：安装依赖、类型检查、静态构建和产物验证，不发布。
 - 推送 `master`：验证通过后在 Actions Runner 构建 `blog:sha-<commit>`，打包 `image.tar`、`compose.yaml`、宿主 Nginx 和部署脚本，再传输给服务器。
 - 手动触发：基于所选 Git ref 重建并发布该 ref，对历史版本回滚时选择对应的提交或引用。
+- 普通贡献热力图使用仓库内的明暗 SVG 静态快照，随正常构建发布；不配置 cron、贡献蛇生成或相关 artifact 传递。
 - 服务器验证发布包、`docker load` 镜像、同步受管配置、执行 `docker compose up -d --remove-orphans web`，并检查 `http://127.0.0.1:18080/healthz`。
 - 公网页面和根目录 IndexNow 密钥验证通过后，读取线上 `sitemap.xml` 并向 IndexNow 全局端点提交同站 URL。
 
@@ -75,12 +76,43 @@ docker compose -f /opt/stacks/blog/compose.yaml ps
 发布后先验证稳定的响应头契约：
 
 ```bash
-curl --http2 --silent --show-error --dump-header - --output /dev/null https://blog.ljhboard.cn/
+curl --http2 --silent --show-error --dump-header - --output /dev/null https://ljhboard.cn/
 ```
 
 最终 `200` 响应应包含带 `rel=preload; as=style` 的 `Link`。随后可重复请求，或使用 Chrome DevTools、WebPageTest 观察 `103 Early Hints`。Cloudflare 在主响应头更快到达、客户端不兼容或 Early Hints 缓存尚未命中时可能不发出 `103`，因此不能把“每次请求都出现 103”作为稳定健康检查。
 
-## IndexNow
+## 正式域名切换与 self 资料迁移
+
+正式地址为 `https://ljhboard.cn`，统一来源是 `site.config.json`。CI 公网验证和服务器健康检查必须同步切换；首次切换失败后，回滚健康检查允许旧版 `blog.ljhboard.cn` canonical，正常发布仍只接受根域名。源站 `ai.ljhboard.cn`、证书路径和 SaaS 回源配置保持按现有部署链路管理。
+
+按下面顺序发布，保留根域名和 blog 两个直接访问入口：
+
+1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中只有一个 async AdSense 脚本、验证 meta、根域名 canonical，以及 sitemap 中的根域名 URL。
+2. 保持 `ljhboard.cn` 与 `blog.ljhboard.cn` 均直接提供同一份静态内容，不配置两个主机之间的跳转。分别验证首页、文章及 `/sitemap.xml` 返回 200；两端 HTML 的 canonical 和 sitemap 正文均使用根域名 URL。
+3. 按[完整迁移对照](self-site-migration.md)核验“关于我”的资料、四站入口、工具、贡献与技术栈；将 self 首页及 `/about` 永久跳转至 `https://ljhboard.cn/about`，`/privacy` 跳至根域名隐私页，保留查询参数和有效锚点。旧图片保留服务或映射至 `/profile/*`，不能全部送到 HTML 页面；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。关闭原站每日贡献蛇部署任务，避免重复部署旧服务；博客不接替该定时任务。
+4. GSC 已有 `sc-domain:ljhboard.cn` 网域资源；在该资源检查正式 sitemap 的读取、代表文章实时抓取和 Google 选择的 canonical。保留历史报告用于对照，不把“实时测试可索引”写成“已经收录”。
+5. 查看 Cloudflare 安全事件时按主机、时间及 Google 相关用户代理筛选；对命中记录核对路径、方法、规则和爬虫身份。不能仅凭用户代理或 Google Cloud ASN 放行，也不要为了审核关闭全站 WAF。发布后重新核对 AdSense ads.txt 和所有权区域，内容修订完成后再由站长决定复审。
+
+历史 sitemap-0.xml 的抓取失败与当前 sitemap.xml 应分别处理。若仍有旧 sitemap 引用，先核对旧清单是否完整映射，再处理旧提交或提供对应重定向。核查记录见 [AdSense 与搜索后台核查](adsense-search-audit.md)。
+
+### 两个域名直接访问与 sitemap
+
+2026-10-18 控制台复核：两条单一重定向均禁用；名为“从根重定向到WWW”的旧规则实际匹配根域名，目标是 blog。页面规则仅有图片域名缓存设置。本次只查看，没有保存或启用线上规则。
+
+用户明确保留两个域名直接访问，不配置 blog 到根域名的 301。两端同一文章声明相同的根域名 canonical，sitemap 与站内链接使用同一规范地址。[Google 的规范网址说明](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)支持通过 canonical 与 sitemap 表达偏好，不要求为此跳转。
+
+`next-sitemap.config.cjs` 从 `site.config.json` 读取规范域名，构建时生成同一份 `out/sitemap.xml` 和 `out/robots.txt`。两个域名服务同一静态产物，因此两端 `/sitemap.xml` 均可直接访问；地图内每个内容页面只列根域名版本，不重复列出相同内容的 blog URL。生产以构建生成的 `out/robots.txt` 为准，忽略的本地 `public/robots.txt` 旧文件不作为配置来源。
+
+发布后验收：
+
+- 两个域名的首页、`/about`、代表文章和 `/sitemap.xml` 均返回 200，不发生跨域跳转。
+- 两端同一篇文章的 canonical 相同，指向根域名同路径；地图中的 `<loc>` 也采用根域名地址。
+- 两端 `/robots.txt` 均声明 `Sitemap: https://ljhboard.cn/sitemap.xml`。
+- GSC 使用已有 `sc-domain:ljhboard.cn` 网域资源提交根域名 sitemap，并核对地图读取状态、正文抓取及 Google 选择的 canonical。可访问入口与 Google 最终索引的规范 URL 是不同概念。
+
+同一内容有多个 URL 时，Google 建议 sitemap 只列偏好的规范版本，见[构建与提交 sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)。这项配置保留双域名访问，但不能保证索引或 AdSense 审核结果。
+
+## IndexNow 通知
 
 `public/1da648d59c024d869f2523943dce4c6b.txt` 是协议要求的公开所有权证明，随静态站点发布到根目录，不是 GitHub Secret。生产流水线先验证公网密钥内容，再由 `scripts/submit-indexnow-urls.mjs` 读取线上 sitemap，过滤并去重正式站点 URL，最后向 `https://api.indexnow.org/indexnow` 发送一个 JSON 批次。
 
