@@ -7,9 +7,9 @@
 ### 发布根域名内容并完成旧入口迁移
 
 - 价值：统一作者资料与正式页面地址，让旧文章和 self 访问者到达对应新内容。
-- 依据：根域名 sitemap 已成功读取，但当前页面 canonical 仍为 blog；self 核心作者信息已移入 /about。
+- 依据：根域名 sitemap 已成功读取，但线上页面 canonical 仍为 blog；self 完整首页内容已在本分支迁入博客“关于我” `/about`，见[逐项对照](../self-site-migration.md)。博客首页继续保留文章布局。
 - 依赖：PR 通过、站长明确发布；先检查新版根域名，再启用 blog/www 逐路径永久跳转，清点 self 路径后映射至相应内容。完整顺序见部署文档。
-- 完成信号：线上 head / canonical / sitemap / ads.txt 校验通过；旧文章单次跳至相同根路径、无环路；self 首页和关于页到 /about。
+- 完成信号：线上 head / canonical / sitemap / ads.txt 校验通过；旧文章单次跳至相同根路径、无环路；self 首页和关于页到博客 /about、隐私到 /privacy；贡献蛇首次定时生成与发布资产一致。
 
 ## Next
 

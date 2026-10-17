@@ -1,4 +1,5 @@
 import siteConfig from '@/site.config.json'
+import { profile } from './profile'
 
 export const site = {
   name: 'ljh.notes',
@@ -8,12 +9,9 @@ export const site = {
   googleAnalyticsId: 'G-CNJ6XX4XBJ',
   baiduAnalyticsId: '0f1b632716b21f7c3c7ed60e47890594',
   author: {
-    name: '李建辉',
-    englishName: 'ljh',
+    ...profile.author,
     url: `${siteConfig.url}/about`,
-    github: 'https://github.com/ljh12138164',
-    jobTitle: '前端全干工程师',
-    sameAs: ['https://github.com/ljh12138164']
+    sameAs: [profile.author.github]
   },
   icp: {
     number: '浙ICP备2026067260号-1',

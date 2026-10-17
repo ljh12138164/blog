@@ -50,6 +50,7 @@ gate 不提供 shell、SFTP 或任意命令执行。
 - Pull Request：安装依赖、类型检查、静态构建和产物验证，不发布。
 - 推送 `master`：验证通过后在 Actions Runner 构建 `blog:sha-<commit>`，打包 `image.tar`、`compose.yaml`、宿主 Nginx 和部署脚本，再传输给服务器。
 - 手动触发：基于所选 Git ref 重建并发布该 ref，对历史版本回滚时选择对应的提交或引用。
+- 每日 `03:17 UTC`（北京时间 11:17）：继承 self 的 GitHub 贡献蛇更新，生成明暗 SVG 并经 artifact 将验证资产传至部署构建。每日与手动运行使用 SHA、run ID、attempt 派生的发布标签，避免相同代码 SHA 下贡献图变动覆盖旧镜像；push 仍使用提交 SHA。
 - 服务器验证发布包、`docker load` 镜像、同步受管配置、执行 `docker compose up -d --remove-orphans web`，并检查 `http://127.0.0.1:18080/healthz`。
 - 公网页面和根目录 IndexNow 密钥验证通过后，读取线上 `sitemap.xml` 并向 IndexNow 全局端点提交同站 URL。
 
@@ -88,7 +89,7 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://lj
 
 1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中只有一个 async AdSense 脚本、验证 meta、根域名 canonical，以及 sitemap 中的根域名 URL。
 2. 在 Cloudflare 停用任何根域名到 blog 的历史跳转后，将 `blog.ljhboard.cn` 和 `www.ljhboard.cn` 永久跳转到根域名对应路径，保留查询参数。旧文章必须跳到同一文章路径，不能全部送到首页。
-3. 验证作者资料完整后，将 self 首页与 `/about` 永久跳转到 `https://ljhboard.cn/about`。先清点 self 其他页面并逐一映射；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。
+3. 按[完整迁移对照](self-site-migration.md)核验“关于我”的资料、四站入口、工具、贡献与技术栈；将 self 首页及 `/about` 永久跳转至 `https://ljhboard.cn/about`，`/privacy` 跳至根域名隐私页，保留查询参数和有效锚点。旧图片保留服务或映射至 `/profile/*`，不能全部送到 HTML 页面；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。关闭原站每日贡献蛇部署任务，避免重复部署旧服务；核验博客首次定时更新成功。
 4. GSC 已有 `sc-domain:ljhboard.cn` 网域资源；在该资源检查正式 sitemap 的读取、代表文章实时抓取和 Google 选择的 canonical。保留历史报告用于对照，不把“实时测试可索引”写成“已经收录”。
 5. 查看 Cloudflare 安全事件时按主机、时间及 Google 相关用户代理筛选；对命中记录核对路径、方法、规则和爬虫身份。不能仅凭用户代理或 Google Cloud ASN 放行，也不要为了审核关闭全站 WAF。发布后重新核对 AdSense ads.txt 和所有权区域，内容修订完成后再由站长决定复审。
 

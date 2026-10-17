@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+[data-theme="dark"] .profile-snake-light {
+  display: none;
+}
+[data-theme="dark"] .profile-snake-dark {
+  display: block;
+}
+
 /* Layout required by Nextra's react-medium-image-zoom component. */
 [data-rmiz-ghost] {
   position: absolute;

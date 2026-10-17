@@ -1,48 +1,18 @@
-export const metadata = {
-  title: '关于这个博客',
-  description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
-  alternates: { canonical: '/about' },
-  openGraph: {
-    type: 'profile',
-    title: '关于这个博客 · ljh.notes',
-    description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
-    url: '/about',
-    images: ['/og-image.png']
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: '关于这个博客 · ljh.notes',
-    description: '关于李建辉（ljh）与技术博客：专注前端架构、多人实时协同、Web 性能工程与 AI 落地实践的个人手记与联系方式。',
-    images: ['/og-image.png']
-  }
-}
+## 我在意的几件事
 
-我是李建辉，GitHub 上使用 [ljh12138164](https://github.com/ljh12138164)。我在浙江，主要做前端开发，也会处理接口、数据、部署和线上排查。
+- **清楚胜过炫技。** 界面、结果和技术边界都应该能被快速理解。
+- **先尊重用户的数据。** 能在浏览器完成的任务优先留在本地；需要调用外部服务时说明数据去向。
+- **让经验可以复用。** 不仅记录怎么做，也说明为什么这样做。
 
-这里记录前端工程、多人协同、Web 性能和 AI 应用中的具体问题，也存放读书、旅行和日常思考。个人介绍、作品入口和技术文章放在同一个站点，方便读者沿着问题找到代码与作者。
-
-## 我在做什么
-
-日常使用 TypeScript、React、Vue 和 Next.js，关注表单与编辑器、构建工具和静态内容发布。比起罗列所有用过的技术，我更愿意把做过的改动和遇到的问题留下来。
-
-- [LJH Tools](https://tools.ljhboard.cn/)：文本、编码、哈希、时间戳等开发工具。
-- [Token Paper](https://token.ljhboard.cn/)：不同模型的 Token 计数与上下文预算工作台。
-- [这个博客的源码](https://github.com/ljh12138164/blog)：Next.js 与 Nextra 静态导出、Pagefind 搜索、SEO 校验和容器发布脚本。
-
-这些工具站各自运行；具体功能和数据处理方式以对应站点的说明为准。
-
-## 可以追溯的开源工作
-
-- [AutoForm：添加 Ant Design 支持（PR #145）](https://github.com/vantezzen/autoform/pull/145)。提交记录包含普通字段、嵌套对象与数组的表单展示。
-- [ProComponents：修复嵌套列勾选后的显示问题（PR #9226）](https://github.com/ant-design/pro-components/pull/9226)。问题涉及取消父列后重新勾选子列时，表格没有恢复显示。
-
-这里链接的是我的具体提交，贡献范围、讨论和合并状态都可以在原记录中核对。
+工具解决眼前任务，博客保存技术判断。它们可以独立运行，也可以从这个入口一起被理解。
 
 ## 从这些文章开始
 
 - [本站的静态博客构建](/posts/nextra-blog-setup)：源码怎样变成 HTML、搜索索引和可部署文件。
 - [静态博客的 SEO 与 IndexNow](/posts/seo-geo-indexnow)：canonical、站点地图与提交通知分别解决什么问题。
 - [Early Hints 的实现与验证](/posts/cloudflare-http3-early-hints)：构建产物、Nginx 响应头和边缘行为怎样衔接。
+
+本站的构建与发布实现可以查看[博客源码](https://github.com/ljh12138164/blog)。
 
 ## 写作原则
 

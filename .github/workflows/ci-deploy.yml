@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [master]
+  schedule:
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -16,6 +18,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Generate GitHub contribution snake
+        if: github.event_name != 'pull_request'
+        uses: Platane/snk/svg-only@v3
+        with:
+          github_user_name: ljh12138164
+          github_token: ${{ github.token }}
+          outputs: |
+            public/profile/snake-light.svg?palette=github-light
+            public/profile/snake-dark.svg?palette=github-dark
+      - name: Respect reduced motion in contribution assets
+        if: github.event_name != 'pull_request'
+        run: |
+          sed -i 's|</style>|@media (prefers-reduced-motion: reduce){.c,.s{animation:none!important}}</style>|' public/profile/snake-light.svg public/profile/snake-dark.svg
+      - name: Preserve contribution assets for deployment
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-contribution-snake
+          path: public/profile/snake-*.svg
+          if-no-files-found: error
+          retention-days: 1
       - uses: pnpm/action-setup@v4
         with:
           version: 9.12.3
@@ -32,6 +55,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test:resource-hints
+      - run: pnpm exec vitest run scripts/personal-hub.test.mjs
       - name: Verify static artifacts
         shell: bash
         run: |
@@ -39,6 +63,8 @@ jobs:
           test -f out/_pagefind/pagefind.js
           test -f out/sitemap.xml
           test -f out/robots.txt
+          cmp public/profile/snake-light.svg out/profile/snake-light.svg
+          cmp public/profile/snake-dark.svg out/profile/snake-dark.svg
           test -f .next/early-hints-map.conf
           cmp public/1da648d59c024d869f2523943dce4c6b.txt out/1da648d59c024d869f2523943dce4c6b.txt
       - name: Build and verify runtime image
@@ -114,11 +140,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Restore verified contribution assets
+        uses: actions/download-artifact@v4
+        with:
+          name: github-contribution-snake
+          path: public/profile
       - id: target
         name: Resolve immutable release tag
         shell: bash
         run: |
-          echo "value=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            release="sha-${GITHUB_SHA}"
+          else
+            digest=$(printf '%s' "${GITHUB_SHA}:${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}" | sha1sum | cut -d ' ' -f 1)
+            release="sha-${digest}"
+          fi
+          echo "value=$release" >> "$GITHUB_OUTPUT"
       - name: Configure restricted SSH client
         shell: bash
         env:

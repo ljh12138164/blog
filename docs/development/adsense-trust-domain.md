@@ -8,7 +8,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 - AdSense 在 head 中输出原生 async script，保留验证 meta，避免 Rocket Loader 改写该脚本。
 - 正式 URL 改为 https://ljhboard.cn，同步作者、结构化数据、生成文件、部署校验与运维文档。
-- self 站的作者、作品、技术方向迁入 /about，补编辑、纠错、引用与技术使用说明；隐私页同步实际服务。
+- 将 self 首页整体迁入博客“关于我” `/about`：作者、四站作品与预览、工具直达、贡献蛇、三项贡献与技术栈，补编辑、纠错、引用与技术使用说明；`/privacy` 同步实际服务。逐项对照见[迁移清单](../self-site-migration.md)。博客首页 `/` 保留原文章布局。
 - 打磨建站与 SEO 文章，补版本、仓库链接、可运行检查和适用边界。
 - 只读核查 AdSense、GSC 代表文章和 Cloudflare 安全事件，记录时间范围与证据局限。
 
@@ -21,6 +21,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 导出 HTML 在 head 中仅有一份正确的 AdSense 外链脚本，meta 与 ads.txt 保留。
 - canonical / og:url、sitemap、RSS、robots 指向根域名，部署校验同步。
 - /about 包含联系方式、作品、可追溯贡献、编辑与纠错说明；不新增页面或 UI 依赖。
+- `/about` 完整承接个人站内容及本地资产，分类筛选、图片放大、贡献折叠、明暗贡献蛇及每日生成链路可用；不把本地/历史快照声称为实时数据。博客首页源码与原分支一致。
 - 两篇代表文章补可核查依据，不把待发布内容说成已上线。
 - typecheck、生产构建、相关测试通过；明确后台验证局限。
 
@@ -30,11 +31,21 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 根域名已提供 HTML，边缘根域名到 blog 的旧重定向处于禁用状态。blog 到根域名、self 到 /about 的跳转在新内容上线验证后切换，避免环路与丢失旧路径。源站 ai 域名及证书路径属于现有回源链路，不能机械替换。
 
+完整迁移可行：原站为 Astro，但资料、条目、WebP 和 SVG 可直接迁入；React 组件使用现有 Next/Nextra，无需嵌入第二个运行时。较完整数据来自 homepage-content 工作树 `5c53bca`，本地 master `d2ead4e` 滞后于线上，因此不能只取 master。原项目只读。
+
+关键约束：跨构建生成的贡献蛇须由 verify 的 artifact 传给 deploy；每日运行同一 SHA 时仍须生成不同发布标签。远端 GitHub 数量失败时保留注明日期的快照，PR 状态注明原核实日期。图片缩放复用 Nextra ImageZoom，不复制原站弹层和缓存系统。
+
 ## Implementation
 
-复用 `docs/superpowers/specs/2026-09-01-personal-tech-notebook-ui-design.md` 已确认方向：现有 /about、/privacy 与文章继承 MDX / Article 窄栏排版，桌面、平板和 390px 手机；普通文档与链接，无新增交互状态。已加载 UI Skills `dammyjay93/interface-design`、`ibelick/baseline-ui`。复用系统字体、teal 强调色、表面色差与 4px 间距节奏。
+复用 `docs/superpowers/specs/2026-09-01-personal-tech-notebook-ui-design.md` 已确认的窄栏、系统字体、teal、明暗色差及 4px 间距。用户明确要求 self 完整首页迁入“关于我” `/about`，博客首页保持文章布局；该页面归属已记录在 AGENTS.md。再次加载 UI Skills `dammyjay93/interface-design`、`ibelick/baseline-ui`，未引入 UI 库。
+
+界面约定：`/about` 供访客认识作者、选择工具、核对贡献、进入文章，焦点为姓名及个人介绍；网站使用预览图加文字行，贡献以问题与 PR 为主。保留技术分类与贡献折叠，图片使用现有 ImageZoom；做事与写作说明仍为 MDX，使用无文章壳的嵌入方式，避免关于页被标记为技术文章或出现重复 H1。`/privacy` 说明合并后的服务。
+
+状态包括分类选中、贡献展开/收起、预览开/关、统计成功/失败快照、明暗主题。范围为桌面、平板、390px 手机及鼠标、触摸、键盘；不增加路由、表单、后台或认证。
 
 作者资料依据 self 站和 GitHub 公开记录，贡献直接链接 PR，不用项目 star 数证明个人贡献。采用 ponytail 最小改动原则，不加依赖。
+
+个人资料在 `lib/profile.ts`，技能条目在 `lib/profile-skills.ts`，本地资产在 `public/profile/`。原站旧 favicon、字体、SW、广告与统计初始化由博客现有能力接管，不重复注入；失真的“当前在线”状态不沿用。贡献蛇按原站每日时间生成并传递同批资产；本地和 PR 使用存档。
 
 建站文章改正版本、容器端口与浮动包管理器示例，固定代码证据到基线提交；SEO 文章增加真实 GSC 观察，删除未提供图片的截图占位，修正已存在 Article image 的描述。保留原始发布日期，在正文标明核对时间，不编造性能采样。
 
@@ -44,16 +55,19 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 - `pnpm typecheck` 通过。
 - `pnpm build` 通过：39 篇文章、Pagefind 41 页、单一 sitemap，全部导出 HTML 的根域名 canonical 与静态 AdSense 断言通过。文章示例修订后再次构建验证。
-- `pnpm test:unit` 9 文件 / 25 项、`pnpm test:resource-hints` 1 项通过。
+- `pnpm test:unit` 9 文件 / 25 项、`pnpm exec vitest run scripts/personal-hub.test.mjs scripts/resource-hints.test.mjs` 2 文件 / 5 项通过，包含迁移位置、静态内容、本地图片和每日资产传递。
 - 对改动的 TS/JS/JSON 执行 Biome 检查与格式化通过；无依赖或无关格式调整。
 - Git Bash 对 `deploy/server/deploy-blog` 执行 `bash -n` 通过；隔离 curl 的健康检查验证：新 root 接受，旧 blog 在正常发布拒绝、回滚接受，外部域名拒绝。默认 WSL bash 不可用，改用系统已安装 Git Bash。
 - 删除导出首页 AdSense script 的受控负向检查被 `verify:seo` 正确拒绝，随后原样恢复并再次校验通过。
-- Chrome 本地预览检查 /about、/privacy、两篇文章。桌面与 390px 手机视口检查作者/隐私页；作者页及建站文章手机根节点无水平溢出。未新增交互或样式；本地 `/stats/` 404 属于未经过 Nginx 统计代理的开发环境，生产代理不在本次修改范围。
+- 迁移前的关于页草稿截图不代表完整交付；本轮以完整 `/about` 的桌面和 390px 手机实测、分类与图片预览检查为准。最终截图另存为 `about-migrated-desktop.png`、`about-migrated-desktop-projects.png` 与 `about-migrated-mobile-light.png` / `about-migrated-mobile-dark.png`。桌面与 390px 手机无页面横向溢出，贡献图区域可用方向键横滚；分类、图片打开/关闭与原生贡献折叠有效。
+- 原生 AdSense 在 hydration 前向 head 插入托管脚本，可导致 React 将其误认作主题/JSON-LD 内联脚本。本轮将这两个同步脚本移至 body 的最前方，主题仍在正文绘制前初始化；AdSense 仍在 head 静态输出。开发预览刷新后无新增同类水合错误。
+- 原站两张 GitHub 实现截图外链在本地浏览器加载失败；下载原图迁入 `public/profile/` 并校验 PNG 完整性，不再依赖图片外链。
+- 本地 `/stats/` 404 属于未经过 Nginx 统计代理的预览环境，生产代理不在本次修改范围。
 - 后台实证见 [AdSense 与搜索核查](../adsense-search-audit.md)。未提交复审或更改线上规则。
 
 ## Review
 
-按仓库规范与本文件验收逐项审阅：已解决首次迁移回滚 canonical 不兼容、教程过时配置、截图占位与无依据镜像体积。无未解决的代码阻断项。
+按仓库规范与本文件验收逐项审阅：已解决首次迁移回滚 canonical 不兼容、教程过时配置、截图占位与无依据镜像体积。完整迁移复审检查了 /about 归属、首页源码未变化、初始 HTML 技能内容、图片资源、第三方失败快照、主题水合和每日产物一致性；无未解决的代码阻断项。
 
 接受的后续工作为生产迁移和搜索系统观察，以及依据具体失败 URL 继续处理历史索引问题；顺序与完成信号见 [roadmap](../roadmaps/adsense-trust-domain.md)。拒绝按 Googlebot 用户代理全站放行、复制双站点作为长期主站、以固定流量或天数承诺过审：本次证据不支持。
 

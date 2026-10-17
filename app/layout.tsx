@@ -134,7 +134,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <Head backgroundColor={{ light: '#fdfdfc', dark: '#15191b' }}>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <meta name="baidu-site-verification" content="codeva-IiA93WOaG7" />
         <meta name="msvalidate.01" content="DD5A2B7DB351923A5E482555DC0A57C4" />
         <meta name="google-adsense-account" content="ca-pub-7441827328189379" />
@@ -194,12 +193,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             `}
           </Script>
         )}
+      </Head>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteAndOrganizationJsonLd) }}
         />
-      </Head>
-      <body>
         <NextTopLoader color="var(--color-accent)" showSpinner={false} height={2.5} />
         <SiteShell>{children}</SiteShell>
       </body>
