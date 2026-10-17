@@ -40,6 +40,9 @@
 - 新静态测试在旧产物上因提前执行 AdSense 失败；重新构建后全部 49 个 HTML 通过。`pnpm build`（含 SEO、Pagefind、sitemap）、`pnpm typecheck`、`pnpm test` 均通过，12 个测试文件/32 项检查。
 - 生产 blog 代表文章的 Config 事件同样四项默认和当前 denied，更新为空；default 事件早于 Config。
 - 修复后的本地生产产物再次通过真实 Tag Assistant：Config 的四项默认/当前均 denied，default 事件先于 Config；没有手工模拟 consent update。
+- 隐私政策 URL 关闭重开编辑器后仍为 `/privacy`，确认已保存。AdSense 网站详情为“需要注意/低价值内容”，ads.txt 显示“已授权”；所有权面板仅展示验证方式，不补写不存在的独立成功标记。后台恢复后，两域名 `fc=alwaysshow&fctype=gdpr` 再试仍无 CMP 弹窗与 Funding Choices 脚本。
+
+修复 PR：[#31](https://github.com/ljh12138164/blog/pull/31)，代码提交 `2836dfe`，尚未合并发布。CI 从 [#122](https://github.com/ljh12138164/blog/actions/runs/39072494786) 开始，最新检查以 PR 为准。
 
 ### 浏览器复现入口
 
