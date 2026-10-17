@@ -29,7 +29,19 @@ describe('personal site migration', () => {
     expect(
       anchors.some((anchor) => /href="https?:\/\/(?:self|blog)\.ljhboard\.cn/.test(anchor))
     ).toBe(false)
-    expect(aboutPage).toContain('href="/posts/seo-geo-indexnow"')
+    expect(aboutPage).toContain('id="contact"')
+    expect(aboutPage).toContain('href="mailto:3479261099@qq.com"')
+    for (const removed of [
+      '最近写的几篇',
+      '我在意的几件事',
+      '从这些文章开始',
+      '写作原则',
+      '修订与纠错',
+      '引用、代码与使用边界',
+      '为什么写'
+    ]) {
+      expect(aboutPage).not.toContain(removed)
+    }
     expect(aboutPage.match(/<h1\b/g)).toHaveLength(1)
     expect(aboutPage).toContain('href="https://ljhboard.cn/about"')
   })
@@ -59,6 +71,8 @@ describe('personal site migration', () => {
     for (const skill of ['Astro', 'Umi', 'TypeScript', 'Yjs', 'Rspack', 'Hono', 'Resend']) {
       expect(body).toContain(skill)
     }
+    const skillsSection = body.slice(body.indexOf('id="skills"'), body.indexOf('id="contact"'))
+    expect(skillsSection.match(/<svg\b/g)).toHaveLength(43)
     for (const theme of ['light', 'dark']) {
       expect(
         readFileSync(new URL(`../out/profile/snake-${theme}.svg`, import.meta.url), 'utf8')

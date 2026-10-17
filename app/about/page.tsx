@@ -20,14 +20,8 @@ export const metadata = {
   }
 }
 
-import { Fragment } from 'react'
-import {
-  PersonalIntroduction,
-  PersonalNotes,
-  PersonalSites,
-  PersonalWork
-} from '../_components/personal-hub'
-import WritingNotes from './notes.mdx'
+import { profile } from '@/lib/profile'
+import { PersonalIntroduction, PersonalSites, PersonalWork } from '../_components/personal-hub'
 
 export default function AboutPage() {
   return (
@@ -37,13 +31,29 @@ export default function AboutPage() {
     >
       <PersonalIntroduction />
       <PersonalSites />
-      <PersonalNotes />
       <PersonalWork />
       <section
-        className="article-content prose prose-lg max-w-none border-t border-line pt-10 pb-20 text-ink prose-headings:text-balance prose-headings:text-ink prose-p:text-pretty prose-p:leading-8 prose-p:text-muted prose-a:text-accent prose-strong:text-ink prose-li:text-muted"
-        aria-label="做事与写作说明"
+        className="border-t border-line pt-10 pb-20"
+        aria-labelledby="contact-title"
+        id="contact"
       >
-        <WritingNotes components={{ wrapper: Fragment }} />
+        <h2 className="mt-0 mb-5 text-2xl font-bold" id="contact-title">
+          联系方式
+        </h2>
+        <ul className="m-0 list-none space-y-3 p-0 text-sm text-muted">
+          <li>
+            GitHub：
+            <a className="text-accent" href={profile.author.github}>
+              {profile.author.nickname}
+            </a>
+          </li>
+          <li>
+            Email：
+            <a className="text-accent" href={`mailto:${profile.author.email}`}>
+              {profile.author.email}
+            </a>
+          </li>
+        </ul>
       </section>
     </div>
   )

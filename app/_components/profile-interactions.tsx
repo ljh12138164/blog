@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { skillIcons } from '@/lib/profile-icons'
 import { skillCategories, skills } from '@/lib/profile-skills'
 
 export function ProfileSkills() {
@@ -28,14 +29,21 @@ export function ProfileSkills() {
         {skills
           .filter((skill) => category === 'all' || skill.category === category)
           .map((skill) => (
-            <li className="border-t border-line py-4" key={skill.name}>
-              <h3 className="m-0 text-balance text-sm font-bold">
-                {skill.name}
-                {skill.hot && <span className="ml-2 text-xs font-normal text-accent">重点</span>}
-              </h3>
-              <p className="mt-1 mb-0 text-pretty text-xs leading-6 text-muted">
-                {skill.description}
-              </p>
+            <li className="flex gap-3 border-t border-line py-4" key={skill.name}>
+              <span
+                className="mt-1 flex size-8 shrink-0 items-center justify-center [&>svg]:size-6"
+                aria-hidden="true"
+                dangerouslySetInnerHTML={{ __html: skillIcons[skill.iconSlug] }}
+              />
+              <div className="min-w-0">
+                <h3 className="m-0 text-balance text-sm font-bold">
+                  {skill.name}
+                  {skill.hot && <span className="ml-2 text-xs font-normal text-accent">重点</span>}
+                </h3>
+                <p className="mt-1 mb-0 text-pretty text-xs leading-6 text-muted">
+                  {skill.description}
+                </p>
+              </div>
             </li>
           ))}
       </ul>

@@ -2,7 +2,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ImageZoom } from 'nextra/components'
 import type { ReactNode } from 'react'
-import { recentPosts } from '@/lib/posts'
 import { profile } from '@/lib/profile'
 import { skills } from '@/lib/profile-skills'
 import { site } from '@/lib/site'
@@ -248,36 +247,5 @@ export function PersonalWork() {
         <ProfileSkills />
       </HubSection>
     </>
-  )
-}
-
-export function PersonalNotes() {
-  return (
-    <HubSection id="notes" label="READ / NOTES" title="最近写的几篇">
-      <ul className="m-0 list-none p-0">
-        {recentPosts.slice(0, 3).map((post) => (
-          <li className="border-t border-line py-5" key={post.slug}>
-            <p className="m-0 font-mono text-xs text-muted tabular-nums">
-              <time dateTime={post.date}>{post.date}</time> · {post.category}
-            </p>
-            <h3 className="my-2 text-balance text-lg font-bold">
-              <Link
-                className="inline-flex min-h-11 items-center hover:text-accent"
-                href={`/posts/${post.slug}`}
-              >
-                {post.title} →
-              </Link>
-            </h3>
-            <p className="m-0 text-pretty text-sm leading-7 text-muted">{post.description}</p>
-          </li>
-        ))}
-      </ul>
-      <Link
-        className="inline-flex min-h-11 items-center text-sm font-bold text-accent"
-        href="/posts"
-      >
-        全部文章 →
-      </Link>
-    </HubSection>
   )
 }
