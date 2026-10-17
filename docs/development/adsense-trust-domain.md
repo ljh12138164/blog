@@ -57,6 +57,10 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 接受的后续工作为生产迁移和搜索系统观察，以及依据具体失败 URL 继续处理历史索引问题；顺序与完成信号见 [roadmap](../roadmaps/adsense-trust-domain.md)。拒绝按 Googlebot 用户代理全站放行、复制双站点作为长期主站、以固定流量或天数承诺过审：本次证据不支持。
 
+## Delivery
+
+已创建 [PR #29](https://github.com/ljh12138164/blog/pull/29)，分支 `feat/adsense-trust-domain`。本地验证完成，远端构建和 Docker 运行检查以 PR 的 CI 状态为准。本次未合并、未发布生产，未切换 Cloudflare 跳转或关闭 self 站。
+
 ## Risks
 
 域名迁移需要搜索系统重新处理信号，无法保证审核或收录。GSC 历史统计与实时抓取不能混同；有限事件窗口不能证明历史上没有拦截。
