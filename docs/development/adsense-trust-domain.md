@@ -14,7 +14,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 ## Out of scope
 
-自动申请 AdSense 复审、购买流量、编造经历或测量、修改独立工具站、未经发布验证就关闭 self 或跳转旧博客。
+自动申请 AdSense 复审、购买流量、编造经历或测量、修改独立工具站、未经发布验证就关闭 self。用户明确保留根域名与 blog 双入口，blog 到根域名的 301 不在授权范围。
 
 ## Acceptance criteria
 
@@ -29,7 +29,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 可行。Next.js 16.0.7、React 19.1.0、Nextra 4.6.1、Tailwind 4.3.3，纯静态导出。site.config.json 是域名来源；部署 canonical 断言需同步，否则新版本健康检查失败。
 
-根域名已提供 HTML，边缘根域名到 blog 的旧重定向处于禁用状态。blog 到根域名、self 到 /about 的跳转在新内容上线验证后切换，避免环路与丢失旧路径。源站 ai 域名及证书路径属于现有回源链路，不能机械替换。
+根域名已提供 HTML，边缘根域名到 blog 的旧重定向处于禁用状态。根域名与 blog 服务同一静态产物，两端直接提供页面和 sitemap；canonical 与地图正文统一使用根域名，不配置 blog 跳转。self 资料迁入 /about 与 blog 双入口是不同事项。源站 ai 域名及证书路径属于现有回源链路，不能机械替换。
 
 完整迁移可行：原站为 Astro，但资料、条目、WebP 和 SVG 可直接迁入；React 组件使用现有 Next/Nextra，无需嵌入第二个运行时。较完整数据来自 homepage-content 工作树 `5c53bca`，本地 master `d2ead4e` 滞后于线上，因此不能只取 master。原项目只读。
 
@@ -72,13 +72,14 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 本地 `/stats/` 404 属于未经过 Nginx 统计代理的预览环境，生产代理不在本次修改范围。
 - 后台实证见 [AdSense 与搜索核查](../adsense-search-audit.md)。未提交复审或更改线上规则。
 - Umami 修订通过 `pnpm typecheck`、`pnpm build` 与 `pnpm exec biome check lib/posts.ts`；一次性比对确认章节、四张图片和 HTML 脚本不变，生成页面包含修正后的内容。双域名首页仍为 200、canonical 都指 blog；同意消息已发布且绑定根域名，但广告用途 Consent Mode 关闭。细节与未完成的浏览器预览见后台核查的 2026-10-18 补充。
-- Umami 修订提交 `b63a7d8` 的 PR CI #115 全部通过，包括 Docker 镜像验证。再次只读核对 Cloudflare 实际跳转条件，部署文档补入仅匹配 blog 的具体规则、发布先后顺序、验收和回退；保留双 200 配合统一 canonical 也是可用方式，不把双入口本身认定为拒审原因。
+- Umami 修订提交 `b63a7d8` 的 PR CI #115 全部通过，包括 Docker 镜像验证。只读核对 Cloudflare 实际跳转条件后，曾误加 blog 301 方案；用户明确未授权该方案，已撤除文档与 PR 中的跳转要求，明确双 200、统一 canonical 与 sitemap。现有生成逻辑已支持该方案，不新增运行时代码；忽略的本地 `public/robots.txt` 旧地图声明已清理，生产以 `out/robots.txt` 为准。未曾启用线上跳转。
+- 双入口方案复核：`pnpm typecheck`、`pnpm build` 通过；导出 sitemap 包含 47 个根域名 URL，生成 robots 声明同一地图，所有 HTML canonical 校验通过。容器静态服务使用 `server_name _`，无按 blog 主机跳转的配置。线上两端 sitemap 本次均直接返回 200、47 项且仍使用 blog URL，需新版发布后再核对根域名 URL 清单；不将本地构建写成线上已生效。
 
 ## Review
 
 按仓库规范与本文件验收逐项审阅：已解决首次迁移回滚 canonical 不兼容、教程过时配置、截图占位与无依据镜像体积。完整迁移复审检查了 /about 归属、首页源码未变化、初始 HTML 的 43 个技能与对应 SVG、指定内容删除、联系方式保留、图片资源、第三方失败快照、主题水合和静态资产完整性；普通热力图复审确认实际格子数据不变，删除蛇图和动画、同步主题样式/CI/隐私说明，未新增任务或依赖；无未解决的代码阻断项。
 
-接受的后续工作为生产迁移和搜索系统观察，以及依据具体失败 URL 继续处理历史索引问题；顺序与完成信号见 [roadmap](../roadmaps/adsense-trust-domain.md)。拒绝按 Googlebot 用户代理全站放行、复制双站点作为长期主站、以固定流量或天数承诺过审：本次证据不支持。
+接受的后续工作为新版发布、双域名 sitemap 验收和搜索系统观察，以及依据具体失败 URL 继续处理历史索引问题；顺序与完成信号见 [roadmap](../roadmaps/adsense-trust-domain.md)。拒绝按 Googlebot 用户代理全站放行、以固定流量或天数承诺过审：本次证据不支持。两个域名直接访问同一站点由用户明确保留，不应当作违规或擅自改成 301。
 
 ## Delivery
 

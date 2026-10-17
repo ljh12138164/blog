@@ -73,7 +73,7 @@ Google 对这些地区的个性化广告要求认证且集成 TCF 的 CMP；不�
 
 根域名与 blog 首页目前均可访问；39 篇根域名文章 canonical 全部仍声明 blog 地址，线上 sitemap/robots 的地图地址也仍采用 blog。相对于用户确定使用根域名的目标，这是尚未完成的迁移。双主机本身不等于 doorway、欺骗或政策违规，301 也不是天然拒审原因。
 
-PR 已生成根域名 canonical 与 sitemap，需按[部署顺序](deployment.md)发布并验收，再设置旧主机逐路径永久跳转。不要为了审核临时让两个域名各自声明 canonical。
+PR 已生成根域名 canonical 与 sitemap，需按[部署顺序](deployment.md)发布并验收。用户明确保留两个域名直接访问，两端 sitemap 提供同一规范 URL 清单，不配置 blog 301。不要为了审核临时让两个域名各自声明不同 canonical。
 
 当日较早的 GSC 检查中，两篇 blog 文章历史状态为“已发现，尚未编入索引”，但实时测试成功，Google 选择的 canonical 尚不可用。不能将自己的 200、实时测试成功或提交 sitemap 当作已收录。发布后应检查根域名代表文章的历史索引、实时渲染与 Google canonical，详见[后台核查记录](adsense-search-audit.md)。
 
@@ -95,7 +95,7 @@ PR 已生成根域名 canonical 与 sitemap，需按[部署顺序](deployment.md
 ## 建议顺序与验收
 
 1. 修正文中可确认的错误；优先给四篇优化实战补真实证据，对没有依据的精确指标做诚实处理；让 Umami 教程的正文覆盖摘要承诺。
-2. 放开必要的 Next.js 渲染资源；完成 PR 发布、根域名 canonical/sitemap 与旧域名跳转的一致性验收，确认新版关于页与隐私页已在线。
+2. 放开必要的 Next.js 渲染资源；完成 PR 发布，验证双域名页面及 sitemap 均直接可访问、canonical/sitemap 规范地址一致，确认新版关于页与隐私页已在线。
 3. 验证已有欧洲法规消息的域名绑定与地区运行效果，并核对广告和统计同意行为；确认非内容页排除和移动端广告体验。
 4. 在 GSC 检查代表性正文和资源渲染，结合真实 Google 请求与源站/Cloudflare 记录排除访问问题。按后台实际状态判断是否复审，不以固定等待时间代替验收。
 

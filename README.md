@@ -40,7 +40,7 @@ pnpm check:write
 
 ## SEO 配置
 
-正式站点 `https://ljhboard.cn` 统一配置在 `site.config.json`。该值用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引；不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于正式域名的 canonical，并检查 head 中唯一的标准 async AdSense 脚本及其 Rocket Loader 排除属性。域名切换顺序见[部署文档](docs/deployment.md)。
+规范地址 `https://ljhboard.cn` 统一配置在 `site.config.json`，`blog.ljhboard.cn` 保留直接访问，不配置跨域 301。两端服务同一静态产物和 sitemap；规范地址用于 canonical、Open Graph、JSON-LD、`sitemap.xml`、`robots.txt` 与 LLM 索引。不要使用源站 IP 构建生产静态文件。`postbuild` 会检查每个 HTML 只能包含一个属于规范域名的 canonical，并检查 head 中唯一的标准 async AdSense 脚本及其 Rocket Loader 排除属性。双域名 sitemap 验收见[部署文档](docs/deployment.md)。
 
 - **社交分享卡片**：全站默认与文章均配置 1200x630 标准 Open Graph / Twitter 预览图（`og-image.png`），支持 Twitter Summary Large Image 卡片。
 - **结构化数据**：首页提供 `WebSite`（含 Sitelinks Searchbox）、`Organization` 与 `Person` 实体；文章页提供 `TechArticle` / `BlogPosting` 与分级 `BreadcrumbList`。

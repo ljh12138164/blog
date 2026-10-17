@@ -4,12 +4,12 @@
 
 ## Now
 
-### 发布根域名内容并完成旧入口迁移
+### 发布新版并验证双域名 sitemap
 
-- 价值：统一作者资料与正式页面地址，让旧文章和 self 访问者到达对应新内容。
+- 价值：保留根域名和 blog 直接访问，用一致的 sitemap 与 canonical 表达规范地址；关于页承接个人站资料。
 - 依据：根域名 sitemap 已成功读取，但线上页面 canonical 仍为 blog；self 完整首页内容已在本分支迁入博客“关于我” `/about`，见[逐项对照](../self-site-migration.md)。博客首页继续保留文章布局。
-- 依赖：PR 通过、站长明确发布；先检查新版根域名，再启用 blog/www 逐路径永久跳转，清点 self 路径后映射至相应内容。完整顺序见部署文档。
-- 完成信号：线上 head / canonical / sitemap / ads.txt 校验通过；旧文章单次跳至相同根路径、无环路；self 首页和关于页到博客 /about、隐私到 /privacy。
+- 依赖：PR 通过、站长明确发布；两端使用同一份静态产物，不配置 blog 到根域名的跳转。self 后续入口安排单独处理，不能与 blog 混同。完整顺序见部署文档。
+- 完成信号：两端首页、文章、地图均直接返回 200；canonical、sitemap 正文与 robots 的地图声明统一采用根域名，head / ads.txt 校验通过。
 
 ## Next
 
