@@ -19,7 +19,7 @@
 | 网站截图放大 | 关于页各网站预览 | 复用 Nextra ImageZoom，支持键盘与关闭，不移植另一套弹层 |
 | JSON 格式化、时间戳、Base64 | 关于页常用工具直达 | 保留对应深层链接与描述 |
 | 最新文章与完整归档 | 关于页最近文章、`/posts` | 使用本站文章数据，不再抓取自己旧域名的 RSS；保留最近文章模块及本站手记列表 |
-| GitHub 公开活动 / 贡献蛇 | `/about#activity` | 保留工作树的明暗 SVG、减少动态效果、可键盘横向滚动；迁入每日生成与 artifact 传递 |
+| GitHub 公开活动 / 贡献蛇 | `/about#activity` | 保留工作树的明暗 SVG、减少动态效果、可键盘横向滚动；按用户要求仅使用已保存的静态快照，不迁入 cron 或生成任务 |
 | ProComponents、AutoForm、RSSHub | `/about#projects` | 仓库入口、Star/Fork、具体问题、本人改动、PR、两张本地实现截图及放大预览；原站状态注明 2026-10-02，不当成实时状态 |
 | GitHub 数量同步及失败情况 | 关于页贡献区 | 通过公共 API 更新 Star/Fork；失败保留标明日期的原站快照，不需要密钥 |
 | 技术栈及分类 | `/about#skills` | 保留原站全部条目、描述和五类筛选；使用可按下按钮和原生列表，不引入图标或 UI 依赖 |
@@ -33,7 +33,7 @@
 
 上线前不关闭 self，不启用跳转。新版验证后，self `/` → `https://ljhboard.cn/about`、`/about` → `/about`、`/privacy` → `/privacy`；关于页的 `#sites-section` 锚点继续有效。旧图片如果存在外部引用，应先保留源站静态资源或单独映射到 `/profile/*`；不能把图片一律跳到 HTML 首页。
 
-贡献蛇继续使用原站的每日时间 `03:17 UTC`。每日与手动运行使用独立发布标签，避免相同代码 SHA 下不同贡献图覆盖镜像；verify 生成的 SVG 通过 artifact 交给 deploy，Docker 校验和部署使用相同资产。PR 使用存档且不生成、不部署；首次生产定时任务在发布后核验。
+按用户要求，贡献蛇保留为本地静态快照，不配置 cron、生成 action 或相关 artifact 传递。明暗 SVG 随仓库正常构建发布，发布标签仍使用提交 SHA。
 
 部署步骤见 [部署文档](deployment.md)，验收及截图见 [开发记录](development/adsense-trust-domain.md)。
 

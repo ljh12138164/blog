@@ -21,7 +21,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 - 导出 HTML 在 head 中仅有一份正确的 AdSense 外链脚本，meta 与 ads.txt 保留。
 - canonical / og:url、sitemap、RSS、robots 指向根域名，部署校验同步。
 - /about 包含联系方式、作品、可追溯贡献、编辑与纠错说明；不新增页面或 UI 依赖。
-- `/about` 完整承接个人站内容及本地资产，分类筛选、图片放大、贡献折叠、明暗贡献蛇及每日生成链路可用；不把本地/历史快照声称为实时数据。博客首页源码与原分支一致。
+- `/about` 完整承接个人站内容及本地资产，分类筛选、图片放大、贡献折叠、明暗贡献蛇静态快照可用，不配置 cron 或生成任务；不把本地/历史快照声称为实时数据。博客首页源码与原分支一致。
 - 两篇代表文章补可核查依据，不把待发布内容说成已上线。
 - typecheck、生产构建、相关测试通过；明确后台验证局限。
 
@@ -33,7 +33,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 完整迁移可行：原站为 Astro，但资料、条目、WebP 和 SVG 可直接迁入；React 组件使用现有 Next/Nextra，无需嵌入第二个运行时。较完整数据来自 homepage-content 工作树 `5c53bca`，本地 master `d2ead4e` 滞后于线上，因此不能只取 master。原项目只读。
 
-关键约束：跨构建生成的贡献蛇须由 verify 的 artifact 传给 deploy；每日运行同一 SHA 时仍须生成不同发布标签。远端 GitHub 数量失败时保留注明日期的快照，PR 状态注明原核实日期。图片缩放复用 Nextra ImageZoom，不复制原站弹层和缓存系统。
+关键约束：用户明确不需要贡献蛇生成任务；使用仓库内的静态快照，不设置 cron、生成 action 或跨任务 artifact 传递。远端 GitHub 数量失败时保留注明日期的快照，PR 状态注明原核实日期。图片缩放复用 Nextra ImageZoom，不复制原站弹层和缓存系统。
 
 ## Implementation
 
@@ -45,7 +45,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 作者资料依据 self 站和 GitHub 公开记录，贡献直接链接 PR，不用项目 star 数证明个人贡献。采用 ponytail 最小改动原则，不加依赖。
 
-个人资料在 `lib/profile.ts`，技能条目在 `lib/profile-skills.ts`，本地资产在 `public/profile/`。原站旧 favicon、字体、SW、广告与统计初始化由博客现有能力接管，不重复注入；失真的“当前在线”状态不沿用。贡献蛇按原站每日时间生成并传递同批资产；本地和 PR 使用存档。
+个人资料在 `lib/profile.ts`，技能条目在 `lib/profile-skills.ts`，本地资产在 `public/profile/`。原站旧 favicon、字体、SW、广告与统计初始化由博客现有能力接管，不重复注入；失真的“当前在线”状态不沿用。贡献蛇按用户要求使用存档，不配置定时生成；构建直接读取本地资产。
 
 建站文章改正版本、容器端口与浮动包管理器示例，固定代码证据到基线提交；SEO 文章增加真实 GSC 观察，删除未提供图片的截图占位，修正已存在 Article image 的描述。保留原始发布日期，在正文标明核对时间，不编造性能采样。
 
@@ -55,7 +55,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 - `pnpm typecheck` 通过。
 - `pnpm build` 通过：39 篇文章、Pagefind 41 页、单一 sitemap，全部导出 HTML 的根域名 canonical 与静态 AdSense 断言通过。文章示例修订后再次构建验证。
-- `pnpm test:unit` 9 文件 / 25 项、`pnpm exec vitest run scripts/personal-hub.test.mjs scripts/resource-hints.test.mjs` 2 文件 / 5 项通过，包含迁移位置、静态内容、本地图片和每日资产传递。
+- `pnpm test:unit` 9 文件 / 25 项、`pnpm exec vitest run scripts/personal-hub.test.mjs scripts/resource-hints.test.mjs` 2 文件 / 4 项通过，包含迁移位置、静态内容与本地图片；已移除每日生成链路的测试。
 - 对改动的 TS/JS/JSON 执行 Biome 检查与格式化通过；无依赖或无关格式调整。
 - Git Bash 对 `deploy/server/deploy-blog` 执行 `bash -n` 通过；隔离 curl 的健康检查验证：新 root 接受，旧 blog 在正常发布拒绝、回滚接受，外部域名拒绝。默认 WSL bash 不可用，改用系统已安装 Git Bash。
 - 删除导出首页 AdSense script 的受控负向检查被 `verify:seo` 正确拒绝，随后原样恢复并再次校验通过。
@@ -67,7 +67,7 @@ AdSense 将 ljhboard.cn 标记为低价值内容。2026-10-17 后台 ads.txt 显
 
 ## Review
 
-按仓库规范与本文件验收逐项审阅：已解决首次迁移回滚 canonical 不兼容、教程过时配置、截图占位与无依据镜像体积。完整迁移复审检查了 /about 归属、首页源码未变化、初始 HTML 技能内容、图片资源、第三方失败快照、主题水合和每日产物一致性；无未解决的代码阻断项。
+按仓库规范与本文件验收逐项审阅：已解决首次迁移回滚 canonical 不兼容、教程过时配置、截图占位与无依据镜像体积。完整迁移复审检查了 /about 归属、首页源码未变化、初始 HTML 技能内容、图片资源、第三方失败快照、主题水合和静态资产完整性；无未解决的代码阻断项。
 
 接受的后续工作为生产迁移和搜索系统观察，以及依据具体失败 URL 继续处理历史索引问题；顺序与完成信号见 [roadmap](../roadmaps/adsense-trust-domain.md)。拒绝按 Googlebot 用户代理全站放行、复制双站点作为长期主站、以固定流量或天数承诺过审：本次证据不支持。
 

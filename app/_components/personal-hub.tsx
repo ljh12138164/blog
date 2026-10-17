@@ -185,7 +185,7 @@ export function PersonalWork() {
           />
         </section>
         <p className="mt-3 mb-0 text-pretty text-xs leading-6 text-muted">
-          贡献图为公开活动的定期快照，具体记录以 GitHub 为准。
+          贡献图为已保存的公开活动快照，具体记录以 GitHub 为准。
         </p>
       </HubSection>
       <HubSection id="projects" label="CHANGE / EVIDENCE" title="我的开源贡献">

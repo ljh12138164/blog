@@ -2,7 +2,7 @@
 
 一个使用 Nextra 4 Custom Theme、Next.js、Tailwind CSS、Turbopack 和 pnpm 构建的中文个人博客。生产站点是静态导出内容，封装于项目管理的 Docker 镜像中。
 
-`/about`（关于我）承接原 `self.ljhboard.cn/` 的完整个人主页：资料、作品预览、工具直达、开源贡献与技术栈；博客首页保持文章布局。来源和功能对照见 [个人站迁移清单](docs/self-site-migration.md)。构建后可运行 `pnpm exec vitest run scripts/personal-hub.test.mjs` 核验迁移产物与贡献蛇发布链路。
+`/about`（关于我）承接原 `self.ljhboard.cn/` 的完整个人主页：资料、作品预览、工具直达、开源贡献与技术栈；博客首页保持文章布局。来源和功能对照见 [个人站迁移清单](docs/self-site-migration.md)。构建后可运行 `pnpm exec vitest run scripts/personal-hub.test.mjs` 核验迁移产物及本地静态资源。
 
 ## 本地运行
 

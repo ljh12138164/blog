@@ -3,10 +3,6 @@ import { describe, expect, it } from 'vitest'
 
 const aboutPage = readFileSync(new URL('../out/about.html', import.meta.url), 'utf8')
 const homepage = readFileSync(new URL('../out/index.html', import.meta.url), 'utf8')
-const workflow = readFileSync(
-  new URL('../.github/workflows/ci-deploy.yml', import.meta.url),
-  'utf8'
-)
 
 describe('personal site migration', () => {
   it('exports /about as the personal hub and direct tools with no dependency on the old self site', () => {
@@ -68,18 +64,5 @@ describe('personal site migration', () => {
         readFileSync(new URL(`../out/profile/snake-${theme}.svg`, import.meta.url), 'utf8')
       ).toContain('prefers-reduced-motion')
     }
-  })
-
-  it('keeps the snake generation, verified artifact and deployment input together', () => {
-    expect(workflow).toContain("cron: '17 3 * * *'")
-    expect(workflow).toContain('public/profile/snake-light.svg?palette=github-light')
-    expect(workflow).toContain('public/profile/snake-dark.svg?palette=github-dark')
-    expect(workflow).toContain('uses: actions/upload-artifact@v4')
-    expect(workflow).toContain('uses: actions/download-artifact@v4')
-    expect(workflow).toContain('path: public/profile')
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: Literal shell variables form the release identity.
-    expect(workflow).toContain('${GITHUB_SHA}:${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}')
-    expect(workflow).toContain('cmp public/profile/snake-light.svg out/profile/snake-light.svg')
-    expect(workflow).toContain('cmp public/profile/snake-dark.svg out/profile/snake-dark.svg')
   })
 })
