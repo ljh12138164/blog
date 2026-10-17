@@ -5,7 +5,6 @@ import { Head } from 'nextra/components'
 import type { ReactNode } from 'react'
 import { site } from '@/lib/site'
 import { themeInitScript } from '@/lib/theme'
-import { AdSenseScript } from './_components/adsense-script'
 import { SiteShell } from './_components/site-shell'
 import './globals.css'
 
@@ -161,7 +160,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             `
           }}
         />
-        <AdSenseScript />
+        <Script
+          id="google-adsense"
+          data-cfasync="false"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7441827328189379"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             gtag('js', new Date());

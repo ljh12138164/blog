@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import vm from 'node:vm'
 import { expect, it } from 'vitest'
 
-it('sets denied consent synchronously before Google scripts in exported pages', () => {
+it('sets denied consent synchronously and defers AdSense execution in exported pages', () => {
   const pages = fs.readdirSync('out', { recursive: true }).filter((file) => file.endsWith('.html'))
   expect(pages.length).toBeGreaterThan(0)
 
@@ -12,9 +12,13 @@ it('sets denied consent synchronously before Google scripts in exported pages', 
       /<script\b[^>]*id="google-consent-default"[^>]*>([\s\S]*?)<\/script>/
     )
     expect(consent, page).not.toBeNull()
-    const adTag = html.match(/<script\b[^>]*src="https:\/\/pagead2\.googlesyndication\.com[^>]*>/)
-    expect(adTag, page).not.toBeNull()
-    expect(html.indexOf(consent[0]), page).toBeLessThan(html.indexOf(adTag[0]))
+    // AdSense mutates head; running it before hydration can duplicate consent defaults.
+    expect(/<script\b[^>]*src="https:\/\/pagead2\.googlesyndication\.com/.test(html), page).toBe(
+      false
+    )
+    expect(html, page).toContain(
+      '<meta name="google-adsense-account" content="ca-pub-7441827328189379"'
+    )
     expect(consent[0].slice(0, consent[0].indexOf('>')), page).not.toMatch(
       /\s(?:async|defer)(?:[\s=>])|\ssrc=/
     )

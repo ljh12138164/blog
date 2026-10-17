@@ -1,5 +1,7 @@
 # AdSense：内容数字、静态资源抓取与 GA 同意
 
+> 以下为 PR #30 合并前的开发与验证记录。2026-10-18 用户允许合并发布后，该 PR 已上线；两域名默认拒绝已通过真实 Tag Assistant 验证。随后发现提前执行原生 AdSense 会触发 hydration 重建，修复与当前 CMP 验收状态见 [GA 发布回归](ga-production-validation.md)。下文“待发布”“保留草稿”及原生脚本方案不再代表当前状态。
+
 ## Background
 
 PR #29 已合并。用户要求删除无法确认的数字，允许页面 CSS/JS 抓取，并完整验证 GA 是否遵循同意选择。
