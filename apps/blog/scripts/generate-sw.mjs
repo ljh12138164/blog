@@ -28,6 +28,9 @@ export const defaultWorkboxConfig = {
           url.hostname.includes('google') ||
           url.hostname.includes('cloudflare') ||
           url.pathname.startsWith('/api/') ||
+          url.pathname === '/write' ||
+          url.pathname.startsWith('/write/') ||
+          url.pathname === '/write.html' ||
           url.pathname.startsWith('/stats/')
         )
       },

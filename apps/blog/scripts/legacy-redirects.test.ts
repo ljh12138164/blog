@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const nginxConfPath = path.join(rootDir, 'deploy/nginx.conf')
+const nginxConfPath = path.resolve(rootDir, '../../deploy/nginx.conf')
 
 function parseLegacyRedirects(nginxConf: string): Map<string, string> {
   const mapMatch = nginxConf.match(/map\s+\$uri\s+\$legacy_post_redirect\s*\{([\s\S]*?)\}/)

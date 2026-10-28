@@ -2,59 +2,45 @@
   "name": "nextra-ai-blog",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "test": "vitest run",
-    "test:unit": "vitest run lib scripts/generate-early-hints.test.mjs scripts/submit-indexnow-urls.test.mjs scripts/legacy-redirects.test.ts scripts/generate-rss.test.mjs scripts/precompress.test.mjs scripts/generate-sw.test.mjs",
-    "test:early-hints": "vitest run scripts/generate-early-hints.test.mjs",
-    "test:indexnow-submit": "vitest run scripts/submit-indexnow-urls.test.mjs",
-    "test:redirects": "vitest run scripts/legacy-redirects.test.ts",
-    "test:resource-hints": "vitest run scripts/resource-hints.test.mjs",
-    "test:sw": "vitest run scripts/generate-sw.test.mjs",
-    "test:theme": "vitest run lib/theme.test.ts",
-    "generate:sw": "node scripts/generate-sw.mjs",
+    "dev": "turbo run dev",
+    "dev:blog": "turbo run dev --filter=@blog/web",
+    "dev:api": "turbo run dev --filter=@blog/api",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "pnpm --filter @blog/api test:integration",
+    "test:early-hints": "pnpm --filter @blog/web test:early-hints",
+    "test:indexnow-submit": "pnpm --filter @blog/web test:indexnow-submit",
+    "test:redirects": "pnpm --filter @blog/web test:redirects",
+    "test:resource-hints": "pnpm --filter @blog/web test:resource-hints",
+    "test:theme": "pnpm --filter @blog/web test:theme",
+    "test:sw": "pnpm --filter @blog/web test:sw",
+    "generate:sw": "pnpm --filter @blog/web generate:sw",
+    "verify:seo": "pnpm --filter @blog/web verify:seo",
     "update:skill": "git submodule update --remote utils",
-    "postbuild": "node scripts/generate-rss.mjs && node scripts/generate-llms.mjs && pagefind --site out --output-path out/_pagefind && next-sitemap --config next-sitemap.config.cjs && node scripts/verify-seo.mjs && node scripts/generate-early-hints.mjs && node scripts/generate-sw.mjs && node scripts/precompress.mjs",
-    "verify:seo": "node scripts/verify-seo.mjs",
-    "typecheck": "tsc --noEmit",
+    "db:generate": "pnpm --filter @blog/api db:generate",
+    "db:migrate": "pnpm --filter @blog/api db:migrate",
+    "auth:setup": "pnpm --filter @blog/api auth:setup",
     "check": "biome lint .",
     "check:write": "biome check --write .",
     "prepare": "simple-git-hooks"
   },
-  "dependencies": {
-    "@giscus/react": "^3.1.0",
-    "@theguild/remark-mermaid": "0.3.0",
-    "next": "16.0.7",
-    "nextjs-toploader": "^3.9.17",
-    "nextra": "4.6.1",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
-    "@tailwindcss/postcss": "4.3.3",
-    "@tailwindcss/typography": "0.5.20",
-    "@types/node": "^24.0.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "baseline-browser-mapping": "^2.11.19",
     "lint-staged": "^17.4.1",
-    "next-sitemap": "4.2.3",
-    "pagefind": "1.5.2",
     "simple-git-hooks": "^2.13.1",
-    "tailwindcss": "4.3.3",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11",
-    "workbox-build": "^7.4.1",
-    "wrangler": "^4.125.0"
+    "turbo": "2.11.10"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx,json,jsonc,css}": "biome check --write --no-errors-on-unmatched"
-  },
-  "packageManager": "pnpm@9.12.3"
+  }
 }

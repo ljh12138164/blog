@@ -4,6 +4,17 @@ import { describe, expect, it } from 'vitest'
 import { defaultWorkboxConfig, generateServiceWorker } from './generate-sw.mjs'
 
 describe('generateServiceWorker', () => {
+  it('keeps write pages and API requests out of persistent caches', () => {
+    const route = defaultWorkboxConfig.runtimeCaching.find((item) => item.handler === 'NetworkOnly')
+    for (const pathname of ['/write', '/write/', '/write.html', '/api/notes', '/api/admin/notes']) {
+      expect(
+        route.urlPattern({ url: new URL(pathname, 'https://ljhboard.cn'), sameOrigin: true })
+      ).toBe(true)
+    }
+    expect(route.urlPattern({ url: new URL('https://ljhboard.cn/posts'), sameOrigin: true })).toBe(
+      false
+    )
+  })
   it('has correctly defined runtimeCaching rules matching caching policy', () => {
     const { runtimeCaching, clientsClaim, skipWaiting, inlineWorkboxRuntime } = defaultWorkboxConfig
 

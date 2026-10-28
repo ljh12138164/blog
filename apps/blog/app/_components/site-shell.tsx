@@ -24,6 +24,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link className="no-underline transition-colors hover:text-accent" href="/posts">
               <span className="inline-flex min-h-11 items-center px-3">文章</span>
             </Link>
+            <Link className="no-underline hover:text-accent" href="/notes">
+              <span className="inline-flex min-h-11 items-center px-3">随笔</span>
+            </Link>
             <Link className="no-underline hover:text-accent max-sm:hidden" href="/series">
               <span className="inline-flex min-h-11 items-center px-3">专栏</span>
             </Link>

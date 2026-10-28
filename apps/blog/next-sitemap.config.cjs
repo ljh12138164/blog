@@ -6,7 +6,7 @@ module.exports = {
   generateRobotsTxt: true,
   generateIndexSitemap: false,
   outDir: 'out',
-  exclude: ['/_pagefind/*'],
+  exclude: ['/_pagefind/*', '/write'],
   transform: async (config, loc) => {
     let priority = 0.7
     let changefreq = 'weekly'

@@ -12,6 +12,17 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: blog
+          POSTGRES_PASSWORD: blog-ci
+          POSTGRES_DB: blog_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U blog -d blog_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,28 +34,49 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:early-hints
-      - run: pnpm test:indexnow-submit
-      - run: pnpm test:theme
-      - run: pnpm test:redirects
-      - run: pnpm exec vitest run lib/post-discovery.test.ts lib/article-summaries.test.ts
+      - run: pnpm test:unit
+      - run: pnpm test:integration
+        env:
+          TEST_DATABASE_URL: postgres://blog:blog-ci@127.0.0.1:5432/blog_test
       - run: pnpm typecheck
       - run: pnpm build
-      - run: pnpm exec vitest run scripts/google-consent.test.mjs
+      - run: pnpm --filter @blog/web exec vitest run scripts/google-consent.test.mjs
       - run: pnpm test:resource-hints
-      - run: pnpm exec vitest run scripts/personal-hub.test.mjs
+      - run: pnpm --filter @blog/web exec vitest run scripts/personal-hub.test.mjs
       - name: Verify static artifacts
         shell: bash
         run: |
-          test -f out/index.html
-          test -f out/_pagefind/pagefind.js
-          test -f out/sitemap.xml
-          test -f out/robots.txt
-          cmp public/profile/contributions-light.svg out/profile/contributions-light.svg
-          cmp public/profile/contributions-dark.svg out/profile/contributions-dark.svg
-          test -f .next/early-hints-map.conf
-          cmp public/1da648d59c024d869f2523943dce4c6b.txt out/1da648d59c024d869f2523943dce4c6b.txt
+          test -f apps/blog/out/index.html
+          test -f apps/blog/out/_pagefind/pagefind.js
+          test -f apps/blog/out/sitemap.xml
+          test -f apps/blog/out/robots.txt
+          cmp apps/blog/public/profile/contributions-light.svg apps/blog/out/profile/contributions-light.svg
+          cmp apps/blog/public/profile/contributions-dark.svg apps/blog/out/profile/contributions-dark.svg
+          test -f apps/blog/.next/early-hints-map.conf
+          cmp apps/blog/public/1da648d59c024d869f2523943dce4c6b.txt apps/blog/out/1da648d59c024d869f2523943dce4c6b.txt
+      - name: Build API runtime image
+        run: docker build -f apps/api/Dockerfile -t blog-api:verify .
+      - name: Verify API runtime image
+        shell: bash
+        env:
+          DATABASE_URL: postgres://blog:blog-ci@127.0.0.1:5432/blog_test
+        run: |
+          password_hash=$(bun -e 'console.log(await Bun.password.hash(crypto.randomUUID()))')
+          session_secret=$(bun -e 'console.log(crypto.randomUUID() + crypto.randomUUID())')
+          docker run --rm --network host -e DATABASE_URL blog-api:verify bun dist/database/migrate.js
+          docker run -d --name journal-api-verify --network host \
+            -e DATABASE_URL -e JOURNAL_PASSWORD_HASH="$password_hash" \
+            -e SESSION_SECRET="$session_secret" -e COOKIE_SECURE=true blog-api:verify
+          trap 'docker logs journal-api-verify; docker rm -f journal-api-verify' EXIT
+          for _ in {1..20}; do
+            if curl -fsS http://127.0.0.1:3001/api/readyz; then exit 0; fi
+            sleep 1
+          done
+          exit 1
       - name: Build and verify runtime image
         shell: bash
         run: |
@@ -206,6 +238,7 @@ jobs:
             --retry-delay 5 \
             --retry-all-errors \
             "https://ljhboard.cn/1da648d59c024d869f2523943dce4c6b.txt"
-          cmp public/1da648d59c024d869f2523943dce4c6b.txt "$indexnow_key"
+          cmp apps/blog/public/1da648d59c024d869f2523943dce4c6b.txt "$indexnow_key"
       - name: Submit deployed URLs to IndexNow
+        working-directory: apps/blog
         run: node scripts/submit-indexnow-urls.mjs
