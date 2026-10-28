@@ -5,3 +5,9 @@
 .env*
 node_modules
 out
+**/node_modules
+**/.next
+**/out
+**/.turbo
+**/dist
+**/.env*

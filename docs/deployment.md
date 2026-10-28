@@ -1,5 +1,49 @@
 # 部署说明
 
+仓库采用 Turborepo。本文静态站点的 `out/`、`public/`、`.next/`、`scripts/` 及 Next 配置路径以 `apps/blog/` 为根；命令默认在仓库根目录执行。
+
+## Turborepo 与随笔服务
+
+博客现位于 `apps/blog`，静态产物为 `apps/blog/out`，构建脚本随应用迁移。根 `Dockerfile` 仍构建博客镜像，原发布包、受限 SSH 和博客回滚流程保持可用。CI 额外安装 Bun 1.4.4，使用 PostgreSQL 17 service 运行 HTTP 集成测试，并构建、启动 API 镜像验证迁移与就绪检查。
+
+API 采用独立的 `compose.api.yaml` 项目 `blog-storage`，不加入现有博客 Compose，避免博客发布的 `--remove-orphans` 删除数据库。首次 API 发布需要单独准备服务器密钥和持久卷；当前博客自动发布包只包含博客镜像，不会代为部署数据库或执行迁移。
+
+在构建机器上：
+
+```bash
+docker build -f apps/api/Dockerfile -t blog-api:sha-<commit> .
+docker pull postgres:17-alpine
+docker save blog-api:sha-<commit> postgres:17-alpine -o storage-images.tar
+```
+
+通过已有管理员渠道将 `storage-images.tar`、`compose.api.yaml` 传到服务器的独立目录，例如 `/opt/stacks/blog-storage`。不要使用只接受博客发布包的受限 `blog-deploy` SSH 入口上传任意文件。服务器不需要安装 Node.js/Bun、不构建镜像或访问镜像仓库。
+
+在该目录创建权限600的 `.env`，设置以下字段；任何真实值都不能提交到仓库：
+
+```dotenv
+IMAGE_TAG=sha-<commit>
+POSTGRES_PASSWORD=<strong-database-password>
+DATABASE_URL=postgres://blog:<URL-encoded-database-password>@postgres:5432/blog
+JOURNAL_PASSWORD_HASH='<argon2id-hash>'
+SESSION_SECRET=<at-least-32-random-characters>
+```
+
+密码哈希需用单引号包裹，避免 Compose 对 Argon2 中的 `$` 做变量展开。哈希与随机会话密钥可在本地使用 `pnpm auth:setup` 生成；不要复用示例凭据。Compose 已强制安全 Cookie，必须通过 HTTPS 使用写作入口。
+
+```bash
+docker load -i storage-images.tar
+docker compose -f compose.api.yaml up -d --wait postgres
+docker compose -f compose.api.yaml run --rm api bun dist/database/migrate.js
+docker compose -f compose.api.yaml up -d --wait api
+curl -f http://127.0.0.1:18081/api/readyz
+```
+
+宿主 Nginx 将 `/api/` 代理到 `127.0.0.1:18081`，博客继续使用 `127.0.0.1:18080`。仓库维护的是 `ai.ljhboard.cn` 源站虚拟主机；如果正式域名由其他虚拟主机承接，也需在那里配置相同的 `/api/` 代理和 `/write` 的禁止缓存规则，不能据此认为其他域名自动具备代理。
+
+CDN 不应缓存 `/api/*` 与 `/write*`，也不能给 API 添加允许任意来源的 CORS 响应头。源站 API 响应带 `Cache-Control: no-store`；`/write` 页面也带 `noindex` 与 `no-store`，Service Worker 对这两个路径使用网络请求。随笔正文只存数据库，不进入静态导出、Pagefind、RSS 或 LLM 索引。
+
+更新 API 时先备份数据库，再显式执行已审阅的迁移，之后切换不可变镜像。数据库迁移不随镜像回滚自动撤销；需确认旧镜像兼容新 schema。`postgres_data` 是独立持久卷，常规发布不要执行 `down -v`。定期将 `pg_dump` 备份保存到卷外并验证恢复。修改密码哈希时同时轮换 `SESSION_SECRET` 并重启 API，可使旧会话立即失效。
+
 ## 架构
 
 ```text

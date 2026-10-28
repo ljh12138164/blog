@@ -23,6 +23,12 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/api/**/*.ts"],
+      "javascript": { "parser": { "unsafeParameterDecoratorsEnabled": true } }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single",

@@ -18,9 +18,9 @@ Keep content, metadata, generated search/SEO artifacts, and task handoff state c
 
 For a new article:
 
-1. Create `app/posts/<slug>/page.mdx`.
+1. Create `apps/blog/app/posts/<slug>/page.mdx`.
 2. Export complete `metadata`: title, description, date, category, readingTime, canonical, Open Graph, and Twitter fields.
-3. Add the same public summary to `lib/posts.ts`; keep ordering newest first.
+3. Add the same public summary to `apps/blog/lib/posts.ts`; keep ordering newest first.
 4. Use one visible H1 through metadata; article bodies should begin at H2.
 5. Keep claims specific and do not invent citations.
 
@@ -42,7 +42,7 @@ pnpm typecheck
 pnpm build
 ```
 
-Require `out/index.html`, `out/_pagefind/pagefind.js`, `out/sitemap.xml`, and `out/robots.txt` after the build.
+Require `apps/blog/out/index.html`, `apps/blog/out/_pagefind/pagefind.js`, `apps/blog/out/sitemap.xml`, and `apps/blog/out/robots.txt` after the build. Commands inside a blog workspace run relative to `apps/blog`; root tasks use Turborepo.
 
 When container files change, also run:
 
