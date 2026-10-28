@@ -4,8 +4,6 @@ export const articleSummaries: Record<string, string> = {
     'Agent 把模型放进工具执行循环：模型提出动作，应用校验参数并执行，再把结果交回模型。文章用 AI SDK 串起工具、消息状态与 MCP，说明如何设置停止条件和预算，以及在高风险动作前加入审批。权限仍由代码掌握，完成说明不能代替执行记录。',
   'anchor-data-url':
     '图片或 PDF 的 Data URL 无法直接在新标签页打开，往往是浏览器阻止了顶级窗口导航。文章给出转换为 Blob URL 的预览与下载方案，并区分下载、图片展示和新标签页的释放时机。临时地址需要显式回收，过早释放也可能让预览加载失败。',
-  'canvas-library-research':
-    'Canvas 图形库的选择取决于编辑方式、图元规模与导出要求。文章比较 Fabric.js 的对象编辑、Konva 的分层场景图、Pixi.js 的批量渲染和 Paper.js 的矢量运算。选型前应先明确需求，再用小原型验证事件命中、序列化和性能。',
   'cloudflare-cdn-acceleration':
     'Cloudflare 缓存配置需要区分带哈希的静态资源、会变化的 HTML 和私有响应。文章结合 Cache Rules 与源站缓存头说明命中、过期和回源的判断方法，并用响应头排错。发布流程还要配合缓存清除，避免旧页面继续引用已不存在的资源。',
   'cloudflare-custom-hostname-fast-ip':
@@ -28,8 +26,6 @@ export const articleSummaries: Record<string, string> = {
     '动态表单的卡顿需要分别排查首屏下载与字段重渲染。文章把 ExcelJS 移到导出时加载，为真实网络依赖预连接，再用字段订阅和 Memo 缩小更新范围。优化前先记录资源体积、输入延迟与渲染次数，修改后通过构建报告和 Profiler 复测。',
   'deepseek-local-deployment':
     '本地运行 DeepSeek 前，需要一起估算模型权重、量化格式和上下文带来的显存占用。文章比较 Ollama 的命令行与 API 接入、LM Studio 的可视化调参，并介绍 WebUI 连接。先用小模型打通流程，再提高规模，同时核对实际加载位置与服务访问边界。',
-  'design-optimization':
-    '设计平台的性能排查围绕网络、解析执行、渲染和交互展开。文章通过动态加载画板与编辑器、优化包导入及 CSS 和字体策略缩短首屏关键路径。延迟加载也会带来首次进入功能的等待，需要合理预取，并用构建报告与 Core Web Vitals 核对收益。',
   'edge-function-backend-deployment':
     '文章比较常驻容器、Serverless 与边缘运行时，并用 Hono 组织轻量 API。迁移前要核对依赖的系统 API、任务时长和数据库连接方式；短生命周期函数不宜照搬常驻服务的连接池。无状态代理与 Webhook 更适合边缘部署，重型本地依赖则需谨慎。',
   'for-of-vs-foreach':
@@ -40,8 +36,6 @@ export const articleSummaries: Record<string, string> = {
     '文章用 Hono 与 Gemini 处理远程图片和本地上传，提取结构化识别结果。输入需要校验体积、MIME 类型和请求权限，大文件可改走 File API。输出即使受 Schema 约束，关键金额等字段仍需业务校验；图片缩放还要兼顾传输成本与文字可读性。',
   'git-commit-validation':
     '本地提交钩子用 Biome 检查暂存文件，再校验 Conventional Commits，让格式和基础错误尽早反馈。文章给出 lint-staged、simple-git-hooks 与提交信息规则的配置。本地钩子可以被跳过，关键检查仍需放在 CI 与分支保护中执行。',
-  'jebet-optimization':
-    '协作平台的包体积优化先用构建报告定位大依赖，再按需注册 ECharts、压缩静态图片，并调整 Vite 分包。文章记录了修改前后的体积和加载表现。拆包需要围绕变动频率与缓存边界组织，文件过多反而会增加请求成本，不能把分包数量当成收益。',
   'jebet-project-management':
     '敏捷看板用 MobX 处理局部交互，React Query 管服务端缓存，Socket.io 传递实时事件。文章梳理任务拖拽、多租户和 RBAC 的边界，强调避免两份数据真相。广播需识别发送者以避免重复更新，授权必须由后端检查，隐藏按钮只改善交互。',
   'ljh-design-system':

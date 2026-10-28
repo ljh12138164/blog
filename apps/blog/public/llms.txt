@@ -81,13 +81,6 @@
 
 - [CDN 边缘缓存原理与 Cloudflare Cache Rules 配置实践](https://ljhboard.cn/posts/cloudflare-cdn-acceleration): 梳理 CDN Anycast 路由与边缘分层缓存机制，配合 Cloudflare Cache Rules 配置静态资源与 HTML 缓存，以及 CI/CD 自动清除缓存。 (发布日期: 2025-02-11)
 
-### 性能调优
-
-- [设计平台首屏性能治理：重型依赖按需分包与编译调优](https://ljhboard.cn/posts/design-optimization): 记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。 (发布日期: 2025-02-11)
-- [协作平台构建体积优化：ECharts 按需引入与构建分包](https://ljhboard.cn/posts/jebet-optimization): 记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。 (发布日期: 2025-02-02)
-- [复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘](https://ljhboard.cn/posts/custom-form-optimization): 将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。 (发布日期: 2025-01-31)
-- [协同笔记系统性能调优：SPA 路由 404、Tree-shaking 与 Bundle 分包](https://ljhboard.cn/posts/collaborative-note-optimization): 记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。 (发布日期: 2025-01-29)
-
 ### 全栈与安全
 
 - [Cloudflare Turnstile 无感人机验证全栈集成实践](https://ljhboard.cn/posts/cloudflare-turnstile): 梳理 Turnstile 的客户端挑战与服务端 Siteverify 校验链路，避免把前端 Token 当作可信凭据。 (发布日期: 2025-02-10)
@@ -95,6 +88,11 @@
 ### 前端核心
 
 - [为什么现代浏览器禁止 a 标签直接在新窗口打开 Data URL？](https://ljhboard.cn/posts/anchor-data-url): 解析 Chromium 顶级窗口 Data URL 导航限制的安全背景，并提供 Data URL 转 Blob ObjectURL 的无损转换与内存安全释放方案。 (发布日期: 2025-02-05)
+
+### 性能调优
+
+- [复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘](https://ljhboard.cn/posts/custom-form-optimization): 将 ExcelJS 移出首屏首包，配置外部图标域名的预连接，并通过非受控订阅解决长表单输入掉帧问题。 (发布日期: 2025-01-31)
+- [协同笔记系统性能调优：SPA 路由 404、Tree-shaking 与 Bundle 分包](https://ljhboard.cn/posts/collaborative-note-optimization): 记录协同笔记项目的排查与优化：配置 SPA 路由重写解决刷新 404，按需注册 highlight.js 语言包并用 lodash-es 与 manualChunks 缩减首屏体积。 (发布日期: 2025-01-29)
 
 ### 网络与 SEO
 
@@ -115,7 +113,6 @@
 
 ### 前端图形学
 
-- [Web Canvas 2D 图形库选型与性能对比](https://ljhboard.cn/posts/canvas-library-research): 从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。 (发布日期: 2025-01-22)
 - [流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染](https://ljhboard.cn/posts/custom-flowchart-connections): 从起点终点与端口朝向推导贝塞尔控制点，结合 React Flow 的 EdgeLabelRenderer 实现带交互按钮的自定义连线。 (发布日期: 2025-01-22)
 
 ### 前端架构
@@ -124,6 +121,6 @@
 
 ## 附加资源与全量数据
 
-- [全站完整文章纯文本合集 (llms-full.txt)](https://ljhboard.cn/llms-full.txt): 包含全站所有 39 篇技术博文的完整 Markdown 原文，专为大模型上下文窗口（Context Window）批量处理设计。
+- [全站完整文章纯文本合集 (llms-full.txt)](https://ljhboard.cn/llms-full.txt): 包含全站所有 36 篇技术博文的完整 Markdown 原文，专为大模型上下文窗口（Context Window）批量处理设计。
 - [全站 XML 站点地图 (sitemap.xml)](https://ljhboard.cn/sitemap.xml): 搜索引擎爬虫索引入口。
 - [关于本站与联系方式](https://ljhboard.cn/about): 作者简介与联系方式。

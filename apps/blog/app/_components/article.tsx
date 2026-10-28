@@ -3,6 +3,7 @@ import type { Heading } from 'nextra'
 import type { ReactNode } from 'react'
 import { articleSummaries } from '@/lib/article-summaries'
 import { site } from '@/lib/site'
+import { ArticleAd } from './article-ad'
 import { ArticleDiscovery } from './article-discovery'
 import { Comments } from './comments'
 import { TableOfContents } from './table-of-contents'
@@ -190,6 +191,7 @@ export function Article({ children, toc, metadata = {} }: ArticleProps) {
         </header>
         {toc && <TableOfContents toc={toc} />}
         {children}
+        {postSlug && <ArticleAd key={postSlug} />}
         <footer
           className="not-prose mt-16 rounded-xl border border-line bg-surface/50 p-6 backdrop-blur-xs max-md:p-5"
           data-pagefind-ignore

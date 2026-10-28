@@ -115,7 +115,7 @@ docker compose -f /opt/stacks/blog/compose.yaml ps
 
 ## Cloudflare 103 Early Hints
 
-每次静态构建都会从导出的 HTML 提取页面样式表，生成 `.next/early-hints-map.conf`。Docker 镜像把该映射与同一次构建的静态文件一起打包，容器 Nginx 据此为 HTML 页面返回 `Link` 响应头。宝塔 Nginx 默认透传该响应头。第三方监测与广告域名只保留 `dns-prefetch`，不再通过 HTML 或 Early Hints 提前建立连接。
+每次静态构建都会从导出的 HTML 提取页面样式表，生成 `.next/early-hints-map.conf`。Docker 镜像把该映射与同一次构建的静态文件一起打包，容器 Nginx 据此为 HTML 页面返回 `Link` 响应头。宝塔 Nginx 默认透传该响应头。第三方监测域名只保留 `dns-prefetch`，不再通过 HTML 或 Early Hints 提前建立连接。
 
 生产区域还必须在 Cloudflare 控制台进入 `Speed → Settings → Content Optimization`，把 **Early Hints** 切换为开启。Early Hints 只在 HTTP/2 或 HTTP/3 上生效；Cloudflare 需要先从正常页面响应缓存 `Link` 提示，才可能在后续请求中异步发出 `103`。
 
@@ -133,7 +133,7 @@ curl --http2 --silent --show-error --dump-header - --output /dev/null https://lj
 
 按下面顺序发布，保留根域名和 blog 两个直接访问入口：
 
-1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中唯一的 AdSense 验证 meta、同步默认同意、根域名 canonical，以及 sitemap 中的根域名 URL。浏览器加载后检查只有一份 AdSense 脚本和默认同意脚本，无 hydration 错误；AdSense 使用 afterInteractive，不能要求导出 HTML 提前执行它。
+1. 发布本次镜像，验证根域名首页、`/about`、`/privacy`、代表文章及 `/ads.txt`；检查 HTML head 中唯一的 AdSense 验证 meta、同步默认同意、根域名 canonical，以及 sitemap 中的根域名 URL。浏览器加载后检查默认同意脚本只有一份，无 hydration 错误。AdSense 仅由文章末尾的手动广告位按需加载；首页、归档、关于、隐私、随笔和写作页不加载广告脚本。
 2. 保持 `ljhboard.cn` 与 `blog.ljhboard.cn` 均直接提供同一份静态内容，不配置两个主机之间的跳转。分别验证首页、文章及 `/sitemap.xml` 返回 200；两端 HTML 的 canonical 和 sitemap 正文均使用根域名 URL。
 3. 按[完整迁移对照](self-site-migration.md)核验“关于我”的资料、四站入口、工具、贡献与技术栈；将 self 首页及 `/about` 永久跳转至 `https://ljhboard.cn/about`，`/privacy` 跳至根域名隐私页，保留查询参数和有效锚点。旧图片保留服务或映射至 `/profile/*`，不能全部送到 HTML 页面；工具子域名不参与迁移。确认新入口与旧链接正常后再停旧个人站服务。关闭原站每日贡献蛇部署任务，避免重复部署旧服务；博客不接替该定时任务。
 4. GSC 已有 `sc-domain:ljhboard.cn` 网域资源；在该资源检查正式 sitemap 的读取、代表文章实时抓取和 Google 选择的 canonical。保留历史报告用于对照，不把“实时测试可索引”写成“已经收录”。
@@ -178,3 +178,11 @@ docker build -t blog:local .
 ```
 
 构建必须生成 `out/index.html`、`out/_pagefind/pagefind.js`、`out/sitemap.xml`、`out/robots.txt`、`.next/early-hints-map.conf` 和根目录 IndexNow 密钥。Pull Request 流水线还会启动临时镜像，验证首页与文章页包含 stylesheet preload `Link`，而静态资源与健康检查不包含页面级提示。
+
+## 手动广告与删文发布
+
+全局布局只保留 AdSense 账号验证 meta，不再加载广告库。文章正文末尾使用一个响应式展示广告位；`apps/blog/site.config.json` 的 `articleAdSlot` 填入 AdSense 广告单元代码中的真实 `data-ad-slot`。空值或非法值时不渲染广告位，也不加载广告库。启用前在 AdSense 后台确认本站自动广告已关闭，避免同一广告库触发自动投放。`data-ad-format="auto"` 只表示手动广告位自适应尺寸。
+
+本次删除 `/posts/jebet-optimization`、`/posts/design-optimization`、`/posts/canvas-library-research`，同时清理旧中文路径重定向、摘要和站内索引。发布必须替换整份静态产物，不能将新文件覆盖到保留旧 HTML 的目录。发布后对两个域名的旧文章与旧中文 URL 验证 404，并按实际缓存情况清除这些 URL 的 Cloudflare 缓存；检查 sitemap、RSS、llms 和搜索索引均无已删除文章。不要将这些地址统一跳转首页。
+
+Google CMP 的真实接受、拒绝、撤回流程仍需独立验证，移除全局广告库不能视为该流程已通过。当前改动不提交 AdSense 复审，不保证审核结果。

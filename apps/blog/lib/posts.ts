@@ -107,7 +107,6 @@ export const archiveGroups = [
     title: '项目的可行性研究',
     posts: [
       { title: '怎么把 Markdown 渲染为网页', href: '/posts/markdown-to-html' },
-      { title: '画布库(canvas)的调研', href: '/posts/canvas-library-research' },
       { title: '自定义表单的可行性', href: '/posts/custom-form-feasibility' }
     ]
   },
