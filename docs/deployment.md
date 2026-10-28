@@ -35,10 +35,12 @@ docker load -i storage-images.tar
 docker compose -f compose.api.yaml up -d --wait postgres
 docker compose -f compose.api.yaml run --rm api bun dist/database/migrate.js
 docker compose -f compose.api.yaml up -d --wait api
-curl -f http://127.0.0.1:18081/api/readyz
+curl -f http://127.0.0.1:18088/api/readyz
 ```
 
-宿主 Nginx 将 `/api/` 代理到 `127.0.0.1:18081`，博客继续使用 `127.0.0.1:18080`。仓库维护的是 `ai.ljhboard.cn` 源站虚拟主机；如果正式域名由其他虚拟主机承接，也需在那里配置相同的 `/api/` 代理和 `/write` 的禁止缓存规则，不能据此认为其他域名自动具备代理。
+宿主 Nginx 将 `/api/` 代理到 `127.0.0.1:18088`，博客继续使用 `127.0.0.1:18080`。`18081` 已由其他应用占用。仓库维护的是 `ai.ljhboard.cn` 源站虚拟主机；如果正式域名由其他虚拟主机承接，也需在那里配置相同的 `/api/` 代理和 `/write` 的禁止缓存规则，不能据此认为其他域名自动具备代理。
+
+生产 API 与数据库分别限制为 0.5 CPU、256 MiB / 192 MiB 内存；数据库连接数限制为 20，连接池为 5。遵循用户要求，镜像构建、测试和压缩在本地完成，服务器仅加载镜像、执行迁移和运行服务，不运行依赖安装或构建。
 
 CDN 不应缓存 `/api/*` 与 `/write*`，也不能给 API 添加允许任意来源的 CORS 响应头。源站 API 响应带 `Cache-Control: no-store`；`/write` 页面也带 `noindex` 与 `no-store`，Service Worker 对这两个路径使用网络请求。随笔正文只存数据库，不进入静态导出、Pagefind、RSS 或 LLM 索引。
 

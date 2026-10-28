@@ -3,6 +3,10 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 192m
+    pids_limit: 128
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=20"]
     environment:
       POSTGRES_USER: blog
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the server env file}
@@ -18,13 +22,16 @@ services:
     image: blog-api:${IMAGE_TAG:-latest}
     pull_policy: never
     restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
     environment:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL with host postgres}
       JOURNAL_PASSWORD_HASH: ${JOURNAL_PASSWORD_HASH:?Set JOURNAL_PASSWORD_HASH}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
       COOKIE_SECURE: "true"
     ports:
-      - "127.0.0.1:18081:3001"
+      - "127.0.0.1:18088:3001"
     depends_on:
       postgres:
         condition: service_healthy

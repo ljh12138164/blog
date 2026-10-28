@@ -13,7 +13,7 @@ COPY . .
 
 RUN pnpm --filter @blog/web build
 
-FROM nginx:1.29-alpine AS runtime
+FROM nginx:1.30.6-alpine AS runtime
 
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/apps/blog/.next/early-hints-map.conf /etc/nginx/conf.d/early-hints-map.conf

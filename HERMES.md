@@ -1,6 +1,6 @@
 # Hermes
 
-## 状态：本地实现与验证完成，PR 待审阅（Turborepo 与随笔）
+## 状态：用户已授权本地构建并经 Workbench 发布（Turborepo 与随笔）
 
 当前目标：Turborepo 单仓库、Bun NestJS + Drizzle PostgreSQL、密码写作及随笔显隐/删除。
 
@@ -12,7 +12,7 @@
 
 PR：[随笔与单仓库改造 #32](https://github.com/ljh12138164/blog/pull/32)。CI [#125](https://github.com/ljh12138164/blog/actions/runs/40685459283) 未能启动 verify：GitHub 报告账号近期付款失败或 Actions 支出额度不足；没有运行代码步骤，不能据此判断镜像通过或失败。
 
-下一步：账号恢复 Actions 后重跑 PR 验证，确认容器构建与启动；不合并、不生产发布。正式启动需按 README 设置密码与 PostgreSQL，生产 API 独立部署步骤见 `docs/deployment.md`。无接受的后续功能，不创建空路线图。
+下一步：完成本地容器构建和运行验证，经 Workbench 发布博客及独立存储栈，并回归双域名。用户要求不在服务器做高负载任务；全部构建在本地，API 改用空闲端口 18088，保留其他服务和现有镜像保留钩子。目前尚未修改正式服务。不合并 PR。无接受的后续功能，不创建空路线图。
 
 以下为既有 GA 任务交接，保留上下文；详细记录以 `docs/development/ga-production-validation.md` 为准。
 
