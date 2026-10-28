@@ -70,8 +70,6 @@ describe('legacyRedirects in deploy/nginx.conf', () => {
       ['/cloundflare优化/使用http3和103请求头', '/posts/cloudflare-http3-early-hints'],
       ['/cloudflare优化/使用http3和103请求头', '/posts/cloudflare-http3-early-hints'],
       ['/react/react的执行顺序', '/posts/react-execution-order'],
-      ['/优化记录/design优化', '/posts/design-optimization'],
-      ['/优化记录/jebet', '/posts/jebet-optimization'],
       ['/优化记录/协同note', '/posts/collaborative-note-optimization'],
       ['/优化记录/自定义表单', '/posts/custom-form-optimization'],
       ['/协同的实现/tiptap协同实现', '/posts/tiptap-collaboration'],
@@ -94,7 +92,6 @@ describe('legacyRedirects in deploy/nginx.conf', () => {
       ['/项目文档/项目管理系统', '/posts/jebet-project-management'],
       ['/项目的可行性研究/怎么吧md文件渲染为html网页', '/posts/markdown-to-html'],
       ['/项目的可行性研究/怎么把md文件渲染为html网页', '/posts/markdown-to-html'],
-      ['/项目的可行性研究/画布库(canvas)的调研', '/posts/canvas-library-research'],
       ['/项目的可行性研究/自定义表单的可行性', '/posts/custom-form-feasibility']
     ]
 

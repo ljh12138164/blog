@@ -1,39 +1,15 @@
 # Hermes
 
-## 状态：用户已授权本地构建并经 Workbench 发布（Turborepo 与随笔）
+## 状态：删除三篇文章，改用手动广告，验证中
 
-当前目标：Turborepo 单仓库、Bun NestJS + Drizzle PostgreSQL、密码写作及随笔显隐/删除。
+目标：删除 `/posts/jebet-optimization`、`/posts/design-optimization`、`/posts/canvas-library-research` 及附图和站内引用；撤掉全局广告加载，改为文章末尾手动展示广告。用户要求合入前公开 GitHub 仓库，本轮不合并、不发布、不提交复审。
 
-分支：`feat/turborepo-bun-storage`，基线：远端 `master` 的 `803a4d875fbdeff50e6bbc919ef8925bee93187c`。
+分支：`feat/manual-article-ads`。远端 fetch 凭据失效，用户已明确同意以本机 master 为基线继续。
 
-开发与验收：[turborepo-bun-storage](docs/development/turborepo-bun-storage.md)。用户已确认默认公开、`/write` 隐藏入口及 UI 方案。
+开发文档：[manual-article-ads](docs/development/manual-article-ads.md)。删文和组件已实现，`apps/blog/site.config.json.articleAdSlot` 已配置用户给出的 `7125495670`。浏览器已恢复；AdSense 按网站列表为空，不能声称已关闭后台自动广告。用户已确认公开仓库，浏览器正在执行最终确认流程。
 
-实现：`apps/blog` + `apps/api`、根目录 Turborepo、密码会话、默认公开与显隐/编辑/确认删除、隐藏 `/write` 入口。38 项常规测试、3 项 PostgreSQL 集成测试、类型/构建/lint、桌面/手机浏览器流程及编译后 Bun API 均通过。Docker 本机引擎不可用，容器验证交由 CI。
+已通过类型检查、构建、37 项相关测试与静态产物删文检查；用户要求跳过后续测试。Docker 引擎未启动；实际广告加载、手机与导航行为未完整验证。
 
-PR：[随笔与单仓库改造 #32](https://github.com/ljh12138164/blog/pull/32)。CI [#125](https://github.com/ljh12138164/blog/actions/runs/40685459283) 未能启动 verify：GitHub 报告账号近期付款失败或 Actions 支出额度不足；没有运行代码步骤，不能据此判断镜像通过或失败。
+下一步：完成仓库公开并确认状态；提交本地变更，尝试推送并创建 PR。GitHub Git 凭据失效；后台自动广告状态仍待确认。
 
-下一步：完成本地容器构建和运行验证，经 Workbench 发布博客及独立存储栈，并回归双域名。用户要求不在服务器做高负载任务；全部构建在本地，API 改用空闲端口 18088，保留其他服务和现有镜像保留钩子。目前尚未修改正式服务。不合并 PR。无接受的后续功能，不创建空路线图。
-
-以下为既有 GA 任务交接，保留上下文；详细记录以 `docs/development/ga-production-validation.md` 为准。
-
-## 目标
-
-完整验证 GA 与现有 Google CMP 的真实同意联动；两域名均保留直接访问，不改跳转、不提交复审。
-
-## 当前结果
-
-PR #30 已获用户明确允许合并并发布，合并提交 `fee4bde7f02b563779977ec9f9bc9623270f7229`；生产流水线 [#121](https://github.com/ljh12138164/blog/actions/runs/39070579514) 的 verify/deploy 均成功。无据数字删除及 robots 放行已上线。
-
-两域名首页、代表文章、robots、sitemap、ads.txt 和首页实际引用的 12 个 CSS/JS 均通过 HTTP 回归。root robots 曾命中旧 Cloudflare 缓存，本轮只清除正式 robots URL，随后该 URL 已允许 /_next/；未修改 DNS、重定向、安全或缓存规则。
-
-真实 Tag Assistant 已验证 root/blog 首页和 blog 代表文章：Config 时四项默认和当前状态均 denied；blog page_view 的 gcs=G100。尚无真实 CMP update，不能当作接受/拒绝完整通过。
-
-2026-10-18 约 05:45 CST 重试后，完整后台消息编辑器恢复。发现网站信息的隐私政策 URL 为 `http://ljhboard.cn`，已保存为 `https://ljhboard.cn/privacy`，关闭重开后确认保持；未修改其他同意选项、未重新发布消息。当前两个入口强制预览仍无 CMP，接受、拒绝、恢复、撤回均未验证。AdSense 网站页显示需要注意/低价值内容，ads.txt 已授权；所有权面板只显示验证方式，未出现独立的验证成功状态，不据此补写已通过。
-
-## 下一步
-
-当前分支 `feat/ga-production-validation` 基于上述 master 合并提交。回归发现 AdSense 提前向 head 插入 show_ads_impl，触发 hydration 重建，默认/AdSense 各两份；本地静态服务和 dev 均复现。已改 Next Script afterInteractive，保留同步 default 和官方验证 meta，删除原 AdSenseScript 小组件。原始 CUA reload 检查由 defaults=2/ads=2 变为各一份，全新页面无 hydration 错误且 Google 托管脚本实际加载。pnpm build、typecheck、32 项测试通过。
-
-最终差异审阅已完成，代码提交 `2836dfe`，修复 PR [#31](https://github.com/ljh12138164/blog/pull/31) 已创建。CI [#122](https://github.com/ljh12138164/blog/actions/runs/39072494786) 已启动；最终状态以 PR 最新检查为准。修复后的本地生产产物已再次经 Tag Assistant 验证四项默认/当前 denied，default 早于 Config。
-
-下一步：确认 PR #31 最新 CI，用户允许合并发布后回归线上 hydration，再继续真实 CMP 选择。此新修复尚未获生产发布授权；PR #30 的发布授权已执行，不扩展为自动发布新 PR。详细证据与验收见 [GA 发布回归](docs/development/ga-production-validation.md)。完整 GA 验证仍受站点上未显示真实 CMP 阻塞；不能再写后台编辑器不可用。
+既有 GA/CMP 验证尚未完成真实接受、拒绝、恢复、撤回流程，详细状态保留在 [GA 发布回归](docs/development/ga-production-validation.md)。此前 PR #32 的本地发布任务与历史证据见 [Turborepo 开发文档](docs/development/turborepo-bun-storage.md)，本轮不延伸旧发布授权。

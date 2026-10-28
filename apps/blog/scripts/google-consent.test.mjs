@@ -43,3 +43,44 @@ it('allows page CSS and JS to be crawled while retaining the root sitemap', () =
   expect(robots).toContain('Disallow: /_pagefind/')
   expect(robots).toContain('Sitemap: https://ljhboard.cn/sitemap.xml')
 })
+
+it('keeps functional pages free of ad units and the AdSense loader', () => {
+  for (const page of ['index', 'posts', 'about', 'privacy', 'notes', 'write', '404']) {
+    const html = fs.readFileSync(`out/${page}.html`, 'utf8')
+    expect(html, page).not.toContain('pagead2.googlesyndication.com')
+    expect(html, page).not.toMatch(/<ins[^>]+data-ad-slot=/)
+  }
+})
+
+it('exports exactly one manual slot per retained article', () => {
+  const posts = fs
+    .readdirSync('app/posts')
+    .filter((slug) => fs.existsSync(`app/posts/${slug}/page.mdx`))
+  const config = JSON.parse(fs.readFileSync('site.config.json', 'utf8'))
+  for (const slug of posts) {
+    const html = fs.readFileSync(`out/posts/${slug}.html`, 'utf8')
+    const slots = html.match(/<ins\b[^>]*data-ad-slot="[^"]+"[^>]*>/g) || []
+    expect(slots, slug).toHaveLength(config.articleAdSlot ? 1 : 0)
+    if (slots.length) expect(slots[0], slug).toContain(`data-ad-slot="${config.articleAdSlot}"`)
+  }
+})
+
+it('removes deleted articles from routes and public discovery files', () => {
+  const removed = ['jebet-optimization', 'design-optimization', 'canvas-library-research']
+  for (const slug of removed) {
+    expect(fs.existsSync(`out/posts/${slug}.html`), slug).toBe(false)
+    expect(fs.existsSync(`app/posts/${slug}`), slug).toBe(false)
+    for (const file of [
+      'sitemap.xml',
+      'feed.xml',
+      'llms.txt',
+      'llms-full.txt',
+      'index.html',
+      'posts.html'
+    ]) {
+      expect(fs.readFileSync(`out/${file}`, 'utf8'), `${file}: ${slug}`).not.toContain(
+        `/posts/${slug}`
+      )
+    }
+  }
+})
