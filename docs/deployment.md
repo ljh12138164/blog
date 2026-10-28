@@ -33,7 +33,7 @@ SESSION_SECRET=<at-least-32-random-characters>
 ```bash
 docker load -i storage-images.tar
 docker compose -f compose.api.yaml up -d --wait postgres
-docker compose -f compose.api.yaml run --rm api bun dist/database/migrate.js
+docker compose -f compose.api.yaml run --rm -T --interactive=false api bun dist/database/migrate.js < /dev/null
 docker compose -f compose.api.yaml up -d --wait api
 curl -f http://127.0.0.1:18088/api/readyz
 ```
@@ -45,6 +45,8 @@ curl -f http://127.0.0.1:18088/api/readyz
 CDN 不应缓存 `/api/*` 与 `/write*`，也不能给 API 添加允许任意来源的 CORS 响应头。源站 API 响应带 `Cache-Control: no-store`；`/write` 页面也带 `noindex` 与 `no-store`，Service Worker 对这两个路径使用网络请求。随笔正文只存数据库，不进入静态导出、Pagefind、RSS 或 LLM 索引。
 
 更新 API 时先备份数据库，再显式执行已审阅的迁移，之后切换不可变镜像。数据库迁移不随镜像回滚自动撤销；需确认旧镜像兼容新 schema。`postgres_data` 是独立持久卷，常规发布不要执行 `down -v`。定期将 `pg_dump` 备份保存到卷外并验证恢复。修改密码哈希时同时轮换 `SESSION_SECRET` 并重启 API，可使旧会话立即失效。
+
+2026-10-28 首次发布由本地构建后经 Workbench 上传完成，代码版本为 `ab9cb32b1897325a69cc077eae656a6240674b27`。独立存储栈位于 `/opt/stacks/blog-storage`，使用持久卷 `blog-storage_postgres_data`；博客发布目录为 `/opt/stacks/blog/releases/journal-ab9cb32-20261028`。本次保留服务器原有部署脚本及镜像保留钩子，切换前的博客配置快照位于 `/opt/stacks/blog/backups/sha-ab9cb32b1897325a69cc077eae656a6240674b27-workbench-20261028T135504Z`。本地容器与公网验收、镜像构建方式及网络限制详见[开发验收记录](development/turborepo-bun-storage.md)。
 
 ## 架构
 

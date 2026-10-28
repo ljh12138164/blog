@@ -56,12 +56,16 @@ UI 已获用户确认：公开导航只添加“随笔”，`/notes` 为时间�
 - `pnpm test:integration` 在真实 PostgreSQL 17.10 上通过：3 项测试、58 项断言，覆盖密码/会话、未授权访问、跨站请求限制、限流、公开/隐藏、编辑/删除、分页、重复迁移和重启后持久化。测试仅操作临时数据库中的自建记录。
 - 根目录 `pnpm dev` 实际同时启动 Next.js 与 Bun/NestJS；编译后 `bun dist/main.js` 在生产配置下通过数据库 readiness、密码登录及 Secure/HttpOnly Cookie 检查。
 - Chrome 实测桌面 1280px 和手机 390px，完整验证错误密码、公开/私密发布、公开列表排除隐藏内容、隐藏/恢复、编辑、删除取消/确认、退出、深色主题和无横向溢出；无页面异常。网络失败保留正文，重试保存成功；取消删除后焦点返回原按钮。
-- pnpm 9 冻结锁文件安装、API 生产依赖打包及三份 Compose 配置校验通过。本机 Docker Desktop 引擎不可用，无法本地运行容器构建；CI 已增加 PostgreSQL 服务、API/博客镜像构建及运行检查，结果以 PR 最新检查为准。
-- PR [#32](https://github.com/ljh12138164/blog/pull/32) 的 CI [#125](https://github.com/ljh12138164/blog/actions/runs/40685459283) 未启动 verify，检查注释明确提示 GitHub 账号付款失败或需要提高支出额度。没有运行任何代码步骤；容器验证仍待外部环境恢复，未声称通过。PR 暂无审阅评论。
+- pnpm 9 冻结锁文件安装、API 生产依赖打包及三份 Compose 配置校验通过。用户重启 Docker 后，`apps/api/Dockerfile` 完整构建成功，Linux 容器确认 Bun 1.4.4。博客再次通过本机 `pnpm build`，将同次静态产物、Early Hints 映射和仓库 Nginx 配置打包到 `nginx:1.30.6-alpine`；根 Dockerfile 的重复依赖下载受代理影响而取消，不能将产物打包等同于该多阶段 builder 已通过。
+- 本地使用生产资源限制启动 PostgreSQL/API 和临时博客容器，显式迁移及 HTTP 检查通过：静态页面、canonical、Early Hints、历史路径跳转、隐藏入口、sitemap、readiness、未授权401、密码错误、Secure/HttpOnly Cookie、隐藏记录新增/编辑/删除、公开过滤、退出。验收后只移除本次本地临时容器与测试卷。
+- 2026-10-28 21:55 CST，经用户授权使用 Workbench 发布 `blog:sha-ab9cb32b1897325a69cc077eae656a6240674b27`、`blog-api:sha-ab9cb32b1897325a69cc077eae656a6240674b27` 与 PostgreSQL 17。服务器未执行依赖安装、构建、测试套件或压缩；只加载本地镜像、显式迁移、启动独立存储栈和切换博客，Nginx 校验后平滑重载。配置快照位于 `/opt/stacks/blog/backups/sha-ab9cb32b1897325a69cc077eae656a6240674b27-workbench-20261028T135504Z`；旧博客镜像与现场镜像保留钩子保留，其他容器保持运行。
+- 线上三项服务 healthy；验收取样 API约45 MiB、PostgreSQL约28 MiB，CPU分别约0.03%/0.01%。资源上限实际生效，数据库未暴露宿主端口，API只绑定127.0.0.1:18088。服务器密钥文件权限600；写作密码仅在本机忽略文件 `.secrets/journal-production-password.txt`，没有进入提交或日志。
+- 根域名通过公网完整 HTTP 验收，生产手机 Chrome 实测密码登录、编辑器、退出与公开列表，无横向溢出或页面异常；公网验证只创建隐藏记录并在结束前删除。两域名均保留原页面/API入口与根域名 canonical。blog 默认解析节点172.67.66.3在当前网络连接超时；改用 Cloudflare 节点104.21.3.160、保持原 Host/SNI并校验证书后，首页、关于页、文章、随笔、写作页、同一 sitemap、robots、API就绪200与管理401均通过。没有修改 DNS、重定向或 Cloudflare 规则，默认解析网络限制单独保留。
+- PR [#32](https://github.com/ljh12138164/blog/pull/32) 已于2026-10-28 21:03 CST 合并至 `master`，合并提交 `2a20313b9f893689b4481801992446344ca21600`。CI [#125](https://github.com/ljh12138164/blog/actions/runs/40685459283) 未启动 verify，检查注释明确提示 GitHub 账号付款失败或需要提高支出额度，没有运行代码步骤。标准博客 Docker builder 与 CI 仍待网络/账号环境恢复后补验，不宣称 Actions 通过。
 
 ## Review
 
-完成仓库规范与验收逐项审阅。修复了历史列表首次加载与新建保存的竞争、删除弹窗关闭后的焦点、网络错误中文反馈。文章与媒体仅移动目录，保留既有博客交互与发布边界；密码和数据库信息仅在 API 运行环境读取。未发现遗留代码阻塞项；容器验证受上述外部环境阻塞，应在合并前完成。无需要建立路线图的已接受后续功能。
+完成仓库规范与验收逐项审阅。修复了历史列表首次加载与新建保存的竞争、删除弹窗关闭后的焦点、网络错误中文反馈。文章与媒体仅移动目录，保留既有博客交互与发布边界；密码和数据库信息仅在 API 运行环境读取。未发现遗留代码阻塞项；本地运行容器及生产验收通过，标准博客 Docker builder/Actions 和默认解析网络限制如上记录。无需要建立路线图的已接受后续功能。
 
 ## Risks
 
