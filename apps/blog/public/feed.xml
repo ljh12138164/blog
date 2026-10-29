@@ -5,7 +5,7 @@
     <link>https://ljhboard.cn</link>
     <description>ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。</description>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 Oct 2026 19:33:27 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 28 Oct 2026 16:05:05 GMT</lastBuildDate>
     <atom:link href="https://ljhboard.cn/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title><![CDATA[项目接入 Umami 统计：基于 Vercel 与 Supabase 的自建部署实践]]></title>
@@ -128,14 +128,6 @@
       <pubDate>Tue, 11 Feb 2025 00:00:00 GMT</pubDate>
     </item>
     <item>
-      <title><![CDATA[设计平台首屏性能治理：重型依赖按需分包与编译调优]]></title>
-      <link>https://ljhboard.cn/posts/design-optimization</link>
-      <guid isPermaLink="true">https://ljhboard.cn/posts/design-optimization</guid>
-      <description><![CDATA[记录画板应用的性能优化实践，包括 Fabric.js 与 Tiptap 异步按需加载、SWC 包导入优化和首屏样式处理。]]></description>
-      <category>性能调优</category>
-      <pubDate>Tue, 11 Feb 2025 00:00:00 GMT</pubDate>
-    </item>
-    <item>
       <title><![CDATA[Cloudflare Turnstile 无感人机验证全栈集成实践]]></title>
       <link>https://ljhboard.cn/posts/cloudflare-turnstile</link>
       <guid isPermaLink="true">https://ljhboard.cn/posts/cloudflare-turnstile</guid>
@@ -150,14 +142,6 @@
       <description><![CDATA[解析 Chromium 顶级窗口 Data URL 导航限制的安全背景，并提供 Data URL 转 Blob ObjectURL 的无损转换与内存安全释放方案。]]></description>
       <category>前端核心</category>
       <pubDate>Wed, 05 Feb 2025 00:00:00 GMT</pubDate>
-    </item>
-    <item>
-      <title><![CDATA[协作平台构建体积优化：ECharts 按需引入与构建分包]]></title>
-      <link>https://ljhboard.cn/posts/jebet-optimization</link>
-      <guid isPermaLink="true">https://ljhboard.cn/posts/jebet-optimization</guid>
-      <description><![CDATA[记录中后台平台打包体积治理过程：通过 ECharts 按需注册模块、构建期图片压缩与 Vite manualChunks 拆包策略，缩减首屏传输体积。]]></description>
-      <category>性能调优</category>
-      <pubDate>Sun, 02 Feb 2025 00:00:00 GMT</pubDate>
     </item>
     <item>
       <title><![CDATA[复杂动态表单系统性能优化实战：从 Excel.js 按需隔离、Iconify 预连接到局部精准重绘]]></title>
@@ -246,14 +230,6 @@
       <description><![CDATA[解析 Markdown/MDX 在 Unified 生态下的 AST 编译流程（mdast 到 hast），对比 Nextra 与 Fumadocs 等静态文档框架选型，并介绍 Pagefind 静态检索方案。]]></description>
       <category>前端工程化</category>
       <pubDate>Sat, 25 Jan 2025 00:00:00 GMT</pubDate>
-    </item>
-    <item>
-      <title><![CDATA[Web Canvas 2D 图形库选型与性能对比]]></title>
-      <link>https://ljhboard.cn/posts/canvas-library-research</link>
-      <guid isPermaLink="true">https://ljhboard.cn/posts/canvas-library-research</guid>
-      <description><![CDATA[从交互手柄、场景图树、WebGL 批处理与矢量布尔运算等维度，对比 Fabric.js、Konva、Pixi.js 与 Paper.js 的选型边界。]]></description>
-      <category>前端图形学</category>
-      <pubDate>Wed, 22 Jan 2025 00:00:00 GMT</pubDate>
     </item>
     <item>
       <title><![CDATA[流程图自定义连线算法与吸附计算：基于 React Flow 的 SVG 自定义 Edge 渲染]]></title>

@@ -32,7 +32,6 @@ describe('resourceHints', () => {
 
     expect(linkTags(rootHtml, 'preconnect')).toEqual([])
     expect(linkTags(rootHtml, 'dns-prefetch').map(href).sort()).toEqual([
-      'https://pagead2.googlesyndication.com',
       'https://static.cloudflareinsights.com',
       'https://www.google-analytics.com',
       'https://www.googletagmanager.com'
