@@ -38,6 +38,8 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: pnpm install --frozen-lockfile
+      - name: Verify deployment scripts
+        run: node --test scripts/deploy-blog-api.test.mjs
       - run: pnpm test:unit
       - run: pnpm test:integration
         env:
@@ -166,13 +168,32 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-      - name: Build immutable local image
+      - name: Build immutable blog and API images
         env:
           RELEASE_TAG: ${{ steps.target.outputs.value }}
         run: |
           docker build \
             --tag "blog:$RELEASE_TAG" \
             .
+          docker build -f apps/api/Dockerfile --tag "blog-api:$RELEASE_TAG" .
+      - name: Deploy API image and database migrations
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || 'blog-deploy' }}
+          RELEASE_TAG: ${{ steps.target.outputs.value }}
+        shell: bash
+        run: |
+          test -n "$DEPLOY_HOST"
+          release_dir=$(mktemp -d)
+          trap 'rm -rf "$release_dir"' EXIT
+          mkdir -p "$release_dir/deploy/server"
+          docker save "blog-api:$RELEASE_TAG" -o "$release_dir/image.tar"
+          cp compose.api.yaml "$release_dir/compose.api.yaml"
+          cp deploy/server/deploy-blog-api "$release_dir/deploy/server/deploy-blog-api"
+          tar -C "$release_dir" -czf - image.tar compose.api.yaml deploy/server/deploy-blog-api \
+            | ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" -o BatchMode=yes \
+              "$DEPLOY_USER@$DEPLOY_HOST" "deploy-api $RELEASE_TAG"
       - name: Deploy Docker image bundle
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
@@ -239,6 +260,11 @@ jobs:
             --retry-all-errors \
             "https://ljhboard.cn/1da648d59c024d869f2523943dce4c6b.txt"
           cmp apps/blog/public/1da648d59c024d869f2523943dce4c6b.txt "$indexnow_key"
+          for host in ljhboard.cn blog.ljhboard.cn; do
+            curl --fail --silent --show-error --max-time 10 \
+              --retry 3 --retry-delay 3 --retry-all-errors \
+              "https://$host/api/readyz" | grep -Fq '"status":"ok"'
+          done
       - name: Submit deployed URLs to IndexNow
         working-directory: apps/blog
         run: node scripts/submit-indexnow-urls.mjs

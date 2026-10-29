@@ -29,10 +29,12 @@ RSSHub #23590 经 GitHub API 核实作者为 ljh12138164，2026-10-29 合入，�
 - 静态个人页回归 4 项通过，含新 PR 链接与首页文案。
 - 根 Compose 与 API Compose 配置校验通过。Docker Desktop 引擎未运行，无法本地启动容器验证；CI 保持 PostgreSQL 17 与 API 镜像迁移、运行检查。
 - Biome 与 git diff --check 通过。实际密码生成的 Argon2id 哈希已在仓库外验证，不进入补丁。
-- PR：https://github.com/ljh12138164/blog/pull/35。远程 verify 在约 2 秒后失败，deploy 跳过；读取 run、check-run 详情连续遭遇 GitHub API TLS handshake timeout，原因尚未确认，不能宣称 CI 通过。
+- PR：https://github.com/ljh12138164/blog/pull/35，已合入 master（cbc155d096ec4f97886b12296771d21833b5794a）。合并前 #134 因账户付款或 Actions 支出限制未能启动；合并后 #135 已成功完成 verify 与 deploy，总耗时 5 分 17 秒：https://github.com/ljh12138164/blog/actions/runs/40811031243。
+- 2026-10-29 回归：原目录重新运行 33 项单元测试、4 项真实 PostgreSQL HTTP 集成测试（65 断言）、类型检查、生产构建和 4 项个人页静态回归，均通过。两个正式域名的首页、/about、/api/readyz 均返回 200；新标题和 RSSHub #23590 链接已在线。Uptime 监控连续三次 200 OK。
+- 线上静态博客镜像已是 blog:sha-cbc155d096ec4f97886b12296771d21833b5794a；API 仍为 blog-api:sha-ab9cb32b1897325a69cc077eae656a6240674b27 且健康。因此密码入库与指定的新密码尚未在生产发布，不能据静态博客部署成功认定 API 已升级。本轮只读检查生产环境，没有执行迁移、改密或发布。临时测试 PostgreSQL 已停止，构建造成的无关文件变更已清理。
 
 ## Review
-已对照仓库规范与验收项完成本地审阅：异步鉴权必须 await；迁移导入冲突不覆盖；CI 只在初始化进程传旧环境哈希；会话签名绑定数据库凭据；同仓库贡献 key 保持唯一。上述问题均已处理，本地未发现代码阻塞项；远程 CI 失败仍需查明。没有需要单独排期的已接受后续项，不创建空路线图。
+已对照仓库规范与验收项完成本地审阅：异步鉴权必须 await；迁移导入冲突不覆盖；CI 只在初始化进程传旧环境哈希；会话签名绑定数据库凭据；同仓库贡献 key 保持唯一。上述问题均已处理，合并后 CI 已通过。没有需要单独排期的已接受后续项，不创建空路线图。
 
 ## Risks
 生产迁移与镜像发布需另行执行；新哈希留在仓库外供部署使用。

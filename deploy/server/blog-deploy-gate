@@ -3,8 +3,8 @@ set -eu
 
 set -- ${SSH_ORIGINAL_COMMAND:-}
 
-if [ "$#" -ne 2 ] || [ "$1" != "deploy" ]; then
-  echo "Only 'deploy sha-<40 lowercase hex characters>' is allowed." >&2
+if [ "$#" -ne 2 ]; then
+  echo "Only 'deploy' or 'deploy-api' with an immutable image tag is allowed." >&2
   exit 126
 fi
 
@@ -13,4 +13,8 @@ if ! printf '%s\n' "$2" | grep -Eq '^sha-[0-9a-f]{40}$'; then
   exit 126
 fi
 
-exec sudo -n /usr/local/sbin/deploy-blog "$2"
+case "$1" in
+  deploy) exec sudo -n /usr/local/sbin/deploy-blog "$2" ;;
+  deploy-api) exec sudo -n /usr/local/sbin/deploy-blog-api "$2" ;;
+  *) echo "Unsupported deployment command." >&2; exit 126 ;;
+esac

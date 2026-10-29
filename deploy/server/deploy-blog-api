@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+STACK_DIR=/opt/stacks/blog-storage
+ENV_FILE="$STACK_DIR/.env"
+DEPLOY_SCRIPT=/usr/local/sbin/deploy-blog-api
+NEW_TAG=${1:-}
+
+if [[ $# -ne 1 || ! "$NEW_TAG" =~ ^sha-[0-9a-f]{40}$ ]]; then
+  echo "Invalid API image tag." >&2
+  exit 2
+fi
+
+exec 8>/run/lock/blog-api-deploy.lock
+flock -n 8 || { echo "Another API deployment is running." >&2; exit 3; }
+test -f "$ENV_FILE"
+test -f "$STACK_DIR/compose.api.yaml"
+
+BUNDLE_DIR=$(mktemp -d /tmp/blog-api-release.XXXXXX)
+trap 'rm -rf "$BUNDLE_DIR"' EXIT
+cat > "$BUNDLE_DIR/release.tar.gz"
+tar -tzf "$BUNDLE_DIR/release.tar.gz" | while IFS= read -r entry; do
+  case "$entry" in
+    image.tar|compose.api.yaml|deploy/server/deploy-blog-api) ;;
+    *) echo "Unexpected API bundle entry." >&2; exit 2 ;;
+  esac
+done
+tar --no-same-owner --no-same-permissions -xzf "$BUNDLE_DIR/release.tar.gz" -C "$BUNDLE_DIR"
+for required in image.tar compose.api.yaml deploy/server/deploy-blog-api; do
+  test -f "$BUNDLE_DIR/$required" && test ! -L "$BUNDLE_DIR/$required"
+done
+bash -n "$BUNDLE_DIR/deploy/server/deploy-blog-api"
+
+compose() {
+  docker compose --env-file "$ENV_FILE" -f "$STACK_DIR/compose.api.yaml" "$@"
+}
+
+healthy() {
+  curl --fail --silent --show-error --max-time 5 http://127.0.0.1:18088/api/readyz >/dev/null
+}
+
+BACKUP_DIR="$STACK_DIR/backups/${NEW_TAG}-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+mkdir -p "$BACKUP_DIR"
+cp -p "$ENV_FILE" "$BACKUP_DIR/env"
+cp -p "$STACK_DIR/compose.api.yaml" "$BACKUP_DIR/compose.api.yaml"
+cp -p "$DEPLOY_SCRIPT" "$BACKUP_DIR/deploy-blog-api"
+
+# Keep the old application running until the backup and migration have succeeded.
+compose exec -T postgres pg_dump -U blog -d blog -Fc > "$BACKUP_DIR/database.dump"
+test -s "$BACKUP_DIR/database.dump"
+compose exec -T postgres pg_restore --list < "$BACKUP_DIR/database.dump" >/dev/null
+
+BOOTSTRAP_FILE="$STACK_DIR/bootstrap-password.hash"
+if test -f "$BOOTSTRAP_FILE"; then
+  test ! -L "$BOOTSTRAP_FILE"
+  BOOTSTRAP_HASH=$(cat "$BOOTSTRAP_FILE")
+else
+  BOOTSTRAP_HASH=$(docker exec blog-storage-api-1 printenv JOURNAL_PASSWORD_HASH 2>/dev/null || true)
+fi
+
+docker load -i "$BUNDLE_DIR/image.tar"
+docker image inspect "blog-api:$NEW_TAG" >/dev/null
+awk -v tag="$NEW_TAG" '
+  /^IMAGE_TAG=/ { print "IMAGE_TAG=" tag; found=1; next }
+  { print }
+  END { if (!found) print "IMAGE_TAG=" tag }
+' "$ENV_FILE" > "$BUNDLE_DIR/env"
+docker compose --env-file "$BUNDLE_DIR/env" -f "$BUNDLE_DIR/compose.api.yaml" config --quiet
+
+rollback() {
+  local result=$?
+  trap - ERR
+  set +e
+  echo "API deployment failed; restoring application and configuration. Database backup: $BACKUP_DIR/database.dump" >&2
+  install -m 600 "$BACKUP_DIR/env" "$ENV_FILE"
+  install -m 644 "$BACKUP_DIR/compose.api.yaml" "$STACK_DIR/compose.api.yaml"
+  install -m 755 "$BACKUP_DIR/deploy-blog-api" "$DEPLOY_SCRIPT.next"
+  mv "$DEPLOY_SCRIPT.next" "$DEPLOY_SCRIPT"
+  if compose up -d --no-deps --wait --wait-timeout 90 api && healthy; then
+    echo "API rollback healthy. Applied database migrations were retained." >&2
+    exit "$result"
+  fi
+  echo "API rollback failed; manual recovery required." >&2
+  exit 5
+}
+trap rollback ERR
+
+install -m 644 "$BUNDLE_DIR/compose.api.yaml" "$STACK_DIR/compose.api.yaml"
+install -m 600 "$BUNDLE_DIR/env" "$ENV_FILE"
+JOURNAL_PASSWORD_HASH="$BOOTSTRAP_HASH" compose run --rm -T --no-deps -e JOURNAL_PASSWORD_HASH api bun dist/database/migrate.js
+if [[ "$(compose exec -T postgres psql -U blog -d blog -Atc "SELECT count(*) FROM journal_credentials WHERE id='owner';")" != 1 ]]; then
+  echo "Initialize the owner password before deploying the API." >&2
+  false
+fi
+compose up -d --no-deps --wait --wait-timeout 90 api
+healthy
+install -m 755 "$BUNDLE_DIR/deploy/server/deploy-blog-api" "$DEPLOY_SCRIPT.next"
+mv "$DEPLOY_SCRIPT.next" "$DEPLOY_SCRIPT"
+if test -f "$BOOTSTRAP_FILE"; then
+  mv "$BOOTSTRAP_FILE" "$BACKUP_DIR/bootstrap-password.hash"
+fi
+trap - ERR
+echo "API deployment healthy: $NEW_TAG"
