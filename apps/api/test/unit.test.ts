@@ -2,56 +2,90 @@ import 'reflect-metadata'
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { AuthService } from '../src/auth'
 import { readConfig } from '../src/config'
+import type { DatabaseService } from '../src/database/database.service'
 import { parseNote } from '../src/notes'
 
 const env = {
   DATABASE_URL: 'postgres://test@localhost/blog_test',
-  JOURNAL_PASSWORD_HASH: '$argon2id$test-only',
   SESSION_SECRET: 'test-session-secret-with-at-least-32-characters'
 }
 
 describe('configuration', () => {
-  test('rejects missing database, password hash, invalid port and insecure production cookies', () => {
+  test('requires database and session secret but no environment password', () => {
     expect(() => readConfig({})).toThrow('DATABASE_URL')
-    expect(() => readConfig({ ...env, JOURNAL_PASSWORD_HASH: 'plaintext' })).toThrow(
-      'JOURNAL_PASSWORD_HASH'
-    )
     expect(() => readConfig({ ...env, PORT: '0' })).toThrow('PORT')
     expect(() => readConfig({ ...env, SESSION_SECRET: 'short' })).toThrow('SESSION_SECRET')
     expect(() => readConfig({ ...env, NODE_ENV: 'production' })).toThrow('HTTPS')
     expect(readConfig({ ...env, NODE_ENV: 'production', COOKIE_SECURE: 'true' }).secureCookie).toBe(
       true
     )
+    expect(readConfig(env)).not.toHaveProperty('passwordHash')
   })
 })
 
 describe('owner authentication', () => {
   let auth: AuthService
+  let passwordHash: string | undefined
+  const database = {
+    db: {
+      query: {
+        journalCredentials: { findFirst: async () => (passwordHash ? { passwordHash } : undefined) }
+      }
+    }
+  } as unknown as DatabaseService
+
   beforeAll(async () => {
-    auth = new AuthService(
-      readConfig({ ...env, JOURNAL_PASSWORD_HASH: await Bun.password.hash('test-password-only') })
-    )
+    passwordHash = await Bun.password.hash('test-password-only')
+    auth = new AuthService(readConfig(env), database)
   })
-  test('checks the password without accepting missing or non-string values', async () => {
-    expect(await auth.checkPassword('test-password-only')).toBe(true)
-    expect(await auth.checkPassword('wrong')).toBe(false)
-    expect(await auth.checkPassword(undefined)).toBe(false)
-    expect(await auth.checkPassword({})).toBe(false)
+
+  test('checks database password and rejects missing or non-string values', async () => {
+    expect(await auth.login('test-password-only')).toBeString()
+    for (const value of ['wrong', undefined, {}, 'a'.repeat(1025)]) {
+      expect(await auth.login(value)).toBeUndefined()
+    }
   })
-  test('rejects tampered, expired, malformed and rotated-secret sessions', () => {
+
+  test('rejects tampered, expired, malformed and rotated-secret sessions', async () => {
     const now = 1000000
-    const session = auth.createSession(now)
-    expect(auth.isValid(session, now)).toBe(true)
-    expect(auth.isValid(`${session}a`, now)).toBe(false)
-    expect(auth.isValid(session, now + 7 * 24 * 60 * 60 * 1000)).toBe(false)
-    expect(auth.isValid('garbage', now)).toBe(false)
+    const session = await auth.login('test-password-only', now)
+    expect(await auth.isValid(session, now)).toBe(true)
+    expect(await auth.isValid(`${session}a`, now)).toBe(false)
+    expect(await auth.isValid(session, now + 7 * 24 * 60 * 60 * 1000)).toBe(false)
+    expect(await auth.isValid('garbage', now)).toBe(false)
     const rotated = new AuthService(
-      readConfig({ ...env, SESSION_SECRET: 'a-different-secret-with-at-least-32-characters' })
+      readConfig({ ...env, SESSION_SECRET: 'a-different-secret-with-at-least-32-characters' }),
+      database
     )
-    expect(rotated.isValid(session, now)).toBe(false)
-    expect(auth.cookie(session)).toContain('HttpOnly')
-    expect(auth.cookie(session)).toContain('SameSite=Strict')
-    expect(auth.cookie(session)).not.toContain('Secure;')
+    expect(await rotated.isValid(session, now)).toBe(false)
+    expect(auth.cookie(session ?? '')).toContain('HttpOnly')
+    expect(auth.cookie(session ?? '')).toContain('SameSite=Strict')
+    expect(auth.cookie(session ?? '')).not.toContain('Secure;')
+  })
+
+  test('rejects login and existing sessions when the credential is absent', async () => {
+    const session = await auth.login('test-password-only')
+    const original = passwordHash
+    try {
+      passwordHash = undefined
+      expect(await auth.login('test-password-only')).toBeUndefined()
+      expect(await auth.isValid(session)).toBe(false)
+    } finally {
+      passwordHash = original
+    }
+  })
+
+  test('password replacement immediately rejects old password and sessions', async () => {
+    const session = await auth.login('test-password-only')
+    const original = passwordHash
+    try {
+      passwordHash = await Bun.password.hash('replacement-password')
+      expect(await auth.login('test-password-only')).toBeUndefined()
+      expect(await auth.isValid(session)).toBe(false)
+      expect(await auth.isValid(await auth.login('replacement-password'))).toBe(true)
+    } finally {
+      passwordHash = original
+    }
   })
 })
 

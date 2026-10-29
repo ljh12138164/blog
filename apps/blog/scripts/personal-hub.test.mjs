@@ -17,6 +17,7 @@ describe('personal site migration', () => {
       'Token Paper',
       '今日热点',
       'github.com/DIYgod/RSSHub/pull/23259',
+      'github.com/DIYgod/RSSHub/pull/23590',
       'github.com/vantezzen/autoform/pull/145',
       'github.com/ant-design/pro-components/pull/9226'
     ]) {
@@ -47,7 +48,7 @@ describe('personal site migration', () => {
   })
 
   it('preserves the blog homepage as the article layout', () => {
-    expect(homepage).toContain('这里记录问题，也记录取舍。')
+    expect(homepage).toContain('前端开发与 AI 实践笔记。')
     expect(homepage).not.toContain('id="sites-section"')
     expect(homepage).not.toContain('/profile/avatar.webp')
   })

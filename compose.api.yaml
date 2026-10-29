@@ -27,7 +27,6 @@ services:
     pids_limit: 128
     environment:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL with host postgres}
-      JOURNAL_PASSWORD_HASH: ${JOURNAL_PASSWORD_HASH:?Set JOURNAL_PASSWORD_HASH}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
       COOKIE_SECURE: "true"
     ports:
