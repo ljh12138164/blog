@@ -1,17 +1,15 @@
 # Hermes
 
-## 状态：随笔密码入库与个人页更新，PR 已创建，远程 CI 待排查
+## 状态：API 自动部署本地验证完成，准备新 PR
 
-工作目录：原项目 C:/Users/PC/Desktop/front/TEST/blog；分支 feat/journal-db-password。用户要求不在独立工作区继续开发，已将改动迁回原目录；原有 Dockerfile、deploy/server/deploy-blog 与 public/ 保留，不提交这些无关修改。
+按用户要求在原项目目录 C:/Users/PC/Desktop/front/TEST/blog 工作，继续 feat/journal-db-password 分支完成同一功能交付遗漏。已快进到已合入的 origin/master cbc155d；保留 Dockerfile、deploy/server/deploy-blog、public/ 的原有修改。
 
-开发文档：[journal-db-password](docs/development/journal-db-password.md)。
+目标：CI 先发布 API（备份、迁移、凭据初始化、健康检查和失败回滚），再发布静态博客；复用受限 SSH，不让凭据经过 CI。此前用户指定密码的哈希只从仓库外传到服务器 bootstrap 文件。
 
-已完成：Argon2id 凭据改读 PostgreSQL，改密自动使旧会话失效；旧环境哈希仅供迁移初始化，不覆盖已有凭据；新增 RSSHub #23590 贡献；首页标题改为“前端开发与 AI 实践笔记。”。真实密码和生成的哈希仅在仓库外，不写入本文或 Git。
+开发文档：[api-ci-deployment](docs/development/api-ci-deployment.md)；之前交付和回归见 [journal-db-password](docs/development/journal-db-password.md)。
 
-验证：API 6 项单元测试、4 项真实 PostgreSQL 集成测试（65 项断言）、pnpm typecheck 已通过；pnpm build 与静态个人页回归已通过。本机 Docker Desktop 引擎不可用，容器运行检查需依赖 CI。
+已实现 deploy-blog-api、gate/sudoers 的最小命令扩展、CI 镜像构建与 API 发布步骤、双域名就绪检查。9 项隔离部署回归与 Bash 语法检查通过；测试已修复函数内失败未触发 ERR 回滚的问题。数据库不自动还原，失败回滚只恢复应用与配置。
 
-线上独立操作：Uptime Kuma 已创建监控 ID 15，名称“博客后端 · API 与数据库”，URL http://blog-storage-api-1:3001/api/readyz，间隔 60 秒；最新心跳 200 OK，网络配置已持久保存。未发布新的博客/API 镜像，未修改线上写作密码。
+验证：9 项部署回归、Bash 语法、Biome、workflow YAML、类型检查和构建通过。Docker Desktop 引擎未运行，镜像验证待 CI。服务器 API helper、gate、sudoers 已安装并校验，入口配置有备份；新密码 bootstrap 哈希 root/600 已就绪。当前 API 仍为旧镜像且健康，未执行生产发布、迁移或改密。
 
-PR：https://github.com/ljh12138164/blog/pull/35，代码提交 d0d12f0。verify 约 2 秒后失败，deploy 跳过；读取失败详情连续遭遇 GitHub API TLS handshake timeout，尚不能确认原因。本地验证和审阅已完成，临时测试数据库已停止。
-
-下一步：网络恢复后读取 CI run 40810181722 的失败原因并处理；生产迁移、写作密码生效和页面更新需另行发布。线上监控已经生效。
+下一步：提交本任务文件、创建新 PR 并检查 CI；合入 master 后自动先发布 API，再发布博客。

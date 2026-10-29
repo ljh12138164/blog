@@ -78,7 +78,7 @@ pnpm check:write
 
 ## 自动部署
 
-Pull Request 会验证站点并构建、启动临时 Docker 镜像，检查 HTML 的 Early Hints `Link` 响应头以及静态资源和健康检查的隔离。推送到 `master` 后，GitHub Actions 会构建不可变 `blog:sha-<commit>` Docker 镜像，并将镜像和仓库中的 Compose、Nginx、部署配置通过受限 SSH 发送到服务器。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。公网验证和 IndexNow 根密钥验证通过后，流水线读取线上 sitemap 并通知 IndexNow。
+Pull Request 会验证站点、API、数据库迁移和部署回滚脚本，并构建、启动临时 Docker 镜像。推送到 `master` 后，GitHub Actions 构建不可变 `blog` 与 `blog-api:sha-<commit>` 镜像，通过受限 SSH 先发布 API（数据库备份、迁移、更新、健康检查），再发布静态博客。服务器只导入并运行本地镜像，不构建站点、不访问 GHCR 或 GitHub Packages。两个域名的 API、公网站点和 IndexNow 根密钥验证通过后，流水线读取线上 sitemap 并通知 IndexNow。
 
 完整的首次服务器引导、变量、回滚和排障说明见 [部署文档](docs/deployment.md)。
 

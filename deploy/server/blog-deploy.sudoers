@@ -1,1 +1,2 @@
 blog-deploy ALL=(root) NOPASSWD: /usr/local/sbin/deploy-blog sha-*
+blog-deploy ALL=(root) NOPASSWD: /usr/local/sbin/deploy-blog-api sha-*

@@ -6,7 +6,7 @@
 
 博客现位于 `apps/blog`，静态产物为 `apps/blog/out`，构建脚本随应用迁移。根 `Dockerfile` 仍构建博客镜像，原发布包、受限 SSH 和博客回滚流程保持可用。CI 额外安装 Bun 1.4.4，使用 PostgreSQL 17 service 运行 HTTP 集成测试，并构建、启动 API 镜像验证迁移与就绪检查。
 
-API 采用独立的 `compose.api.yaml` 项目 `blog-storage`，不加入现有博客 Compose，避免博客发布的 `--remove-orphans` 删除数据库。首次 API 发布需要单独准备服务器密钥和持久卷；当前博客自动发布包只包含博客镜像，不会代为部署数据库或执行迁移。
+API 采用独立的 `compose.api.yaml` 项目 `blog-storage`，不加入现有博客 Compose，避免博客发布的 `--remove-orphans` 删除数据库。CI 在同一流水线分别构建 `blog` 与 `blog-api` 镜像，先自动发布 API、备份数据库并运行迁移，再发布静态博客。首次仍须通过管理员渠道准备数据库、服务器环境文件和受限部署入口；常规发布不更新 PostgreSQL 镜像或持久卷。
 
 在构建机器上：
 
@@ -16,7 +16,7 @@ docker pull postgres:17-alpine
 docker save blog-api:sha-<commit> postgres:17-alpine -o storage-images.tar
 ```
 
-通过已有管理员渠道将 `storage-images.tar`、`compose.api.yaml` 传到服务器的独立目录，例如 `/opt/stacks/blog-storage`。不要使用只接受博客发布包的受限 `blog-deploy` SSH 入口上传任意文件。服务器不需要安装 Node.js/Bun、不构建镜像或访问镜像仓库。
+首次准备数据库时，通过已有管理员渠道将 `storage-images.tar`、`compose.api.yaml` 传到 `/opt/stacks/blog-storage`。之后 CI 用同一受限 SSH 密钥调用 `deploy-api sha-<commit>`，传入只包含 API 镜像、Compose 和 API 部署脚本的发布包。服务器不需要安装 Node.js/Bun、不构建镜像或访问镜像仓库。
 
 在该目录创建权限600的 `.env`，设置以下字段；任何真实值都不能提交到仓库：
 
@@ -45,26 +45,29 @@ docker compose -f compose.api.yaml run --rm -T api bun -e 'const { savePasswordH
 
 旧版本升级时，可在迁移进程单独传入旧 `JOURNAL_PASSWORD_HASH`：`docker compose -f compose.api.yaml run --rm -e JOURNAL_PASSWORD_HASH api bun dist/database/migrate.js`。先在当前 shell 安全加载该变量；它只在数据库没有 owner 凭据时导入，重复迁移不覆盖新密码。升级后移除服务器 `.env` 的旧密码哈希。首次切换新认证实现会使旧格式会话失效，需重新登录。回滚到旧 API 镜像需要恢复旧版本所需的环境配置。
 
+自动部署会优先读取服务器权限 600 的 `/opt/stacks/blog-storage/bootstrap-password.hash` 作为首次凭据哈希；没有该文件时尝试从现有旧 API 的环境读取旧哈希。两者只用于迁移初始化，不覆盖数据库已有 owner。发布前必须存在可用 owner 凭据，健康后 bootstrap 文件移动到该次权限受限备份目录。写作密码不会经过 CI。
+
 以后改密只需更新 `journal_credentials.password_hash` 的 owner 行，新密码立即生效，旧密码与旧会话失效，无需重启。哈希文件和临时凭据不得提交 Git。
 
 Uptime Kuma 已配置“博客后端 · API 与数据库”监控（ID 15），通过 Docker 内网每 60 秒检查 `http://blog-storage-api-1:3001/api/readyz`，仅接受 200。Uptime 容器须加入外部 `blog-storage_default` 网络；服务器 `/opt/stacks/uptime-kuma/compose.yaml` 已持久声明该网络。该接口检查数据库连通性，和仅检查静态博客的监控分开。
 
 宿主 Nginx 将 `/api/` 代理到 `127.0.0.1:18088`，博客继续使用 `127.0.0.1:18080`。`18081` 已由其他应用占用。仓库维护的是 `ai.ljhboard.cn` 源站虚拟主机；如果正式域名由其他虚拟主机承接，也需在那里配置相同的 `/api/` 代理和 `/write` 的禁止缓存规则，不能据此认为其他域名自动具备代理。
 
-生产 API 与数据库分别限制为 0.5 CPU、256 MiB / 192 MiB 内存；数据库连接数限制为 20，连接池为 5。遵循用户要求，镜像构建、测试和压缩在本地完成，服务器仅加载镜像、执行迁移和运行服务，不运行依赖安装或构建。
+生产 API 与数据库分别限制为 0.5 CPU、256 MiB / 192 MiB 内存；数据库连接数限制为 20，连接池为 5。镜像构建、测试和压缩在 CI Runner 完成，服务器仅加载镜像、执行迁移和运行服务，不运行依赖安装或构建。
 
 CDN 不应缓存 `/api/*` 与 `/write*`，也不能给 API 添加允许任意来源的 CORS 响应头。源站 API 响应带 `Cache-Control: no-store`；`/write` 页面也带 `noindex` 与 `no-store`，Service Worker 对这两个路径使用网络请求。随笔正文只存数据库，不进入静态导出、Pagefind、RSS 或 LLM 索引。
 
 更新 API 时先备份数据库，再显式执行已审阅的迁移，之后切换不可变镜像。数据库迁移不随镜像回滚自动撤销；需确认旧镜像兼容新 schema。`postgres_data` 是独立持久卷，常规发布不要执行 `down -v`。定期将 `pg_dump` 备份保存到卷外并验证恢复。
 
+`deploy-blog-api` 在 `/opt/stacks/blog-storage/backups/` 中保存权限受限的环境配置、Compose、部署脚本和 `database.dump`。备份成功后才允许迁移；迁移或启动失败会恢复旧 API 及配置，并保留已应用迁移与新写入，数据库恢复需管理员明确操作。API 失败时 CI 不发布新静态博客；静态博客后续失败时保留已健康的 API，接口和迁移需兼容前一版前端。
+
 ## 架构
 
 ```text
 GitHub master
-  → GitHub Actions 构建 blog:sha-<commit>
-  → docker save 镜像 + 仓库部署配置
-  → 受限 SSH 标准输入
-  → ECS docker load + docker compose up
+  → GitHub Actions 构建 blog 与 blog-api:sha-<commit>
+  → 受限 SSH deploy-api：导入 API 镜像 → 数据库备份 → 迁移 → 更新 API → 就绪检查
+  → 受限 SSH deploy：导入静态博客镜像 → 更新博客 → 公网检查
   → 宝塔 Nginx → 127.0.0.1:18080 → 容器 Nginx
 ```
 
@@ -86,10 +89,12 @@ GitHub master
 
 ```bash
 install -m 755 deploy/server/deploy-blog /usr/local/sbin/deploy-blog
+install -m 755 deploy/server/deploy-blog-api /usr/local/sbin/deploy-blog-api
 install -m 755 deploy/server/blog-deploy-gate /usr/local/bin/blog-deploy-gate
 install -m 440 deploy/server/blog-deploy.sudoers /etc/sudoers.d/blog-deploy
 mkdir -p /opt/stacks/blog/backups
 bash -n /usr/local/sbin/deploy-blog
+bash -n /usr/local/sbin/deploy-blog-api
 bash -n /usr/local/bin/blog-deploy-gate
 visudo -cf /etc/sudoers.d/blog-deploy
 ```
@@ -98,6 +103,7 @@ visudo -cf /etc/sudoers.d/blog-deploy
 
 ```text
 deploy sha-<40位小写十六进制commit>
+deploy-api sha-<40位小写十六进制commit>
 ```
 
 gate 不提供 shell、SFTP 或任意命令执行。

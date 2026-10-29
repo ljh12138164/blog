@@ -7,4 +7,4 @@
 - `/notes` 是公开随笔列表。`/write` 是无公开链接的密码写作页，后端权限校验决定是否可读写；地址隐藏不承担鉴权职责。
 - `/api` 是同源后端路径。开发由 Next.js 代理，生产由宿主 Nginx 代理；动态内容与写作页不缓存。
 - 单作者写作密码的 Argon2id 哈希存于 PostgreSQL 的 `journal_credentials` 表（`id=owner`）；API 即时读取，密码修改使旧会话失效。`SESSION_SECRET` 仍由环境提供。
-- 博客和 API 分别构建镜像；博客延续现有发布包部署，API 与 PostgreSQL 使用独立 Compose 项目及持久卷。
+- 博客和 API 分别构建镜像，在同一 CI 中先发布 API、再发布静态博客；API 使用独立受限部署命令，发布前备份数据库和执行迁移。API 与 PostgreSQL 使用独立 Compose 项目及持久卷，常规发布只更新 API。
