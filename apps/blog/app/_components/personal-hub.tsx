@@ -189,7 +189,7 @@ export function PersonalWork() {
       </HubSection>
       <HubSection id="projects" label="CHANGE / EVIDENCE" title="我的开源贡献">
         {profile.projects.map((project) => (
-          <article className="border-t border-line py-6" key={project.repo}>
+          <article className="border-t border-line py-6" key={project.contribution.pr}>
             <h3 className="m-0 break-words text-balance text-lg font-bold">
               <a className="inline-flex min-h-11 items-center hover:text-accent" href={project.url}>
                 {project.name} ↗

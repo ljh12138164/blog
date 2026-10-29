@@ -24,11 +24,10 @@ docker save blog-api:sha-<commit> postgres:17-alpine -o storage-images.tar
 IMAGE_TAG=sha-<commit>
 POSTGRES_PASSWORD=<strong-database-password>
 DATABASE_URL=postgres://blog:<URL-encoded-database-password>@postgres:5432/blog
-JOURNAL_PASSWORD_HASH='<argon2id-hash>'
 SESSION_SECRET=<at-least-32-random-characters>
 ```
 
-密码哈希需用单引号包裹，避免 Compose 对 Argon2 中的 `$` 做变量展开。哈希与随机会话密钥可在本地使用 `pnpm auth:setup` 生成；不要复用示例凭据。Compose 已强制安全 Cookie，必须通过 HTTPS 使用写作入口。
+写作密码哈希存于 PostgreSQL 的 `journal_credentials` 表（`id=owner`），运行中的 API 不再读取环境密码。`SESSION_SECRET` 可在本地用 `bun -e 'console.log(crypto.randomUUID() + crypto.randomUUID())'` 生成。Compose 已强制安全 Cookie，必须通过 HTTPS 使用写作入口。
 
 ```bash
 docker load -i storage-images.tar
@@ -38,13 +37,25 @@ docker compose -f compose.api.yaml up -d --wait api
 curl -f http://127.0.0.1:18088/api/readyz
 ```
 
+迁移后须初始化数据库凭据，再使用写作入口。本地开发运行 `pnpm auth:setup`；生产可在本地生成 Argon2id 哈希文件，经已有管理员通道传入权限为 600 的临时文件，再从标准输入写入数据库：
+
+```bash
+docker compose -f compose.api.yaml run --rm -T api bun -e 'const { savePasswordHash } = require("./dist/database/credentials.js"); await savePasswordHash(process.env.DATABASE_URL, (await Bun.stdin.text()).trim())' < journal-password.hash
+```
+
+旧版本升级时，可在迁移进程单独传入旧 `JOURNAL_PASSWORD_HASH`：`docker compose -f compose.api.yaml run --rm -e JOURNAL_PASSWORD_HASH api bun dist/database/migrate.js`。先在当前 shell 安全加载该变量；它只在数据库没有 owner 凭据时导入，重复迁移不覆盖新密码。升级后移除服务器 `.env` 的旧密码哈希。首次切换新认证实现会使旧格式会话失效，需重新登录。回滚到旧 API 镜像需要恢复旧版本所需的环境配置。
+
+以后改密只需更新 `journal_credentials.password_hash` 的 owner 行，新密码立即生效，旧密码与旧会话失效，无需重启。哈希文件和临时凭据不得提交 Git。
+
+Uptime Kuma 已配置“博客后端 · API 与数据库”监控（ID 15），通过 Docker 内网每 60 秒检查 `http://blog-storage-api-1:3001/api/readyz`，仅接受 200。Uptime 容器须加入外部 `blog-storage_default` 网络；服务器 `/opt/stacks/uptime-kuma/compose.yaml` 已持久声明该网络。该接口检查数据库连通性，和仅检查静态博客的监控分开。
+
 宿主 Nginx 将 `/api/` 代理到 `127.0.0.1:18088`，博客继续使用 `127.0.0.1:18080`。`18081` 已由其他应用占用。仓库维护的是 `ai.ljhboard.cn` 源站虚拟主机；如果正式域名由其他虚拟主机承接，也需在那里配置相同的 `/api/` 代理和 `/write` 的禁止缓存规则，不能据此认为其他域名自动具备代理。
 
 生产 API 与数据库分别限制为 0.5 CPU、256 MiB / 192 MiB 内存；数据库连接数限制为 20，连接池为 5。遵循用户要求，镜像构建、测试和压缩在本地完成，服务器仅加载镜像、执行迁移和运行服务，不运行依赖安装或构建。
 
 CDN 不应缓存 `/api/*` 与 `/write*`，也不能给 API 添加允许任意来源的 CORS 响应头。源站 API 响应带 `Cache-Control: no-store`；`/write` 页面也带 `noindex` 与 `no-store`，Service Worker 对这两个路径使用网络请求。随笔正文只存数据库，不进入静态导出、Pagefind、RSS 或 LLM 索引。
 
-更新 API 时先备份数据库，再显式执行已审阅的迁移，之后切换不可变镜像。数据库迁移不随镜像回滚自动撤销；需确认旧镜像兼容新 schema。`postgres_data` 是独立持久卷，常规发布不要执行 `down -v`。定期将 `pg_dump` 备份保存到卷外并验证恢复。修改密码哈希时同时轮换 `SESSION_SECRET` 并重启 API，可使旧会话立即失效。
+更新 API 时先备份数据库，再显式执行已审阅的迁移，之后切换不可变镜像。数据库迁移不随镜像回滚自动撤销；需确认旧镜像兼容新 schema。`postgres_data` 是独立持久卷，常规发布不要执行 `down -v`。定期将 `pg_dump` 备份保存到卷外并验证恢复。
 
 ## 架构
 

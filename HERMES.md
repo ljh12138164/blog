@@ -1,15 +1,15 @@
 # Hermes
 
-## 状态：删除三篇文章，改用手动广告，验证中
+## 状态：随笔密码入库与个人页更新，本地验证完成，准备 PR
 
-目标：删除 `/posts/jebet-optimization`、`/posts/design-optimization`、`/posts/canvas-library-research` 及附图和站内引用；撤掉全局广告加载，改为文章末尾手动展示广告。用户要求合入前公开 GitHub 仓库，本轮不合并、不发布、不提交复审。
+工作目录：原项目 C:/Users/PC/Desktop/front/TEST/blog；分支 feat/journal-db-password。用户要求不在独立工作区继续开发，已将改动迁回原目录；原有 Dockerfile、deploy/server/deploy-blog 与 public/ 保留，不提交这些无关修改。
 
-分支：`feat/manual-article-ads`。远端 fetch 凭据失效，用户已明确同意以本机 master 为基线继续。
+开发文档：[journal-db-password](docs/development/journal-db-password.md)。
 
-开发文档：[manual-article-ads](docs/development/manual-article-ads.md)。删文和组件已实现，`apps/blog/site.config.json.articleAdSlot` 已配置用户给出的 `7125495670`。浏览器已恢复；AdSense 按网站列表为空，不能声称已关闭后台自动广告。用户已确认公开仓库，浏览器正在执行最终确认流程。
+已完成：Argon2id 凭据改读 PostgreSQL，改密自动使旧会话失效；旧环境哈希仅供迁移初始化，不覆盖已有凭据；新增 RSSHub #23590 贡献；首页标题改为“前端开发与 AI 实践笔记。”。真实密码和生成的哈希仅在仓库外，不写入本文或 Git。
 
-已通过类型检查、构建、37 项相关测试与静态产物删文检查；用户要求跳过后续测试。Docker 引擎未启动；实际广告加载、手机与导航行为未完整验证。
+验证：API 6 项单元测试、4 项真实 PostgreSQL 集成测试（65 项断言）、pnpm typecheck 已通过；pnpm build 与静态个人页回归已通过。本机 Docker Desktop 引擎不可用，容器运行检查需依赖 CI。
 
-下一步：完成仓库公开并确认状态；提交本地变更，尝试推送并创建 PR。GitHub Git 凭据失效；后台自动广告状态仍待确认。
+线上独立操作：Uptime Kuma 已创建监控 ID 15，名称“博客后端 · API 与数据库”，URL http://blog-storage-api-1:3001/api/readyz，间隔 60 秒；最新心跳 200 OK，网络配置已持久保存。未发布新的博客/API 镜像，未修改线上写作密码。
 
-既有 GA/CMP 验证尚未完成真实接受、拒绝、恢复、撤回流程，详细状态保留在 [GA 发布回归](docs/development/ga-production-validation.md)。此前 PR #32 的本地发布任务与历史证据见 [Turborepo 开发文档](docs/development/turborepo-bun-storage.md)，本轮不延伸旧发布授权。
+下一步：审阅已完成，提交本任务文件、创建 PR 并检查 CI。生产迁移与密码生效需另行发布。

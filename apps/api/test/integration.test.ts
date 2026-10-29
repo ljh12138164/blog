@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { randomBytes, randomUUID } from 'node:crypto'
 import type { INestApplication } from '@nestjs/common'
+import { inArray } from 'drizzle-orm'
 import { createApp } from '../src/app'
-import { AuthService } from '../src/auth'
 import { type ApiConfig, readConfig } from '../src/config'
+import { savePasswordHash } from '../src/database/credentials'
 import { DatabaseService } from '../src/database/database.service'
 import { migrateDatabase } from '../src/database/migrate'
-import { notes } from '../src/database/schema'
+import { journalCredentials, notes } from '../src/database/schema'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 if (!databaseUrl || !new URL(databaseUrl).pathname.endsWith('_test')) {
@@ -40,19 +41,49 @@ async function request(path: string, method = 'GET', body?: unknown, owner = fal
 beforeAll(async () => {
   config = readConfig({
     DATABASE_URL: databaseUrl,
-    JOURNAL_PASSWORD_HASH: await Bun.password.hash(password),
     SESSION_SECRET: randomBytes(32).toString('hex')
   })
-  await migrateDatabase(databaseUrl)
+  await migrateDatabase(databaseUrl, await Bun.password.hash(password))
   await migrateDatabase(databaseUrl)
   await start()
 })
 
 afterAll(async () => {
-  cookie = `journal_session=${new AuthService(config).createSession()}`
-  if (cookie)
-    for (const id of created) await request(`/admin/notes/${id}`, 'DELETE', undefined, true)
+  if (app) {
+    const db = app.get(DatabaseService).db
+    if (created.length) await db.delete(notes).where(inArray(notes.id, created))
+    await db.delete(journalCredentials)
+  }
   await app?.close()
+})
+
+test('database password updates survive repeated migrations and revoke existing HTTP sessions', async () => {
+  await app.close()
+  await start()
+  const login = await request('/auth/login', 'POST', { password })
+  expect(login.status).toBe(200)
+  cookie = login.headers.get('set-cookie')?.split(';')[0] ?? ''
+  const replacement = randomBytes(24).toString('hex')
+  try {
+    await savePasswordHash(config.databaseUrl, await Bun.password.hash(replacement))
+    await migrateDatabase(config.databaseUrl, await Bun.password.hash(password))
+    expect((await request('/auth/session', 'GET', undefined, true)).status).toBe(401)
+    expect((await request('/auth/login', 'POST', { password })).status).toBe(401)
+    const next = await request('/auth/login', 'POST', { password: replacement })
+    expect(next.status).toBe(200)
+    cookie = next.headers.get('set-cookie')?.split(';')[0] ?? ''
+    await app.close()
+    await start()
+    expect((await request('/auth/session', 'GET', undefined, true)).status).toBe(200)
+    await app.get(DatabaseService).db.delete(journalCredentials)
+    expect((await request('/auth/session', 'GET', undefined, true)).status).toBe(401)
+    expect((await request('/auth/login', 'POST', { password: replacement })).status).toBe(401)
+  } finally {
+    await savePasswordHash(config.databaseUrl, await Bun.password.hash(password))
+    await app.close()
+    await start()
+    cookie = ''
+  }
 })
 
 test('password-protected HTTP lifecycle persists public/hidden notes and rejects unauthorized writes', async () => {

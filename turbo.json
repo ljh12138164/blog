@@ -4,14 +4,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": [
-        "DATABASE_URL",
-        "JOURNAL_PASSWORD_HASH",
-        "SESSION_SECRET",
-        "COOKIE_SECURE",
-        "HOST",
-        "PORT"
-      ]
+      "passThroughEnv": ["DATABASE_URL", "SESSION_SECRET", "COOKIE_SECURE", "HOST", "PORT"]
     },
     "build": {
       "dependsOn": ["^build"],

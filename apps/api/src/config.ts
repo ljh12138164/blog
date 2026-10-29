@@ -7,9 +7,6 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   }
   const port = Number(env.PORT ?? 3001)
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT')
-  if (!env.JOURNAL_PASSWORD_HASH?.startsWith('$argon2id$')) {
-    throw new Error('Generate JOURNAL_PASSWORD_HASH with pnpm auth:setup')
-  }
   if (!env.SESSION_SECRET || env.SESSION_SECRET.length < 32) {
     throw new Error('SESSION_SECRET must contain at least 32 characters')
   }
@@ -23,7 +20,6 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     databaseUrl,
     port,
     host: env.HOST ?? '127.0.0.1',
-    passwordHash: env.JOURNAL_PASSWORD_HASH,
     sessionSecret: env.SESSION_SECRET,
     secureCookie: env.COOKIE_SECURE === 'true'
   }

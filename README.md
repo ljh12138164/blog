@@ -15,12 +15,13 @@ deploy/          Nginx 与现有博客发布脚本
 ```bash
 pnpm install --frozen-lockfile
 docker compose -f compose.dev.yaml up -d --wait
-pnpm auth:setup
+# 复制 apps/api/.env.example 到 apps/api/.env，填写 DATABASE_URL 和随机 SESSION_SECRET
 pnpm db:migrate
+pnpm auth:setup
 pnpm dev
 ```
 
-需要 Node.js 22+、pnpm 9.12.3、Bun 1.4.4 和 PostgreSQL 17。`pnpm auth:setup` 提示设置写作密码，并生成未跟踪的 `apps/api/.env`（密码只存 Argon2id 哈希）。已有 PostgreSQL 时可跳过 Compose，修改 `.env` 中的 `DATABASE_URL` 后迁移即可。
+需要 Node.js 22+、pnpm 9.12.3、Bun 1.4.4 和 PostgreSQL 17。`pnpm auth:setup` 提示设置写作密码，将 Argon2id 哈希写入数据库的 `journal_credentials` 表（`id=owner`），不存明文。`SESSION_SECRET` 可用 `bun -e 'console.log(crypto.randomUUID() + crypto.randomUUID())'` 生成。已有 PostgreSQL 时可跳过 Compose。
 
 博客运行于 `http://localhost:3000`，API 默认监听 `127.0.0.1:3001`，开发环境 `/api` 自动代理到 API。只启动一端可用 `pnpm dev:blog` 或 `pnpm dev:api`。
 
@@ -30,7 +31,7 @@ pnpm dev
 
 新随笔默认公开，可勾选“仅自己可见”。历史随笔支持编辑、隐藏、恢复公开、二次确认删除和退出。隐藏正文只由鉴权后的管理 API 返回，API 响应不缓存，正文按纯文本展示。密码验证签发最长7天的 HttpOnly 会话。
 
-轮换密码时更新 `apps/api/.env` 的密码哈希与随机 `SESSION_SECRET`，重启 API，旧会话随之失效。生产环境须使用 HTTPS 与 `COOKIE_SECURE=true`，并独立备份数据库卷。
+改密码时重新运行 `pnpm auth:setup`，或在数据库中替换 `journal_credentials.password_hash`（必须是 Argon2id 哈希）。新密码即时生效，旧会话失效，无需重启 API。`SESSION_SECRET` 仍是环境中的会话签名密钥。生产环境须使用 HTTPS 与 `COOKIE_SECURE=true`，并独立备份数据库卷。
 
 API 路由：`GET /api/notes`（公开）、`POST /api/auth/login`、`GET /api/auth/session`、`POST /api/auth/logout`，以及鉴权的 `GET/POST /api/admin/notes`、`PATCH/DELETE /api/admin/notes/:id`。写请求需要 `X-Journal-Request: 1`，登录每 IP 每分钟最多5次。
 

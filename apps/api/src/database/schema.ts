@@ -1,5 +1,10 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
+export const journalCredentials = pgTable('journal_credentials', {
+  id: text('id').primaryKey(),
+  passwordHash: text('password_hash').notNull()
+})
+
 export const notes = pgTable(
   'notes',
   {

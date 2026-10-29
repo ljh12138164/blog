@@ -126,6 +126,27 @@ export const profile = {
       lang: 'TypeScript',
       langColor: '#3178c6',
       contribution: {
+        title: '新增 Cloudflare 博客全文订阅路由',
+        problem: 'Cloudflare 官方 RSS 未完整提供文章中的正文、代码块和可复制提示词。',
+        work: '新增 /cloudflare/blog 路由，抓取文章全文，保留图片和代码块，并加入缓存与并发限制。',
+        pr: 'https://github.com/DIYgod/RSSHub/pull/23590',
+        number: 23590,
+        status: 'merged',
+        checkedAt: '2026-10-29',
+        image: null
+      }
+    },
+    {
+      name: 'DIYgod/RSSHub',
+      repo: 'DIYgod/RSSHub',
+      tag: 'Public',
+      description: '🧡 Everything is RSSible',
+      url: 'https://github.com/DIYgod/RSSHub',
+      stars: '46.3k',
+      forks: '10.2k',
+      lang: 'TypeScript',
+      langColor: '#3178c6',
+      contribution: {
         title: '新增 DeepSeek API 更新日志订阅路由',
         problem: '将 DeepSeek 官方 API 的中英文更新日志转成可订阅的 RSS。',
         work: '按日期拆分更新条目，提取标题、正文与来源锚点，补充 Radar 规则、双语文档和解析测试。',

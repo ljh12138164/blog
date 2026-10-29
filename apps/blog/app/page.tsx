@@ -57,7 +57,7 @@ export default function HomePage() {
         <h1 className="mt-6 mb-5 max-w-[680px] text-balance text-6xl leading-[1.12] font-extrabold max-md:text-[42px]">
           你好，我是 ljh。
           <br />
-          这里记录问题，也记录取舍。
+          前端开发与 AI 实践笔记。
         </h1>
         <p className="m-0 max-w-[650px] text-pretty text-[17px] leading-8 text-muted">
           一名前端工程师的个人技术手账。写协同编辑、性能优化、边缘计算与 AI
