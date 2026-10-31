@@ -6,7 +6,6 @@ export const site = {
   title: 'ljh.notes - 前端架构、实时协同与 AI 工程化实践',
   description: 'ljh个人技术手记，持续修订，写给下一次遇到同样问题的自己。',
   url: siteConfig.url,
-  googleAnalyticsId: 'G-CNJ6XX4XBJ',
   baiduAnalyticsId: '0f1b632716b21f7c3c7ed60e47890594',
   author: {
     ...profile.author,

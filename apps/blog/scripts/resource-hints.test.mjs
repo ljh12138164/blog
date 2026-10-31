@@ -32,9 +32,7 @@ describe('resourceHints', () => {
 
     expect(linkTags(rootHtml, 'preconnect')).toEqual([])
     expect(linkTags(rootHtml, 'dns-prefetch').map(href).sort()).toEqual([
-      'https://static.cloudflareinsights.com',
-      'https://www.google-analytics.com',
-      'https://www.googletagmanager.com'
+      'https://static.cloudflareinsights.com'
     ])
     expect(earlyHintsMap).toMatch(/rel=preload; as=style/)
     expect(earlyHintsMap).not.toMatch(/rel=preconnect/)
